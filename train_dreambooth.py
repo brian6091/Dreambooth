@@ -518,6 +518,11 @@ def main(args):
         revision=args.revision,
     )
 
+    try:
+        unet.set_use_memory_efficient_attention_xformers(True)
+    except Exception as e:
+        print("Continuining without using xformers. " + e)
+
     vae.requires_grad_(False)
     if not args.train_text_encoder:
         text_encoder.requires_grad_(False)
