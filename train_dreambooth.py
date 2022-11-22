@@ -5,6 +5,8 @@ import math
 import os
 from pathlib import Path
 from typing import Optional
+import subprocess
+import sys
 
 import torch
 import torch.nn.functional as F
@@ -195,6 +197,47 @@ def parse_args(input_args=None):
             "and an Nvidia Ampere GPU."
         ),
     )
+    parser.add_argument(
+        "--save_n_steps",
+        type=int,
+        default=1,
+        help=("Save the model every n global_steps"),
+    )
+    parser.add_argument(
+        "--save_starting_step",
+        type=int,
+        default=1,
+        help=("The step from which it starts saving intermediary checkpoints"),
+    )
+    parser.add_argument(
+        "--stop_text_encoder_training",
+        type=int,
+        default=1000000,
+        help=("The step at which the text_encoder is no longer trained"),
+    )
+    parser.add_argument(
+        "--image_captions_filename",
+        action="store_true",
+        help="Get captions from filename",
+    )
+    parser.add_argument(
+        "--dump_only_text_encoder",
+        action="store_true",
+        default=False,        
+        help="Dump only text encoder",
+    )
+    parser.add_argument(
+        "--train_only_unet",
+        action="store_true",
+        default=False,        
+        help="Train only the unet",
+    )
+    parser.add_argument(
+        "--Session_dir",
+        type=str,
+        default="",     
+        help="Current session directory",
+    )    
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
 
     if input_args is not None:
@@ -239,6 +282,7 @@ class DreamBoothDataset(Dataset):
         self.size = size
         self.center_crop = center_crop
         self.tokenizer = tokenizer
+        self.image_captions_filename = None
 
         self.instance_data_root = Path(instance_data_root)
         if not self.instance_data_root.exists():
@@ -248,6 +292,9 @@ class DreamBoothDataset(Dataset):
         self.num_instance_images = len(self.instance_images_path)
         self.instance_prompt = instance_prompt
         self._length = self.num_instance_images
+
+        if args.image_captions_filename:
+            self.image_captions_filename = True
 
         if class_data_root is not None:
             self.class_data_root = Path(class_data_root)
@@ -276,6 +323,20 @@ class DreamBoothDataset(Dataset):
         instance_image = Image.open(self.instance_images_path[index % self.num_instance_images])
         if not instance_image.mode == "RGB":
             instance_image = instance_image.convert("RGB")
+
+        instance_prompt = self.instance_prompt
+
+        if self.image_captions_filename:
+            filename = Path(path).stem
+            pt=''.join([i for i in filename if not i.isdigit()])
+            pt=pt.replace("_"," ")
+            pt=pt.replace("(","")
+            pt=pt.replace(")","")
+            pt=pt.replace("-","")
+            instance_prompt = pt
+            sys.stdout.write(" [0;32m" +instance_prompt+" [0m")
+            sys.stdout.flush()
+
         example["instance_images"] = self.image_transforms(instance_image)
         example["instance_prompt_ids"] = self.tokenizer(
             self.instance_prompt,
@@ -328,6 +389,8 @@ def get_full_repo_name(model_id: str, organization: Optional[str] = None, token:
 
 def main(args):
     logging_dir = Path(args.output_dir, args.logging_dir)
+
+    i=args.save_starting_step
 
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
@@ -418,11 +481,32 @@ def main(args):
         )
 
     # Load models and create wrapper for stable diffusion
-    text_encoder = CLIPTextModel.from_pretrained(
-        args.pretrained_model_name_or_path,
-        subfolder="text_encoder",
-        revision=args.revision,
-    )
+    if args.train_only_unet:
+      if os.path.exists(str(args.output_dir+"/text_encoder_trained")):
+        text_encoder = CLIPTextModel.from_pretrained(
+            args.output_dir,
+            subfolder="text_encoder_trained",
+            revision=args.revision,
+        )
+      elif os.path.exists(str(args.output_dir+"/text_encoder")):
+        text_encoder = CLIPTextModel.from_pretrained(
+            args.output_dir,
+            subfolder="text_encoder",
+            revision=args.revision,
+        )
+      else:
+        text_encoder = CLIPTextModel.from_pretrained(
+            args.pretrained_model_name_or_path,
+            subfolder="text_encoder",
+            revision=args.revision,
+        )
+    else:
+        text_encoder = CLIPTextModel.from_pretrained(
+            args.pretrained_model_name_or_path,
+            subfolder="text_encoder",
+            revision=args.revision,
+        )
+
     vae = AutoencoderKL.from_pretrained(
         args.pretrained_model_name_or_path,
         subfolder="vae",
@@ -482,6 +566,7 @@ def main(args):
         tokenizer=tokenizer,
         size=args.resolution,
         center_crop=args.center_crop,
+        args=args,
     )
 
     def collate_fn(examples):
@@ -562,6 +647,10 @@ def main(args):
     if accelerator.is_main_process:
         accelerator.init_trackers("dreambooth", config=vars(args))
 
+    def bar(prg):
+       br='|'+'█' * prg + ' ' * (25-prg)+'|'
+       return br
+
     # Train!
     total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
@@ -638,13 +727,59 @@ def main(args):
                 progress_bar.update(1)
                 global_step += 1
 
+            fll=round((global_step*100)/args.max_train_steps)
+            fll=round(fll/4)
+            pr=bar(fll)
+            
             logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
             progress_bar.set_postfix(**logs)
+            progress_bar.set_description_str("Progress:"+pr)
             accelerator.log(logs, step=global_step)
 
             if global_step >= args.max_train_steps:
                 break
 
+            if args.train_text_encoder and global_step == args.stop_text_encoder_training and global_step >= 30:
+              if accelerator.is_main_process:
+                print(" [0;32m" +" Freezing the text_encoder ..."+" [0m")                
+                frz_dir=args.output_dir + "/text_encoder_frozen"
+                if os.path.exists(frz_dir):
+                  subprocess.call('rm -r '+ frz_dir, shell=True)
+                os.mkdir(frz_dir)
+                pipeline = StableDiffusionPipeline.from_pretrained(
+                    args.pretrained_model_name_or_path,
+                    unet=accelerator.unwrap_model(unet),
+                    text_encoder=accelerator.unwrap_model(text_encoder),
+                )
+                pipeline.text_encoder.save_pretrained(frz_dir)
+                         
+            if args.save_n_steps >= 200:
+               if global_step < args.max_train_steps and global_step+1==i:
+                  ckpt_name = "_step_" + str(global_step+1)
+                  save_dir = Path(args.output_dir+ckpt_name)
+                  save_dir=str(save_dir)
+                  save_dir=save_dir.replace(" ", "_")                    
+                  if not os.path.exists(save_dir):
+                     os.mkdir(save_dir)
+                  inst=save_dir[16:]
+                  inst=inst.replace(" ", "_")
+                  print(" [1;32mSAVING CHECKPOINT: "+args.Session_dir+"/"+inst+".ckpt")
+                  # Create the pipeline using the trained modules and save it.
+                  if accelerator.is_main_process:
+                     pipeline = StableDiffusionPipeline.from_pretrained(
+                           args.pretrained_model_name_or_path,
+                           unet=accelerator.unwrap_model(unet),
+                           text_encoder=accelerator.unwrap_model(text_encoder),
+                     )
+                     pipeline.save_pretrained(save_dir)
+                     frz_dir=args.output_dir + "/text_encoder_frozen"                    
+                     if args.train_text_encoder and os.path.exists(frz_dir):
+                        subprocess.call('rm -r '+save_dir+'/text_encoder/*.*', shell=True)
+                        subprocess.call('cp -f '+frz_dir +'/*.* '+ save_dir+'/text_encoder', shell=True)                     
+                     chkpth=args.Session_dir+"/"+inst+".ckpt"
+                     subprocess.call('python /content/diffusers/scripts/convert_diffusers_to_original_stable_diffusion.py --model_path ' + save_dir + ' --checkpoint_path ' + chkpth + ' --half', shell=True)
+                     i=i+args.save_n_steps
+            
         accelerator.wait_for_everyone()
 
     # Create the pipeline using using the trained modules and save it.
