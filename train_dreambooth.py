@@ -278,7 +278,6 @@ class DreamBoothDataset(Dataset):
         class_prompt=None,
         size=512,
         center_crop=False,
-        args,
     ):
         self.size = size
         self.center_crop = center_crop
@@ -572,7 +571,6 @@ def main(args):
         tokenizer=tokenizer,
         size=args.resolution,
         center_crop=args.center_crop,
-        args=args,
     )
 
     def collate_fn(examples):
