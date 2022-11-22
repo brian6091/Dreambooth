@@ -571,7 +571,6 @@ def main(args):
         tokenizer=tokenizer,
         size=args.resolution,
         center_crop=args.center_crop,
-        args=args,
     )
 
     def collate_fn(examples):
