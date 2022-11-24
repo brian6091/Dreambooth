@@ -17,7 +17,7 @@ from torch.utils.data import Dataset
 from accelerate import Accelerator
 from accelerate.logging import get_logger
 from accelerate.utils import set_seed
-from diffusers import AutoencoderKL, DDPMScheduler, StableDiffusionPipeline, UNet2DConditionModel
+from diffusers import AutoencoderKL, DDPMScheduler, DDIMScheduler, StableDiffusionPipeline, UNet2DConditionModel
 from diffusers.optimization import get_scheduler
 from huggingface_hub import HfFolder, Repository, whoami
 from PIL import Image
@@ -746,45 +746,59 @@ def main(args):
                 break
 
             if args.train_text_encoder and global_step == args.stop_text_encoder_training and global_step >= 30:
-              if accelerator.is_main_process:
-                print(" [0;32m" +" Freezing the text_encoder ..."+" [0m")                
-                frz_dir=args.output_dir + "/text_encoder_frozen"
-                if os.path.exists(frz_dir):
-                  subprocess.call('rm -r '+ frz_dir, shell=True)
-                os.mkdir(frz_dir)
-                pipeline = StableDiffusionPipeline.from_pretrained(
-                    args.pretrained_model_name_or_path,
-                    unet=accelerator.unwrap_model(unet),
-                    text_encoder=accelerator.unwrap_model(text_encoder),
-                )
-                pipeline.text_encoder.save_pretrained(frz_dir)
+                if accelerator.is_main_process:
+                    print(" [0;32m" +" Freezing the text_encoder ..."+" [0m")                
+                    frz_dir=args.output_dir + "/text_encoder_frozen"
+                    if os.path.exists(frz_dir):
+                        subprocess.call('rm -r '+ frz_dir, shell=True)
+                    os.mkdir(frz_dir)
+                    pipeline = StableDiffusionPipeline.from_pretrained(
+                        args.pretrained_model_name_or_path,
+                        unet=accelerator.unwrap_model(unet),
+                        text_encoder=accelerator.unwrap_model(text_encoder),
+                    )
+                    pipeline.text_encoder.save_pretrained(frz_dir)
                          
             if args.save_n_steps >= 200:
-               if global_step < args.max_train_steps and global_step+1==i:
-                  ckpt_name = "_step_" + str(global_step+1)
-                  save_dir = Path(args.output_dir+ckpt_name)
-                  save_dir=str(save_dir)
-                  save_dir=save_dir.replace(" ", "_")                    
-                  if not os.path.exists(save_dir):
-                     os.mkdir(save_dir)
-                  inst=save_dir[16:]
-                  inst=inst.replace(" ", "_")
-                  print(" [1;32mSAVING CHECKPOINT: "+args.Session_dir+"/"+inst+".ckpt")
-                  # Create the pipeline using the trained modules and save it.
-                  if accelerator.is_main_process:
-                     pipeline = StableDiffusionPipeline.from_pretrained(
-                           args.pretrained_model_name_or_path,
-                           unet=accelerator.unwrap_model(unet),
-                           text_encoder=accelerator.unwrap_model(text_encoder),
-                     )
-                     pipeline.save_pretrained(save_dir)
-                     frz_dir=args.output_dir + "/text_encoder_frozen"                    
-                     if args.train_text_encoder and os.path.exists(frz_dir):
-                        subprocess.call('rm -r '+save_dir+'/text_encoder/*.*', shell=True)
-                        subprocess.call('cp -f '+frz_dir +'/*.* '+ save_dir+'/text_encoder', shell=True)                     
-                     chkpth=args.Session_dir+"/"+inst+".ckpt"
-                     subprocess.call('python /content/convert_diffusers_to_original_stable_diffusion.py --model_path ' + save_dir + ' --checkpoint_path ' + chkpth + ' --half', shell=True)
-                     i=i+args.save_n_steps
+                if global_step < args.max_train_steps and global_step+1==i:
+                    ckpt_name = "_step_" + str(global_step+1)
+                    save_dir = Path(args.output_dir+ckpt_name)
+                    save_dir=str(save_dir)
+                    save_dir=save_dir.replace(" ", "_")                    
+                    if not os.path.exists(save_dir):
+                        os.mkdir(save_dir)
+                    inst=save_dir[16:]
+                    inst=inst.replace(" ", "_")
+                    print(" [1;32mSAVING CHECKPOINT: "+args.Session_dir+"/"+inst+".ckpt")
+                    # Create the pipeline using the trained modules and save it.
+                    if accelerator.is_main_process:
+                        if args.train_text_encoder:
+                            text_enc_model = accelerator.unwrap_model(text_encoder)
+                        else:
+                            text_enc_model = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
+                        scheduler = DDIMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", clip_sample=False, set_alpha_to_one=False)
+                        pipeline = StableDiffusionPipeline.from_pretrained(
+                            args.pretrained_model_name_or_path,
+                            unet=accelerator.unwrap_model(unet),
+                            text_encoder=text_enc_model,
+                            vae=AutoencoderKL.from_pretrained(
+                                args.pretrained_model_name_or_path,
+                                subfolder="vae",
+                                revision=args.revision,
+                            ),
+                            safety_checker=None,
+                            scheduler=scheduler,
+                            torch_dtype=torch.float16,
+                            revision=args.revision,                                
+                        )
+                        pipeline.save_pretrained(save_dir)
+                        frz_dir=args.output_dir + "/text_encoder_frozen"                    
+                        if args.train_text_encoder and os.path.exists(frz_dir):
+                            subprocess.call('rm -r '+save_dir+'/text_encoder/*.*', shell=True)
+                            subprocess.call('cp -f '+frz_dir +'/*.* '+ save_dir+'/text_encoder', shell=True)                     
+                        chkpth=args.Session_dir+"/"+inst+".ckpt"
+                        subprocess.call('python /content/convert_diffusers_to_original_stable_diffusion.py --model_path ' + save_dir + ' --checkpoint_path ' + chkpth + ' --half', shell=True)
+                        i=i+args.save_n_steps
             
         accelerator.wait_for_everyone()
 
