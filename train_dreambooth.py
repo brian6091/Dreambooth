@@ -39,6 +39,12 @@ def parse_args(input_args=None):
         help="Path to pretrained model or model identifier from huggingface.co/models.",
     )
     parser.add_argument(
+        "--pretrained_vae_name_or_path",
+        type=str,
+        default=None,
+        help="Path to pretrained vae or vae identifier from huggingface.co/models.",
+    )
+    parser.add_argument(
         "--revision",
         type=str,
         default=None,
@@ -421,13 +427,21 @@ def main(args):
 
         if cur_class_images < args.num_class_images:
             torch_dtype = torch.float16 if accelerator.device.type == "cuda" else torch.float32
-            pipeline = StableDiffusionPipeline.from_pretrained(
-                args.pretrained_model_name_or_path,
-                torch_dtype=torch_dtype,
-                safety_checker=None,
-                revision=args.revision,
-            )
-            pipeline.set_progress_bar_config(disable=True)
+            if pipeline is None:
+                pipeline = StableDiffusionPipeline.from_pretrained(
+                    args.pretrained_model_name_or_path,
+                    vae=AutoencoderKL.from_pretrained(
+                        args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
+                        subfolder=None if args.pretrained_vae_name_or_path else "vae",
+                        revision=None if args.pretrained_vae_name_or_path else args.revision,
+                        torch_dtype=torch_dtype
+                    ),
+                    torch_dtype=torch_dtype,
+                    safety_checker=None,
+                    revision=args.revision
+                )
+                pipeline.set_progress_bar_config(disable=True)
+                pipeline.to(accelerator.device)
 
             num_new_images = args.num_class_images - cur_class_images
             logger.info(f"Number of class images to sample: {num_new_images}.")
@@ -436,7 +450,6 @@ def main(args):
             sample_dataloader = torch.utils.data.DataLoader(sample_dataset, batch_size=args.sample_batch_size)
 
             sample_dataloader = accelerator.prepare(sample_dataloader)
-            pipeline.to(accelerator.device)
 
             for example in tqdm(
                 sample_dataloader, desc="Generating class images", disable=not accelerator.is_local_main_process
@@ -790,9 +803,9 @@ def main(args):
                             unet=accelerator.unwrap_model(unet),
                             text_encoder=text_enc_model,
                             vae=AutoencoderKL.from_pretrained(
-                                args.pretrained_model_name_or_path,
-                                subfolder="vae",
-                                revision=args.revision,
+                                args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
+                                subfolder=None if args.pretrained_vae_name_or_path else "vae",
+                                revision=None if args.pretrained_vae_name_or_path else args.revision,
                             ),
                             safety_checker=None,
                             scheduler=scheduler,
