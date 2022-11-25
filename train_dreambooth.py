@@ -420,6 +420,7 @@ def main(args):
         set_seed(args.seed)
 
     if args.with_prior_preservation:
+        pipeline = None
         class_images_dir = Path(args.class_data_dir)
         if not class_images_dir.exists():
             class_images_dir.mkdir(parents=True)
