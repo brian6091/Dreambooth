@@ -103,6 +103,7 @@ def parse_args(input_args=None):
         default=4,
         help="The number of samples to save.",
     )
+    parser.add_argument("--save_interval", type=int, default=10_000, help="Save weights every N steps.")
     parser.add_argument(
         "--save_guidance_scale",
         type=float,
