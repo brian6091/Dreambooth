@@ -398,7 +398,7 @@ def get_full_repo_name(model_id: str, organization: Optional[str] = None, token:
 def main(args):
     logging_dir = Path(args.output_dir, args.logging_dir)
 
-    i=args.save_starting_step
+    i_save=args.save_starting_step
 
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
@@ -775,7 +775,7 @@ def main(args):
                     pipeline.text_encoder.save_pretrained(frz_dir)
                          
             if args.save_n_steps >= 200:
-                if global_step < args.max_train_steps and global_step+1==i:
+                if global_step < args.max_train_steps and global_step+1==i_save:
                     ckpt_name = "_step_" + str(global_step+1)
                     save_dir = Path(args.output_dir+ckpt_name)
                     save_dir=str(save_dir)
@@ -814,13 +814,13 @@ def main(args):
                             revision=args.revision,                                
                         )
                         pipeline.save_pretrained(save_dir)
-                        frz_dir=args.output_dir + "/text_encoder_frozen"                    
-                        if args.train_text_encoder and os.path.exists(frz_dir):
-                            subprocess.call('rm -r '+save_dir+'/text_encoder/*.*', shell=True)
-                            subprocess.call('cp -f '+frz_dir +'/*.* '+ save_dir+'/text_encoder', shell=True)                     
-                        chkpth=args.Session_dir+"/"+inst+".ckpt"
-                        subprocess.call('python /content/convert_diffusers_to_original_stable_diffusion.py --model_path ' + save_dir + ' --checkpoint_path ' + chkpth + ' --half', shell=True)
-                        i=i+args.save_n_steps
+                        #frz_dir=args.output_dir + "/text_encoder_frozen"                    
+                        #if args.train_text_encoder and os.path.exists(frz_dir):
+                        #    subprocess.call('rm -r '+save_dir+'/text_encoder/*.*', shell=True)
+                        #    subprocess.call('cp -f '+frz_dir +'/*.* '+ save_dir+'/text_encoder', shell=True)                     
+                        #chkpth=args.Session_dir+"/"+inst+".ckpt"
+                        #subprocess.call('python /content/convert_diffusers_to_original_stable_diffusion.py --model_path ' + save_dir + ' --checkpoint_path ' + chkpth + ' --half', shell=True)
+                        i_save=i_save+args.save_n_steps
             
         accelerator.wait_for_everyone()
 
