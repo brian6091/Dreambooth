@@ -2,6 +2,7 @@ import argparse
 import hashlib
 import itertools
 import math
+import json
 import random
 import os
 from pathlib import Path
@@ -83,6 +84,36 @@ def parse_args(input_args=None):
         type=str,
         default=None,
         help="The prompt to specify images in the same class as provided instance images.",
+    )
+    parser.add_argument(
+        "--save_sample_prompt",
+        type=str,
+        default=None,
+        help="The prompt used to generate sample outputs to save.",
+    )
+    parser.add_argument(
+        "--save_sample_negative_prompt",
+        type=str,
+        default=None,
+        help="The negative prompt used to generate sample outputs to save.",
+    )
+    parser.add_argument(
+        "--n_save_sample",
+        type=int,
+        default=4,
+        help="The number of samples to save.",
+    )
+    parser.add_argument(
+        "--save_guidance_scale",
+        type=float,
+        default=7.5,
+        help="CFG for save sample.",
+    )
+    parser.add_argument(
+        "--save_infer_steps",
+        type=int,
+        default=50,
+        help="The number of inference steps for save sample.",
     )
     parser.add_argument(
         "--with_prior_preservation",
@@ -204,24 +235,24 @@ def parse_args(input_args=None):
             " flag passed with the `accelerate.launch` command. Use this argument to override the accelerate config."
         ),
     )
-    parser.add_argument(
-        "--save_n_steps",
-        type=int,
-        default=1,
-        help=("Save the model every n global_steps"),
-    )
-    parser.add_argument(
-        "--save_starting_step",
-        type=int,
-        default=1,
-        help=("The step from which it starts saving intermediary checkpoints"),
-    )
-    parser.add_argument(
-        "--stop_text_encoder_training",
-        type=int,
-        default=1000000,
-        help=("The step at which the text_encoder is no longer trained"),
-    )
+#    parser.add_argument(
+#        "--save_n_steps",
+#        type=int,
+#        default=1,
+#        help=("Save the model every n global_steps"),
+#    )
+#    parser.add_argument(
+#        "--save_starting_step",
+#        type=int,
+#        default=1,
+#        help=("The step from which it starts saving intermediary checkpoints"),
+#    )
+#    parser.add_argument(
+#        "--stop_text_encoder_training",
+#        type=int,
+#        default=1000000,
+#        help=("The step at which the text_encoder is no longer trained"),
+#    )
     parser.add_argument(
         "--image_captions_filename",
         action="store_true",
@@ -239,12 +270,12 @@ def parse_args(input_args=None):
         default=False,        
         help="Train only the unet",
     )
-    parser.add_argument(
-        "--Session_dir",
-        type=str,
-        default="",     
-        help="Current session directory",
-    )    
+#    parser.add_argument(
+#        "--Session_dir",
+#        type=str,
+#        default="",     
+#        help="Current session directory",
+#    )    
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
 
     if input_args is not None:
@@ -683,6 +714,62 @@ def main(args):
     logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
     logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
+
+    def save_weights(step):
+        # Create the pipeline using using the trained modules and save it.
+        if accelerator.is_main_process:
+            if args.train_text_encoder:
+                text_enc_model = accelerator.unwrap_model(text_encoder)
+            else:
+                text_enc_model = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
+            scheduler = DDIMScheduler(
+                beta_start=0.00085, 
+                beta_end=0.012, 
+                beta_schedule="scaled_linear", 
+                clip_sample=False, 
+                set_alpha_to_one=False,
+                steps_offset=1,
+            )
+            pipeline = StableDiffusionPipeline.from_pretrained(
+                args.pretrained_model_name_or_path,
+                unet=accelerator.unwrap_model(unet),
+                text_encoder=text_enc_model,
+                vae=AutoencoderKL.from_pretrained(
+                    args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
+                    subfolder=None if args.pretrained_vae_name_or_path else "vae",
+                    revision=None if args.pretrained_vae_name_or_path else args.revision,
+                ),
+                safety_checker=None,
+                scheduler=scheduler,
+                torch_dtype=torch.float16,
+                revision=args.revision,
+            )
+            save_dir = os.path.join(args.output_dir, f"{step}")
+            pipeline.save_pretrained(save_dir)
+            with open(os.path.join(save_dir, "args.json"), "w") as f:
+                json.dump(args.__dict__, f, indent=2)
+
+            if args.save_sample_prompt is not None:
+                pipeline = pipeline.to(accelerator.device)
+                g_cuda = torch.Generator(device=accelerator.device).manual_seed(args.seed)
+                pipeline.set_progress_bar_config(disable=True)
+                sample_dir = os.path.join(save_dir, "samples")
+                os.makedirs(sample_dir, exist_ok=True)
+                with torch.autocast("cuda"), torch.inference_mode():
+                    for i in tqdm(range(args.n_save_sample), desc="Generating samples"):
+                        images = pipeline(
+                            args.save_sample_prompt,
+                            negative_prompt=args.save_sample_negative_prompt,
+                            guidance_scale=args.save_guidance_scale,
+                            num_inference_steps=args.save_infer_steps,
+                            generator=g_cuda
+                        ).images
+                        images[0].save(os.path.join(sample_dir, f"{i}.png"))
+                del pipeline
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            print(f"[*] Weights saved at {save_dir}")
+
     # Only show the progress bar once on each machine.
     progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
     progress_bar.set_description("Steps")
@@ -757,70 +844,11 @@ def main(args):
             progress_bar.set_description_str("Progress:"+pr)
             accelerator.log(logs, step=global_step)
 
+            if global_step > 0 and not global_step % args.save_interval and global_step >= args.save_min_steps:
+                save_weights(global_step)
+                
             if global_step >= args.max_train_steps:
                 break
-
-            if args.train_text_encoder and global_step == args.stop_text_encoder_training and global_step >= 30:
-                if accelerator.is_main_process:
-                    print(" [0;32m" +" Freezing the text_encoder ..."+" [0m")                
-                    frz_dir=args.output_dir + "/text_encoder_frozen"
-                    if os.path.exists(frz_dir):
-                        subprocess.call('rm -r '+ frz_dir, shell=True)
-                    os.mkdir(frz_dir)
-                    pipeline = StableDiffusionPipeline.from_pretrained(
-                        args.pretrained_model_name_or_path,
-                        unet=accelerator.unwrap_model(unet),
-                        text_encoder=accelerator.unwrap_model(text_encoder),
-                    )
-                    pipeline.text_encoder.save_pretrained(frz_dir)
-                         
-            if args.save_n_steps >= 200:
-                if global_step < args.max_train_steps and global_step+1==i_save:
-                    ckpt_name = "_step_" + str(global_step+1)
-                    save_dir = Path(args.output_dir+ckpt_name)
-                    save_dir=str(save_dir)
-                    save_dir=save_dir.replace(" ", "_")                    
-                    if not os.path.exists(save_dir):
-                        os.mkdir(save_dir)
-                    inst=save_dir[16:]
-                    inst=inst.replace(" ", "_")
-                    print(" [1;32mSAVING CHECKPOINT: "+args.Session_dir+"/"+inst+".ckpt")
-                    # Create the pipeline using the trained modules and save it.
-                    if accelerator.is_main_process:
-                        if args.train_text_encoder:
-                            text_enc_model = accelerator.unwrap_model(text_encoder)
-                        else:
-                            text_enc_model = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
-                        scheduler = DDIMScheduler(
-                            beta_start=0.00085,
-                            beta_end=0.012,
-                            beta_schedule="scaled_linear",
-                            clip_sample=False,
-                            set_alpha_to_one=False,
-                            steps_offset=1,
-                        )
-                        pipeline = StableDiffusionPipeline.from_pretrained(
-                            args.pretrained_model_name_or_path,
-                            unet=accelerator.unwrap_model(unet),
-                            text_encoder=text_enc_model,
-                            vae=AutoencoderKL.from_pretrained(
-                                args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
-                                subfolder=None if args.pretrained_vae_name_or_path else "vae",
-                                revision=None if args.pretrained_vae_name_or_path else args.revision,
-                            ),
-                            safety_checker=None,
-                            scheduler=scheduler,
-                            torch_dtype=torch.float16,
-                            revision=args.revision,                                
-                        )
-                        pipeline.save_pretrained(save_dir)
-                        #frz_dir=args.output_dir + "/text_encoder_frozen"                    
-                        #if args.train_text_encoder and os.path.exists(frz_dir):
-                        #    subprocess.call('rm -r '+save_dir+'/text_encoder/*.*', shell=True)
-                        #    subprocess.call('cp -f '+frz_dir +'/*.* '+ save_dir+'/text_encoder', shell=True)                     
-                        #chkpth=args.Session_dir+"/"+inst+".ckpt"
-                        #subprocess.call('python /content/convert_diffusers_to_original_stable_diffusion.py --model_path ' + save_dir + ' --checkpoint_path ' + chkpth + ' --half', shell=True)
-                        i_save=i_save+args.save_n_steps
             
         accelerator.wait_for_everyone()
 
