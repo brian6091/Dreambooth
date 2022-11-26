@@ -431,8 +431,6 @@ def get_full_repo_name(model_id: str, organization: Optional[str] = None, token:
 def main(args):
     logging_dir = Path(args.output_dir, args.logging_dir)
 
-    i_save=args.save_starting_step
-
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         mixed_precision=args.mixed_precision,
