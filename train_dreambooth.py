@@ -249,6 +249,7 @@ def parse_args(input_args=None):
 
     if input_args is not None:
         args = parser.parse_args(input_args)
+    else:
         args = parser.parse_args()
 
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
