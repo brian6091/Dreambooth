@@ -606,7 +606,6 @@ def main(args):
 
     if args.lr_scheduler=="cosine_with_restarts":
         lr_scheduler = get_cosine_with_hard_restarts_schedule_with_warmup(
-            args.lr_scheduler,
             optimizer=optimizer,
             num_warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
             num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
