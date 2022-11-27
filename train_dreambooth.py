@@ -237,52 +237,15 @@ def parse_args(input_args=None):
             " flag passed with the `accelerate.launch` command. Use this argument to override the accelerate config."
         ),
     )
-#    parser.add_argument(
-#        "--save_n_steps",
-#        type=int,
-#        default=1,
-#        help=("Save the model every n global_steps"),
-#    )
-#    parser.add_argument(
-#        "--save_starting_step",
-#        type=int,
-#        default=1,
-#        help=("The step from which it starts saving intermediary checkpoints"),
-#    )
-#    parser.add_argument(
-#        "--stop_text_encoder_training",
-#        type=int,
-#        default=1000000,
-#        help=("The step at which the text_encoder is no longer trained"),
-#    )
     parser.add_argument(
         "--image_captions_filename",
         action="store_true",
         help="Get captions from filename",
     )
-    parser.add_argument(
-        "--dump_only_text_encoder",
-        action="store_true",
-        default=False,        
-        help="Dump only text encoder",
-    )
-    parser.add_argument(
-        "--train_only_unet",
-        action="store_true",
-        default=False,        
-        help="Train only the unet",
-    )
-#    parser.add_argument(
-#        "--Session_dir",
-#        type=str,
-#        default="",     
-#        help="Current session directory",
-#    )    
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
 
     if input_args is not None:
         args = parser.parse_args(input_args)
-    else:
         args = parser.parse_args()
 
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
@@ -528,32 +491,11 @@ def main(args):
         )
 
     # Load models and create wrapper for stable diffusion
-    if args.train_only_unet:
-      if os.path.exists(str(args.output_dir+"/text_encoder_trained")):
-        text_encoder = CLIPTextModel.from_pretrained(
-            args.output_dir,
-            subfolder="text_encoder_trained",
-            revision=args.revision,
-        )
-      elif os.path.exists(str(args.output_dir+"/text_encoder")):
-        text_encoder = CLIPTextModel.from_pretrained(
-            args.output_dir,
-            subfolder="text_encoder",
-            revision=args.revision,
-        )
-      else:
-        text_encoder = CLIPTextModel.from_pretrained(
-            args.pretrained_model_name_or_path,
-            subfolder="text_encoder",
-            revision=args.revision,
-        )
-    else:
-        text_encoder = CLIPTextModel.from_pretrained(
-            args.pretrained_model_name_or_path,
-            subfolder="text_encoder",
-            revision=args.revision,
-        )
-
+    text_encoder = CLIPTextModel.from_pretrained(
+        args.pretrained_model_name_or_path,
+        subfolder="text_encoder",
+        revision=args.revision,
+    )
     vae = AutoencoderKL.from_pretrained(
         args.pretrained_model_name_or_path,
         subfolder="vae",
@@ -699,10 +641,6 @@ def main(args):
     if accelerator.is_main_process:
         accelerator.init_trackers("dreambooth", config=vars(args))
 
-    def bar(prg):
-       br='|'+'█' * prg + ' ' * (25-prg)+'|'
-       return br
-
     # Train!
     total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
@@ -834,14 +772,9 @@ def main(args):
             if accelerator.sync_gradients:
                 progress_bar.update(1)
                 global_step += 1
-
-            fll=round((global_step*100)/args.max_train_steps)
-            fll=round(fll/4)
-            pr=bar(fll)
             
             logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
             progress_bar.set_postfix(**logs)
-            progress_bar.set_description_str("Progress:"+pr)
             accelerator.log(logs, step=global_step)
 
             if global_step > 0 and not global_step % args.save_interval and global_step >= args.save_min_steps:
@@ -852,19 +785,8 @@ def main(args):
             
         accelerator.wait_for_everyone()
 
-    # Create the pipeline using using the trained modules and save it.
-    if accelerator.is_main_process:
-        pipeline = StableDiffusionPipeline.from_pretrained(
-            args.pretrained_model_name_or_path,
-            unet=accelerator.unwrap_model(unet),
-            text_encoder=accelerator.unwrap_model(text_encoder),
-            revision=args.revision,
-        )
-        pipeline.save_pretrained(args.output_dir)
-
-        if args.push_to_hub:
-            repo.push_to_hub(commit_message="End of training", blocking=False, auto_lfs_prune=True)
-
+    save_weights(global_step)
+    
     accelerator.end_training()
 
 
