@@ -708,6 +708,7 @@ def main(args):
                 sample_dir = os.path.join(save_dir, "samples")
                 os.makedirs(sample_dir, exist_ok=True)
                 with torch.autocast("cuda"), torch.inference_mode():
+                    j = 0
                     for i in tqdm(range(args.n_save_sample), desc="Generating samples"):
                         images = pipeline(
                             args.save_sample_prompt,
@@ -716,7 +717,8 @@ def main(args):
                             num_inference_steps=args.save_infer_steps,
                             generator=g_cuda
                         ).images
-                        images[0].save(os.path.join(sample_dir, f"{i}.png"))
+                        images[0].save(os.path.join(sample_dir, f"{j}_{i}.png"))
+                        j+=1
                 del pipeline
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
