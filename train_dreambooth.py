@@ -718,10 +718,8 @@ def main(args):
                             num_inference_steps=args.save_infer_steps,
                             generator=g_cuda
                         ).images
-                        j=0
-                        for image in images:
-                            image.save(os.path.join(sample_dir, f"{j}_{i}.png"))
-                            j+=1
+                        for j in range(len(save_sample_prompt)):
+                            images[j].save(os.path.join(sample_dir, f"{j}_{i}.png"))
                 del pipeline
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
