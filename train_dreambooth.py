@@ -396,6 +396,10 @@ def get_full_repo_name(model_id: str, organization: Optional[str] = None, token:
 
 
 def main(args):
+    if args.save_sample_prompt is not None:
+        arg_str = ' '.join(args.save_sample_prompt)
+        args.save_sample_prompt = list(map(str.strip, arg_str.split('|')))
+    
     logging_dir = Path(args.output_dir, args.logging_dir)
 
     accelerator = Accelerator(
