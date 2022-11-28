@@ -395,11 +395,7 @@ def get_full_repo_name(model_id: str, organization: Optional[str] = None, token:
         return f"{organization}/{model_id}"
 
 
-def main(args):
-    if args.save_sample_prompt is not None:
-        arg_str = ' '.join(args.save_sample_prompt)
-        args.save_sample_prompt = list(map(str.strip, arg_str.split('|')))
-    
+def main(args):    
     logging_dir = Path(args.output_dir, args.logging_dir)
 
     accelerator = Accelerator(
@@ -704,6 +700,8 @@ def main(args):
                 json.dump(args.__dict__, f, indent=2)
 
             if args.save_sample_prompt is not None:
+                save_sample_prompt = ' '.join(args.save_sample_prompt)
+                save_sample_prompt = list(map(str.strip, save_sample_prompt.split('|')))
                 pipeline = pipeline.to(accelerator.device)
                 g_cuda = torch.Generator(device=accelerator.device).manual_seed(args.seed)
                 pipeline.set_progress_bar_config(disable=True)
