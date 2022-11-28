@@ -87,7 +87,7 @@ def parse_args(input_args=None):
     )
     parser.add_argument(
         "--save_sample_prompt",
-        type=str,
+        type=list,
         default=None,
         help="The prompt used to generate sample outputs to save.",
     )
