@@ -700,8 +700,8 @@ def main(args):
                 json.dump(args.__dict__, f, indent=2)
 
             if args.save_sample_prompt is not None:
-                save_sample_prompt = ' '.join(args.save_sample_prompt)
-                save_sample_prompt = list(map(str.strip, save_sample_prompt.split('|')))
+                #save_sample_prompt = ' '.join(args.save_sample_prompt)
+                #save_sample_prompt = list(map(str.strip, save_sample_prompt.split('|')))
                 pipeline = pipeline.to(accelerator.device)
                 g_cuda = torch.Generator(device=accelerator.device).manual_seed(args.seed)
                 pipeline.set_progress_bar_config(disable=True)
@@ -710,14 +710,16 @@ def main(args):
                 with torch.autocast("cuda"), torch.inference_mode():
                     for i in tqdm(range(args.n_save_sample), desc="Generating samples"):
                         images = pipeline(
-                            save_sample_prompt,
+                            #save_sample_prompt,
+                            args.save_sample_prompt,
                             negative_prompt=args.save_sample_negative_prompt,
                             guidance_scale=args.save_guidance_scale,
                             num_inference_steps=args.save_infer_steps,
                             generator=g_cuda
                         ).images
-                        for j in range(len(save_sample_prompt)):
-                            images[j].save(os.path.join(sample_dir, f"{j}_{i}.png"))
+                        images[0].save(os.path.join(sample_dir, f"{i}.png"))
+                        #for j in range(len(save_sample_prompt)):
+                        #    images[j].save(os.path.join(sample_dir, f"{j}_{i}.png"))
                 del pipeline
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
