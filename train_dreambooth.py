@@ -512,10 +512,10 @@ def main(args):
         low_cpu_mem_usage=False,
     )
 
-#    try:
-#        unet.set_use_memory_efficient_attention_xformers(True)
-#    except Exception as e:
-#        print("Continuining without using xformers. " + e)
+    try:
+        unet.set_use_memory_efficient_attention_xformers(True)
+    except Exception as e:
+        print("Continuining without using xformers. " + e)
 
     vae.requires_grad_(False)
     if not args.train_text_encoder:
@@ -699,9 +699,9 @@ def main(args):
             with open(os.path.join(save_dir, "args.json"), "w") as f:
                 json.dump(args.__dict__, f, indent=2)
 
-            del pipeline
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+            #del pipeline
+            #if torch.cuda.is_available():
+            #    torch.cuda.empty_cache()
             print(f"[*] Weights saved at {save_dir}")
 
     # Only show the progress bar once on each machine.
