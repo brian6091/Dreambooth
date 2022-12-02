@@ -699,6 +699,9 @@ def main(args):
             with open(os.path.join(save_dir, "args.json"), "w") as f:
                 json.dump(args.__dict__, f, indent=2)
 
+            del pipeline
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             print(f"[*] Weights saved at {save_dir}")
 
     # Only show the progress bar once on each machine.
