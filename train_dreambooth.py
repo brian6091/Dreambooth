@@ -394,6 +394,15 @@ def get_full_repo_name(model_id: str, organization: Optional[str] = None, token:
     else:
         return f"{organization}/{model_id}"
 
+def get_gpu_memory_map():
+    result = subprocess.check_output(
+        [
+            'nvidia-smi', '--query-gpu=memory.used',
+            '--format=csv,nounits,noheader'
+        ], encoding='utf-8')
+    gpu_memory = [int(x) for x in result.strip().split('\n')]
+    gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
+    return gpu_memory_map
 
 def main(args):    
     logging_dir = Path(args.output_dir, args.logging_dir)
@@ -794,9 +803,10 @@ def main(args):
                 logs = {"Loss/pred": pred_loss.detach().item(),
                         "Loss/prior": prior_loss.detach().item(),
                         "Loss/total": loss.detach().item(),
-                        "lr": lr_scheduler.get_last_lr()[0]}
+                        "lr": lr_scheduler.get_last_lr()[0],
+                        "GPU": get_gpu_memory_map()[0]}
             else:
-                logs = {"Loss/pred": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
+                logs = {"Loss/pred": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0], "GPU": get_gpu_memory_map()[0]}
 
             progress_bar.set_postfix(**logs)
             accelerator.log(logs, step=global_step)
