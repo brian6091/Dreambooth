@@ -714,7 +714,7 @@ def main(args):
 
     # Create EMA for the unet.
     if args.use_ema:
-        ema_unet = EMAModel(unet.parameters())
+        ema_unet = EMAModel(unet.parameters(), decay=args.ema_decay)
 
     # We need to recalculate our total training steps as the size of the training dataloader may have changed.
     num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
