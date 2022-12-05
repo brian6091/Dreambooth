@@ -232,6 +232,9 @@ def parse_args(input_args=None):
         ),
     )
     parser.add_argument(
+        "--log_gpu", action="store_true", help="Whether or not to log GPU memory usage."
+    )
+    parser.add_argument(
         "--mixed_precision",
         type=str,
         default=None,
@@ -876,11 +879,12 @@ def main(args):
                 logs = {"Loss/pred": pred_loss.detach().item(),
                         "Loss/prior": prior_loss.detach().item(),
                         "Loss/total": loss.detach().item(),
-                        "lr": lr_scheduler.get_last_lr()[0],
-                        "GPU": get_gpu_memory_map()[0]}
+                        "lr": lr_scheduler.get_last_lr()[0]}
             else:
-                logs = {"Loss/pred": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0], "GPU": get_gpu_memory_map()[0]}
+                logs = {"Loss/pred": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
 
+            if args.log_gpu:
+                    logs["GPU"] = get_gpu_memory_map()[0]
             progress_bar.set_postfix(**logs)
             accelerator.log(logs, step=global_step)
 
