@@ -6,7 +6,7 @@ import json
 import random
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, Optional
 import subprocess
 import sys
 
