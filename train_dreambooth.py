@@ -204,6 +204,8 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--lr_cosine_num_cycles", type=float, default=1.0, help="Number of cycles when using cosine_with_restarts lr scheduler."
     )
+    parser.add_argument("--use_ema", action="store_true", help="Whether to use EMA model.")
+    parser.add_argument("--ema_decay", type=float, default=0.999, help="The decay parameter for the EMA model.")
     parser.add_argument(
         "--use_8bit_adam", action="store_true", help="Whether or not to use 8-bit Adam from bitsandbytes."
     )
@@ -404,6 +406,66 @@ def get_gpu_memory_map():
     gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
     return gpu_memory_map
 
+# Adapted from torch-ema https://github.com/fadel/pytorch_ema/blob/master/torch_ema/ema.py#L14
+class EMAModel:
+    """
+    Exponential Moving Average of models weights
+    """
+
+    def __init__(self, parameters: Iterable[torch.nn.Parameter], decay=0.9999):
+        parameters = list(parameters)
+        self.shadow_params = [p.clone().detach() for p in parameters]
+
+        self.decay = decay
+        self.optimization_step = 0
+
+    def get_decay(self, optimization_step):
+        """
+        Compute the decay factor for the exponential moving average.
+        """
+        value = (1 + optimization_step) / (10 + optimization_step)
+        return 1 - min(self.decay, value)
+
+    @torch.no_grad()
+    def step(self, parameters):
+        parameters = list(parameters)
+
+        self.optimization_step += 1
+        self.decay = self.get_decay(self.optimization_step)
+
+        for s_param, param in zip(self.shadow_params, parameters):
+            if param.requires_grad:
+                tmp = self.decay * (s_param - param)
+                s_param.sub_(tmp)
+            else:
+                s_param.copy_(param)
+
+        torch.cuda.empty_cache()
+
+    def copy_to(self, parameters: Iterable[torch.nn.Parameter]) -> None:
+        """
+        Copy current averaged parameters into given collection of parameters.
+        Args:
+            parameters: Iterable of `torch.nn.Parameter`; the parameters to be
+                updated with the stored moving averages. If `None`, the
+                parameters with which this `ExponentialMovingAverage` was
+                initialized will be used.
+        """
+        parameters = list(parameters)
+        for s_param, param in zip(self.shadow_params, parameters):
+            param.data.copy_(s_param.data)
+
+    def to(self, device=None, dtype=None) -> None:
+        r"""Move internal buffers of the ExponentialMovingAverage to `device`.
+        Args:
+            device: like `device` argument to `torch.Tensor.to`
+        """
+        # .to() on the tensors handles None correctly
+        self.shadow_params = [
+            p.to(device=device, dtype=dtype) if p.is_floating_point() else p.to(device=device)
+            for p in self.shadow_params
+        ]
+        
 def main(args):    
     logging_dir = Path(args.output_dir, args.logging_dir)
 
@@ -650,6 +712,10 @@ def main(args):
     if not args.train_text_encoder:
         text_encoder.to(accelerator.device, dtype=weight_dtype)
 
+    # Create EMA for the unet.
+    if args.use_ema:
+        ema_unet = EMAModel(unet.parameters())
+
     # We need to recalculate our total training steps as the size of the training dataloader may have changed.
     num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
     if overrode_max_train_steps:
@@ -689,9 +755,14 @@ def main(args):
                 set_alpha_to_one=False,
                 steps_offset=1,
             )
+            
+            unet = accelerator.unwrap_model(unet)
+            if args.use_ema:
+                ema_unet.copy_to(unet.parameters())
+
             pipeline = StableDiffusionPipeline.from_pretrained(
                 args.pretrained_model_name_or_path,
-                unet=accelerator.unwrap_model(unet),
+                unet=unet,
                 text_encoder=text_enc_model,
                 vae=AutoencoderKL.from_pretrained(
                     args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
@@ -796,6 +867,8 @@ def main(args):
 
             # Checks if the accelerator has performed an optimization step behind the scenes
             if accelerator.sync_gradients:
+                if args.use_ema:
+                    ema_unet.step(unet.parameters())
                 progress_bar.update(1)
                 global_step += 1
             
