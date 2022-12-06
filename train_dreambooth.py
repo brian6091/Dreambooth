@@ -759,13 +759,13 @@ def main(args):
                 steps_offset=1,
             )
             
-            unet = accelerator.unwrap_model(unet)
+            unet_model = accelerator.unwrap_model(unet)
             if args.use_ema:
-                ema_unet.copy_to(unet.parameters())
+                ema_unet.copy_to(unet_model.parameters())
 
             pipeline = StableDiffusionPipeline.from_pretrained(
                 args.pretrained_model_name_or_path,
-                unet=unet,
+                unet=unet_model,
                 text_encoder=text_enc_model,
                 vae=AutoencoderKL.from_pretrained(
                     args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
