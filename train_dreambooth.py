@@ -747,7 +747,7 @@ def main(args):
         # Create the pipeline using using the trained modules and save it.
         if accelerator.is_main_process:
             if args.train_text_encoder:
-                text_enc_model = accelerator.unwrap_model(text_encoder)
+                text_enc_model = accelerator.unwrap_model(text_encoder, keep_fp32_wrapper=True)
             else:
                 text_enc_model = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
             scheduler = DDIMScheduler(
@@ -759,7 +759,7 @@ def main(args):
                 steps_offset=1,
             )
             
-            unet_model = accelerator.unwrap_model(unet)
+            unet_model = accelerator.unwrap_model(unet, keep_fp32_wrapper=True)
             if args.use_ema:
                 ema_unet.copy_to(unet_model.parameters())
 
