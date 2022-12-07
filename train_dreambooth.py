@@ -206,7 +206,10 @@ def parse_args(input_args=None):
         "--lr_cosine_num_cycles", type=float, default=1.0, help="Number of cycles when using cosine_with_restarts lr scheduler."
     )
     parser.add_argument("--use_ema", action="store_true", help="Whether to use EMA model.")
-    parser.add_argument("--ema_decay", type=float, default=0.999, help="The decay parameter for the EMA model.")
+    parser.add_argument("--ema_inv_gamma", type=float, default=1.0, help="The inverse gamma parameter for the EMA model.")
+    parser.add_argument("--ema_power", type=float, default=3 / 4, help="Exponential factor of EMA warmup.")
+    parser.add_argument("--ema_min_value", type=float, default=0.0, help="The minimum EMA decay rate.")
+    parser.add_argument("--ema_max_value", type=float, default=0.9999, help="The maximum EMA decay rate.")
     parser.add_argument(
         "--use_8bit_adam", action="store_true", help="Whether or not to use 8-bit Adam from bitsandbytes."
     )
@@ -655,9 +658,11 @@ def main(args):
     if args.use_ema:
         ema_unet = EMAModel(
             accelerator.unwrap_model(unet), 
-            inv_gamma=args.ema_decay, 
-            power=3 / 4, 
-            max_value=0.9999)
+            inv_gamma=args.ema_inv_gamma, 
+            power=args.ema_power, 
+            min_value=args.ema_min_value
+            max_value=args.ema_max_value
+        )
 
     # We need to recalculate our total training steps as the size of the training dataloader may have changed.
     num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
