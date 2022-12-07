@@ -654,7 +654,7 @@ def main(args):
     # Create EMA for the unet.
     if args.use_ema:
         ema_unet = EMAModel(
-            accelerator.unwrap_model(model), 
+            accelerator.unwrap_model(unet), 
             inv_gamma=args.ema_decay, 
             power=3 / 4, 
             max_value=0.9999)
