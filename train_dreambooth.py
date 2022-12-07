@@ -20,6 +20,7 @@ from accelerate.logging import get_logger
 from accelerate.utils import set_seed
 from diffusers import AutoencoderKL, DDPMScheduler, DDIMScheduler, StableDiffusionPipeline, UNet2DConditionModel
 from diffusers.optimization import get_scheduler, get_cosine_with_hard_restarts_schedule_with_warmup
+from diffusers.training_utils import EMAModel
 from huggingface_hub import HfFolder, Repository, whoami
 from PIL import Image
 from torchvision import transforms
@@ -408,66 +409,6 @@ def get_gpu_memory_map():
     gpu_memory = [int(x) for x in result.strip().split('\n')]
     gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
     return gpu_memory_map
-
-# Adapted from torch-ema https://github.com/fadel/pytorch_ema/blob/master/torch_ema/ema.py#L14
-class EMAModel:
-    """
-    Exponential Moving Average of models weights
-    """
-
-    def __init__(self, parameters: Iterable[torch.nn.Parameter], decay=0.9999):
-        parameters = list(parameters)
-        self.shadow_params = [p.clone().detach() for p in parameters]
-
-        self.decay = decay
-        self.optimization_step = 0
-
-    def get_decay(self, optimization_step):
-        """
-        Compute the decay factor for the exponential moving average.
-        """
-        value = (1 + optimization_step) / (10 + optimization_step)
-        return 1 - min(self.decay, value)
-
-    @torch.no_grad()
-    def step(self, parameters):
-        parameters = list(parameters)
-
-        self.optimization_step += 1
-        self.decay = self.get_decay(self.optimization_step)
-
-        for s_param, param in zip(self.shadow_params, parameters):
-            if param.requires_grad:
-                tmp = self.decay * (s_param - param)
-                s_param.sub_(tmp)
-            else:
-                s_param.copy_(param)
-
-        torch.cuda.empty_cache()
-
-    def copy_to(self, parameters: Iterable[torch.nn.Parameter]) -> None:
-        """
-        Copy current averaged parameters into given collection of parameters.
-        Args:
-            parameters: Iterable of `torch.nn.Parameter`; the parameters to be
-                updated with the stored moving averages. If `None`, the
-                parameters with which this `ExponentialMovingAverage` was
-                initialized will be used.
-        """
-        parameters = list(parameters)
-        for s_param, param in zip(self.shadow_params, parameters):
-            param.data.copy_(s_param.data)
-
-    def to(self, device=None, dtype=None) -> None:
-        r"""Move internal buffers of the ExponentialMovingAverage to `device`.
-        Args:
-            device: like `device` argument to `torch.Tensor.to`
-        """
-        # .to() on the tensors handles None correctly
-        self.shadow_params = [
-            p.to(device=device, dtype=dtype) if p.is_floating_point() else p.to(device=device)
-            for p in self.shadow_params
-        ]
         
 def main(args):    
     logging_dir = Path(args.output_dir, args.logging_dir)
@@ -585,11 +526,6 @@ def main(args):
         revision=args.revision,
         low_cpu_mem_usage=False,
     )
-
-#     try:
-#         unet.set_use_memory_efficient_attention_xformers(True)
-#     except Exception as e:
-#         print("Continuining without using xformers. " + e)
 
     vae.requires_grad_(False)
     if not args.train_text_encoder:
@@ -717,7 +653,11 @@ def main(args):
 
     # Create EMA for the unet.
     if args.use_ema:
-        ema_unet = EMAModel(unet.parameters(), decay=args.ema_decay)
+        ema_unet = EMAModel(
+            accelerator.unwrap_model(model), 
+            inv_gamma=args.ema_decay, 
+            power=3 / 4, 
+            max_value=0.9999)
 
     # We need to recalculate our total training steps as the size of the training dataloader may have changed.
     num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
@@ -759,13 +699,11 @@ def main(args):
                 steps_offset=1,
             )
             
-            unet_model = accelerator.unwrap_model(unet)
-            if args.use_ema:
-                ema_unet.copy_to(unet_model.parameters())
-
             pipeline = StableDiffusionPipeline.from_pretrained(
                 args.pretrained_model_name_or_path,
-                unet=unet_model,
+                unet=accelerator.unwrap_model(
+                        ema_unet.averaged_model if args.use_ema else unet
+                    ),
                 text_encoder=text_enc_model,
                 vae=AutoencoderKL.from_pretrained(
                     args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
@@ -866,12 +804,12 @@ def main(args):
                     accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
                 optimizer.step()
                 lr_scheduler.step()
+                if args.use_ema:
+                    ema_unet.step(unet)
                 optimizer.zero_grad()
 
             # Checks if the accelerator has performed an optimization step behind the scenes
             if accelerator.sync_gradients:
-                if args.use_ema:
-                    ema_unet.step(unet.parameters())
                 progress_bar.update(1)
                 global_step += 1
             
@@ -884,7 +822,11 @@ def main(args):
                 logs = {"Loss/pred": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
 
             if args.log_gpu:
-                    logs["GPU"] = get_gpu_memory_map()[0]
+                logs["GPU"] = get_gpu_memory_map()[0]
+                                
+            if args.use_ema:
+                logs["ema_decay"] = ema_unet.decay
+                    
             progress_bar.set_postfix(**logs)
             accelerator.log(logs, step=global_step)
 
