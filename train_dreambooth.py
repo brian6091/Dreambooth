@@ -660,7 +660,7 @@ def main(args):
             accelerator.unwrap_model(unet), 
             inv_gamma=args.ema_inv_gamma, 
             power=args.ema_power, 
-            min_value=args.ema_min_value
+            min_value=args.ema_min_value,
             max_value=args.ema_max_value
         )
 
