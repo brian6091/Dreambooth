@@ -254,6 +254,12 @@ def parse_args(input_args=None):
         action="store_true",
         help="Get captions from filename",
     )
+    parser.add_argument(
+        "--conditioning_dropout_prob",
+        type=float,
+        default=0.0,
+        help="Probability that conditioning is dropped.",
+    )
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
 
     if input_args is not None:
@@ -791,6 +797,7 @@ def main(args):
 
                 # Get the text embedding for conditioning
                 encoder_hidden_states = text_encoder(batch["input_ids"])[0]
+                print(batch["input_ids"])
 
                 # Predict the noise residual
                 noise_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
