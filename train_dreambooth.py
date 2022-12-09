@@ -260,6 +260,7 @@ def parse_args(input_args=None):
         default=1.0,
         help="Probability that conditioning is dropped.",
     )
+    parser.add_argument("--unconditional_prompt", type=str, default=" ", help="Prompt for conditioning dropout.")
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
 
     if input_args is not None:
@@ -600,20 +601,20 @@ def main(args):
         instance_prompt=args.instance_prompt,
         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
         class_prompt=args.class_prompt,
+        unconditional_prompt=args.unconditional_prompt,
         tokenizer=tokenizer,
         size=args.resolution,
         center_crop=args.center_crop,
     )
 
     def collate_fn(examples):
-        input_ids = [example["instance_prompt_ids"] for example in examples]
-        pixel_values = [example["instance_images"] for example in examples]
-        
-        if args.conditioning_dropout_prob > 0.0:
-            print("hello")
-            for example in examples:
-                print(example["unconditional_prompt_ids"])
+        if random.uniform() <= args.conditioning_dropout_prob:
+            input_ids = [example["unconditional_prompt_ids"] for example in examples]
+        else:
+            input_ids = [example["instance_prompt_ids"] for example in examples]
 
+        pixel_values = [example["instance_images"] for example in examples]
+ 
         # Concat class and instance examples for prior preservation.
         # We do this to avoid doing two forward passes.
         if args.with_prior_preservation:
