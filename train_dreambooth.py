@@ -748,18 +748,16 @@ def main(args):
                     for i in tqdm(range(args.n_save_sample), desc="Generating samples"):
                         images = pipeline(
                             save_sample_prompt,
-                            #args.save_sample_prompt,
                             negative_prompt=[args.save_sample_negative_prompt]*len(save_sample_prompt),
                             guidance_scale=args.save_guidance_scale,
                             num_inference_steps=args.save_infer_steps,
                             generator=g_cuda
                         ).images
                         all_images.extend(images)
-                        #images[0].save(os.path.join(sample_dir, f"{i}.png"))
-                        #for j, image in enumerate(images):
-                        #    image.save(os.path.join(sample_dir, f"{j}_{i}.png"))
+                        
                     grid = image_grid(all_images, rows=args.n_save_sample, cols=len(save_sample_prompt))
                     grid.save(os.path.join(sample_dir, f"{step}.png"))
+                    
                 del pipeline
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
