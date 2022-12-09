@@ -726,7 +726,6 @@ def main(args):
                 json.dump(args.__dict__, f, indent=2)
 
             if args.save_sample_prompt is not None:
-                save_sample_prompt = ' '.join(args.save_sample_prompt)
                 save_sample_prompt = list(map(str.strip, save_sample_prompt.split('//')))
                 pipeline = pipeline.to(accelerator.device)
                 g_cuda = torch.Generator(device=accelerator.device).manual_seed(args.seed)
