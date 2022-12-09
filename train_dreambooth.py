@@ -298,6 +298,7 @@ class DreamBoothDataset(Dataset):
         tokenizer,
         class_data_root=None,
         class_prompt=None,
+        unconditional_prompt=" ",
         size=512,
         center_crop=False,
     ):
@@ -329,6 +330,8 @@ class DreamBoothDataset(Dataset):
         else:
             self.class_data_root = None
 
+        self.unconditional_prompt = unconditional_prompt
+            
         self.image_transforms = transforms.Compose(
             [
                 transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR),
@@ -375,6 +378,13 @@ class DreamBoothDataset(Dataset):
             example["class_images"] = self.image_transforms(class_image)
             example["class_prompt_ids"] = self.tokenizer(
                 self.class_prompt,
+                padding="do_not_pad",
+                truncation=True,
+                max_length=self.tokenizer.model_max_length,
+            ).input_ids
+            
+        example["unconditional_prompt_ids"] = self.tokenizer(
+                self.unconditional_prompt,
                 padding="do_not_pad",
                 truncation=True,
                 max_length=self.tokenizer.model_max_length,
@@ -598,6 +608,11 @@ def main(args):
     def collate_fn(examples):
         input_ids = [example["instance_prompt_ids"] for example in examples]
         pixel_values = [example["instance_images"] for example in examples]
+        
+        if args.conditioning_dropout_prob > 0.0:
+            print("hello")
+            for example in examples:
+                print(example["unconditional_prompt_ids"])
 
         # Concat class and instance examples for prior preservation.
         # We do this to avoid doing two forward passes.
