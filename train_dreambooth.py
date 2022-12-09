@@ -740,7 +740,7 @@ def main(args):
                         images = pipeline(
                             save_sample_prompt,
                             #args.save_sample_prompt,
-                            negative_prompt=args.save_sample_negative_prompt,
+                            negative_prompt=[args.save_sample_negative_prompt]*len(save_sample_prompt),
                             guidance_scale=args.save_guidance_scale,
                             num_inference_steps=args.save_infer_steps,
                             generator=g_cuda
