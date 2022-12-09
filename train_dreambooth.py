@@ -756,7 +756,7 @@ def main(args):
                         all_images.extend(images)
                         
                     grid = image_grid(all_images, rows=args.n_save_sample, cols=len(save_sample_prompt))
-                    grid.save(os.path.join(sample_dir, f"{step}.png"), optimize=True)
+                    grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
                     
                 del pipeline
                 if torch.cuda.is_available():
