@@ -608,7 +608,7 @@ def main(args):
     )
 
     def collate_fn(examples):
-        if random.uniform() <= args.conditioning_dropout_prob:
+        if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
             print("DROPPING INSTANCE PROMPT")
             input_ids = [example["unconditional_prompt_ids"] for example in examples]
         else:
