@@ -257,7 +257,7 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--conditioning_dropout_prob",
         type=float,
-        default=0.0,
+        default=1.0,
         help="Probability that conditioning is dropped.",
     )
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
