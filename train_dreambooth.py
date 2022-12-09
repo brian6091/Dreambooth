@@ -733,6 +733,8 @@ def main(args):
                 pipeline.set_progress_bar_config(disable=True)
                 sample_dir = os.path.join(save_dir, "samples")
                 os.makedirs(sample_dir, exist_ok=True)
+                
+                all_images = []
                 with torch.autocast("cuda"), torch.inference_mode():
                     for i in tqdm(range(args.n_save_sample), desc="Generating samples"):
                         images = pipeline(
@@ -744,8 +746,11 @@ def main(args):
                             generator=g_cuda
                         ).images
                         #images[0].save(os.path.join(sample_dir, f"{i}.png"))
-                        for j, image in enumerate(images):
-                            image.save(os.path.join(sample_dir, f"{j}_{i}.png"))
+                        all_images.extend(images)
+                        
+                    for j, image in enumerate(all_images):
+                        image.save(os.path.join(sample_dir, f"{j}.png"))
+                        
                 del pipeline
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
