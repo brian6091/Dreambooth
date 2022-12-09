@@ -413,6 +413,15 @@ def get_gpu_memory_map():
     gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
     return gpu_memory_map
         
+def image_grid(imgs, rows, cols):
+    assert len(imgs) == rows*cols
+    w, h = imgs[0].size
+    grid = Image.new('RGB', size=(cols*w, rows*h))
+    grid_w, grid_h = grid.size
+    for i, img in enumerate(imgs):
+        grid.paste(img, box=(i%cols*w, i//cols*h))
+    return grid
+
 def main(args):    
     logging_dir = Path(args.output_dir, args.logging_dir)
 
@@ -734,8 +743,8 @@ def main(args):
                 sample_dir = os.path.join(save_dir, "samples")
                 os.makedirs(sample_dir, exist_ok=True)
                 
-                #all_images = []
                 with torch.autocast("cuda"), torch.inference_mode():
+                    all_images = []
                     for i in tqdm(range(args.n_save_sample), desc="Generating samples"):
                         images = pipeline(
                             save_sample_prompt,
@@ -745,11 +754,12 @@ def main(args):
                             num_inference_steps=args.save_infer_steps,
                             generator=g_cuda
                         ).images
+                        all_images.extend(images)
                         #images[0].save(os.path.join(sample_dir, f"{i}.png"))
-                        #all_images.extend(images)
-                        for j, image in enumerate(images):
-                            image.save(os.path.join(sample_dir, f"{j}_{i}.png"))
-                        
+                        #for j, image in enumerate(images):
+                        #    image.save(os.path.join(sample_dir, f"{j}_{i}.png"))
+                     grid = image_grid(all_images, rows=args.n_save_sample, cols=len(save_sample_prompt))
+                     grid.save(os.path.join(sample_dir, f"{step}.png"))
                 del pipeline
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
