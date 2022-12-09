@@ -459,6 +459,8 @@ def main(args):
         )
 
     if args.seed is not None:
+        #cudnn.benchmark = False
+        #cudnn.deterministic = True
         set_seed(args.seed)
 
     if args.with_prior_preservation:
@@ -814,7 +816,6 @@ def main(args):
 
                 # Get the text embedding for conditioning
                 encoder_hidden_states = text_encoder(batch["input_ids"])[0]
-                print(batch["input_ids"])
 
                 # Predict the noise residual
                 noise_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
