@@ -619,34 +619,28 @@ def main(args):
     )
 
     def collate_fn(examples):
+        input_ids = [example["instance_prompt_ids"] for example in examples]
         if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
             # Uninformative prompt for instance images
-            #input_ids = [example["unconditional_prompt_ids"] for example in examples]
-            
-            input_ids = []
-            for example in examples:
+            for i, example in examples:
                 if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob_in_batch:
-                    input_ids += example["unconditional_prompt_ids"]
-                else:
-                    input_ids += example["instance_prompt_ids"]
-        else:
-            input_ids = [example["instance_prompt_ids"] for example in examples]
+                    input_ids[i] = example["unconditional_prompt_ids"]
 
         pixel_values = [example["instance_images"] for example in examples]
  
         # Concat class and instance examples for prior preservation.
         # We do this to avoid doing two forward passes.
         if args.with_prior_preservation:
-            #input_ids += [example["class_prompt_ids"] for example in examples]
-            if args.use_class_dropout and random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
+            class_input_ids += [example["class_prompt_ids"] for example in examples]
+            if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
                 # Uninformative prompt for class images
-                for example in examples:
+                for i, example in examples:
                     if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob_in_batch:
-                        input_ids += example["unconditional_prompt_ids"]
-                    else:
-                        input_ids += example["class_prompt_ids"]
+                        class_input_ids[i] = example["unconditional_prompt_ids"]
                         
-            pixel_values += [example["class_images"] for example in examples]
+                input_ids += class_input_ids
+
+                pixel_values += [example["class_images"] for example in examples]
 
         pixel_values = torch.stack(pixel_values)
         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
