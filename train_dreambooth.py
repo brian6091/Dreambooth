@@ -254,6 +254,22 @@ def parse_args(input_args=None):
         action="store_true",
         help="Get captions from filename",
     )
+    parser.add_argument(
+        "--conditioning_dropout_prob",
+        type=float,
+        default=0.0,
+        help="Probability that conditioning is dropped.",
+    )
+#     parser.add_argument(
+#         "--conditioning_dropout_prob_in_batch",
+#         type=float,
+#         default=1.0,
+#         help="Probability that conditioning is dropped.",
+#     )
+#     parser.add_argument(
+#         "--use_class_dropout", action="store_true", help="Whether or not to apply text-conditioning dropout to class images."
+#     )
+    parser.add_argument("--unconditional_prompt", type=str, default=" ", help="Prompt for conditioning dropout.")
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
 
     if input_args is not None:
@@ -292,6 +308,7 @@ class DreamBoothDataset(Dataset):
         tokenizer,
         class_data_root=None,
         class_prompt=None,
+        unconditional_prompt=" ",
         size=512,
         center_crop=False,
     ):
@@ -323,6 +340,8 @@ class DreamBoothDataset(Dataset):
         else:
             self.class_data_root = None
 
+        self.unconditional_prompt = unconditional_prompt
+            
         self.image_transforms = transforms.Compose(
             [
                 transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR),
@@ -369,6 +388,13 @@ class DreamBoothDataset(Dataset):
             example["class_images"] = self.image_transforms(class_image)
             example["class_prompt_ids"] = self.tokenizer(
                 self.class_prompt,
+                padding="do_not_pad",
+                truncation=True,
+                max_length=self.tokenizer.model_max_length,
+            ).input_ids
+            
+        example["unconditional_prompt_ids"] = self.tokenizer(
+                self.unconditional_prompt,
                 padding="do_not_pad",
                 truncation=True,
                 max_length=self.tokenizer.model_max_length,
@@ -442,6 +468,8 @@ def main(args):
         )
 
     if args.seed is not None:
+        #cudnn.benchmark = False
+        #cudnn.deterministic = True
         set_seed(args.seed)
 
     if args.with_prior_preservation:
@@ -584,6 +612,7 @@ def main(args):
         instance_prompt=args.instance_prompt,
         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
         class_prompt=args.class_prompt,
+        unconditional_prompt=args.unconditional_prompt,
         tokenizer=tokenizer,
         size=args.resolution,
         center_crop=args.center_crop,
@@ -598,6 +627,13 @@ def main(args):
         if args.with_prior_preservation:
             input_ids += [example["class_prompt_ids"] for example in examples]
             pixel_values += [example["class_images"] for example in examples]
+        
+        # Apply text-conditioning dropout by inserting uninformative prompt
+        if args.conditioning_dropout_prob > 0:
+            unconditional_ids = [example["unconditional_prompt_ids"] for example in examples]*2
+            for i, input_id in enumerate(input_ids):
+                if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
+                    input_ids[i] = unconditional_ids[i]
 
         pixel_values = torch.stack(pixel_values)
         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
