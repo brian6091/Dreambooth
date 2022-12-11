@@ -257,8 +257,17 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--conditioning_dropout_prob",
         type=float,
+        default=0.0,
+        help="Probability that conditioning is dropped.",
+    )
+    parser.add_argument(
+        "--conditioning_dropout_prob_in_batch",
+        type=float,
         default=1.0,
         help="Probability that conditioning is dropped.",
+    )
+    parser.add_argument(
+        "--use_class_dropout", action="store_true", help="Whether or not to apply text-conditioning dropout to class images."
     )
     parser.add_argument("--unconditional_prompt", type=str, default=" ", help="Prompt for conditioning dropout.")
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
@@ -611,8 +620,15 @@ def main(args):
 
     def collate_fn(examples):
         if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
-            # Uninformative prompt, applies only to instance images
-            input_ids = [example["unconditional_prompt_ids"] for example in examples]
+            # Uninformative prompt for instance images
+            #input_ids = [example["unconditional_prompt_ids"] for example in examples]
+            
+            input_ids = []
+            for example in examples:
+                if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob_in_batch:
+                    input_ids += example["unconditional_prompt_ids"]
+                else:
+                    input_ids += example["instance_prompt_ids"]
         else:
             input_ids = [example["instance_prompt_ids"] for example in examples]
 
@@ -621,7 +637,15 @@ def main(args):
         # Concat class and instance examples for prior preservation.
         # We do this to avoid doing two forward passes.
         if args.with_prior_preservation:
-            input_ids += [example["class_prompt_ids"] for example in examples]
+            #input_ids += [example["class_prompt_ids"] for example in examples]
+            if args.use_class_dropout and random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
+                # Uninformative prompt for class images
+                for example in examples:
+                    if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob_in_batch:
+                        input_ids += example["unconditional_prompt_ids"]
+                    else:
+                        input_ids += example["class_prompt_ids"]
+                        
             pixel_values += [example["class_images"] for example in examples]
 
         pixel_values = torch.stack(pixel_values)
