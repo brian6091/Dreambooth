@@ -622,7 +622,7 @@ def main(args):
         input_ids = [example["instance_prompt_ids"] for example in examples]
         if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
             # Uninformative prompt for instance images
-            for i, example in examples:
+            for i, example in enumerate(examples):
                 if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob_in_batch:
                     input_ids[i] = example["unconditional_prompt_ids"]
 
@@ -634,7 +634,7 @@ def main(args):
             class_input_ids = [example["class_prompt_ids"] for example in examples]
             if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
                 # Uninformative prompt for class images
-                for i, example in examples:
+                for i, example in enumerate(examples):
                     if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob_in_batch:
                         class_input_ids[i] = example["unconditional_prompt_ids"]
                         
