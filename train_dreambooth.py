@@ -638,9 +638,8 @@ def main(args):
                     if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob_in_batch:
                         class_input_ids[i] = example["unconditional_prompt_ids"]
                         
-                input_ids += class_input_ids
-
-                pixel_values += [example["class_images"] for example in examples]
+            input_ids += class_input_ids
+            pixel_values += [example["class_images"] for example in examples]
 
         pixel_values = torch.stack(pixel_values)
         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
