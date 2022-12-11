@@ -628,35 +628,12 @@ def main(args):
             input_ids += [example["class_prompt_ids"] for example in examples]
             pixel_values += [example["class_images"] for example in examples]
         
+        # Apply text-conditioning dropout by inserting uninformative prompt
         if args.conditioning_dropout_prob > 0:
-            # Apply text-conditioning dropout by inserting uninformative prompt
             unconditional_ids = [example["unconditional_prompt_ids"] for example in examples]*2
             for i, input_id in enumerate(input_ids):
                 if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
                     input_ids[i] = unconditional_ids[i]
-            
-#         ######
-#         input_ids = [example["instance_prompt_ids"] for example in examples]
-#         if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
-#             # Uninformative prompt for instance images
-#             for i, example in enumerate(examples):
-#                 if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob_in_batch:
-#                     input_ids[i] = example["unconditional_prompt_ids"]
-
-#         pixel_values = [example["instance_images"] for example in examples]
- 
-#         # Concat class and instance examples for prior preservation.
-#         # We do this to avoid doing two forward passes.
-#         if args.with_prior_preservation:
-#             class_input_ids = [example["class_prompt_ids"] for example in examples]
-#             if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
-#                 # Uninformative prompt for class images
-#                 for i, example in enumerate(examples):
-#                     if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob_in_batch:
-#                         class_input_ids[i] = example["unconditional_prompt_ids"]
-                        
-#             input_ids += class_input_ids
-#             pixel_values += [example["class_images"] for example in examples]
 
         pixel_values = torch.stack(pixel_values)
         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
