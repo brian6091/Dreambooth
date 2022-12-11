@@ -631,7 +631,7 @@ def main(args):
         # Concat class and instance examples for prior preservation.
         # We do this to avoid doing two forward passes.
         if args.with_prior_preservation:
-            class_input_ids += [example["class_prompt_ids"] for example in examples]
+            class_input_ids = [example["class_prompt_ids"] for example in examples]
             if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
                 # Uninformative prompt for class images
                 for i, example in examples:
