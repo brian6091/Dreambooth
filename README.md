@@ -10,8 +10,9 @@ Tested with [Stable Diffusion v1-5](https://huggingface.co/runwayml/stable-diffu
 
 There are lots of notebooks for Dreambooth-style training. This one borrows elements from [
 ShivamShrirao's](https://github.com/ShivamShrirao/diffusers) implementation, but is distinguished by some additional features:
-* based on [Hugging Face](https://huggingface.co/) [Diffusers🧨](https://github.com/huggingface/diffusers) implementation so it's easy to stay up-to-date with rapid access to new features
+* based on [Hugging Face](https://huggingface.co/) [Diffusers🧨](https://github.com/huggingface/diffusers) implementation so it's easy to stay up-to-date
 * exposes lesser-explored parameters for experimentation (ADAM optimizer parameters, [cosine_with_restarts](https://huggingface.co/transformers/v2.9.1/main_classes/optimizer_schedules.html#transformers.get_cosine_with_hard_restarts_schedule_with_warmup) learning rate scheduler, etc), all of which are dumped to a json file so you can remember what you did
+* possibility to drop some text-conditioning to improve classifier-free guidance sampling (e.g., how [SD V1-5 was fine-tuned](https://huggingface.co/runwayml/stable-diffusion-v1-5))
 * training loss and prior class loss are tracked separately (can be visualized using tensorboard)
 * option to generate exponentially-weighted moving average (EMA) weights for the unet
 * easily switch in different variational autoencoders (VAE) or text encoders
