@@ -570,17 +570,29 @@ def main(args):
 
     if args.use_lora:
         unet.requires_grad_(False)
-        unet_lora_params, train_names = inject_trainable_lora(unet)
+        unet_lora_params, _ = inject_trainable_lora(unet)
 
         for _up, _down in extract_lora_ups_down(unet):
-            print(_up.weight)
-            print(_down.weight)
+            print("Before training: Unet First Layer lora up", _up.weight)
+            print("Before training: Unet First Layer lora down", _down.weight)
             break
     
     vae.requires_grad_(False)
-    if not args.train_text_encoder:
+    
+    if args.train_text_encoder and args.use_lora:
         text_encoder.requires_grad_(False)
-
+        text_encoder_lora_params, _ = inject_trainable_lora(
+            text_encoder, target_replace_module=["CLIPAttention"]
+        )
+        for _up, _down in extract_lora_ups_down(
+            text_encoder, target_replace_module=["CLIPAttention"]
+        ):
+            print("Before training: text encoder First Layer lora up", _up.weight)
+            print("Before training: text encoder First Layer lora down", _down.weight)
+            break
+    else:
+        text_encoder.requires_grad_(False)
+            
     if args.gradient_checkpointing:
         unet.enable_gradient_checkpointing()
         if args.train_text_encoder:
@@ -606,7 +618,7 @@ def main(args):
 
     if args.use_lora:
         params_to_optimize = (
-            itertools.chain(*unet_lora_params, text_encoder.parameters()) if args.train_text_encoder else itertools.chain(*unet_lora_params)
+            itertools.chain(*unet_lora_params, *text_encoder_lora_params) if args.train_text_encoder else itertools.chain(*unet_lora_params)
         )
     else: 
         params_to_optimize = (
@@ -788,10 +800,16 @@ def main(args):
             if args.use_lora:
                 #filename = f"{args.output_dir}/lora_weight_e{epoch}_s{global_step}.pt"
                 #print(f"save weights {filename}")
-                save_lora_weight(pipeline.unet, os.path.join(args.output_dir, f"{step}", "lora_weights.pt"))
+                save_lora_weight(pipeline.unet, os.path.join(args.output_dir, f"{step}", "lora_unet.pt"))
                 for _up, _down in extract_lora_ups_down(pipeline.unet):
                     print("First Layer's Up Weight is now : ", _up.weight)
                     print("First Layer's Down Weight is now : ", _down.weight)
+                if args.train_text_encoder
+                    save_lora_weight(
+                        pipeline.text_encoder,
+                        os.path.join(args.output_dir, f"{step}", "lora_text_encoder.pt"),
+                        target_replace_module=["CLIPAttention"],
+                    )
 
             with open(os.path.join(save_dir, "args.json"), "w") as f:
                 json.dump(args.__dict__, f, indent=2)
@@ -875,18 +893,11 @@ def main(args):
 
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:
-                    if args.use_lora:
-                         params_to_clip = (
-                            itertools.chain(*unet_lora_params, text_encoder.parameters())
-                            if args.train_text_encoder
-                            else *unet_lora_params
-                        )
-                    else:
-                        params_to_clip = (
-                            itertools.chain(unet.parameters(), text_encoder.parameters())
-                            if args.train_text_encoder
-                            else unet.parameters()
-                        )
+                    params_to_clip = (
+                        itertools.chain(unet.parameters(), text_encoder.parameters())
+                        if args.train_text_encoder
+                        else unet.parameters()
+                    )
                     accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
                 optimizer.step()
                 lr_scheduler.step()
