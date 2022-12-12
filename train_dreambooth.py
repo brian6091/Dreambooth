@@ -816,27 +816,27 @@ def main(args):
                         target_replace_module=["CLIPAttention"],
                     )
                     
-                del pipeline
-                pipeline = StableDiffusionPipeline.from_pretrained(
-                    args.pretrained_model_name_or_path,
-                    text_encoder=CLIPTextModel.from_pretrained(
-                        args.pretrained_model_name_or_path, 
-                        subfolder="text_encoder", 
-                        revision=args.revision
-                    ),
-                    vae=AutoencoderKL.from_pretrained(
-                        args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
-                        subfolder=None if args.pretrained_vae_name_or_path else "vae",
-                        revision=None if args.pretrained_vae_name_or_path else args.revision,
-                    ),
-                    safety_checker=None,
-                    scheduler=scheduler,
-                    torch_dtype=torch.float16,
-                    revision=args.revision,
-                )
-                monkeypatch_lora(pipeline.unet, torch.load(os.path.join(save_dir, "lora_unet.pt")))
-                monkeypatch_lora(pipeline.text_encoder, torch.load(os.path.join(save_dir, "lora_text_encoder.pt")), target_replace_module=["CLIPAttention"])
-                tune_lora_scale(pipeline.unet, 1.00)
+#                 del pipeline
+#                 pipeline = StableDiffusionPipeline.from_pretrained(
+#                     args.pretrained_model_name_or_path,
+#                     text_encoder=CLIPTextModel.from_pretrained(
+#                         args.pretrained_model_name_or_path, 
+#                         subfolder="text_encoder", 
+#                         revision=args.revision
+#                     ),
+#                     vae=AutoencoderKL.from_pretrained(
+#                         args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
+#                         subfolder=None if args.pretrained_vae_name_or_path else "vae",
+#                         revision=None if args.pretrained_vae_name_or_path else args.revision,
+#                     ),
+#                     safety_checker=None,
+#                     scheduler=scheduler,
+#                     torch_dtype=torch.float16,
+#                     revision=args.revision,
+#                 )
+#                 monkeypatch_lora(pipeline.unet, torch.load(os.path.join(save_dir, "lora_unet.pt")))
+#                 monkeypatch_lora(pipeline.text_encoder, torch.load(os.path.join(save_dir, "lora_text_encoder.pt")), target_replace_module=["CLIPAttention"])
+#                 tune_lora_scale(pipeline.unet, 1.00)
             else:
                 pipeline.save_pretrained(save_dir)
 
