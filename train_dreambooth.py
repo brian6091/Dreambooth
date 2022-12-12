@@ -765,10 +765,13 @@ def main(args):
     def save_weights(step):
         # Create the pipeline using using the trained modules and save it.
         if accelerator.is_main_process:
-            if args.train_text_encoder:
-                text_enc_model = accelerator.unwrap_model(text_encoder)
-            else:
-                text_enc_model = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
+            save_dir = os.path.join(args.output_dir, f"{step}")
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+
+            with open(os.path.join(save_dir, "args.json"), "w") as f:
+                json.dump(args.__dict__, f, indent=2)
+                
             scheduler = DDIMScheduler(
                 beta_start=0.00085, 
                 beta_end=0.012, 
@@ -777,30 +780,7 @@ def main(args):
                 set_alpha_to_one=False,
                 steps_offset=1,
             )
-            
-            pipeline = StableDiffusionPipeline.from_pretrained(
-                args.pretrained_model_name_or_path,
-                unet=accelerator.unwrap_model(
-                        ema_unet.averaged_model if args.use_ema else unet
-                    ),
-                text_encoder=text_enc_model,
-                vae=AutoencoderKL.from_pretrained(
-                    args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
-                    subfolder=None if args.pretrained_vae_name_or_path else "vae",
-                    revision=None if args.pretrained_vae_name_or_path else args.revision,
-                ),
-                safety_checker=None,
-                scheduler=scheduler,
-                torch_dtype=torch.float16,
-                revision=args.revision,
-            )
-            save_dir = os.path.join(args.output_dir, f"{step}")
-            if not os.path.exists(save_dir):
-                os.makedirs(save_dir)
                 
-            if not args.use_lora:
-                pipeline.save_pretrained(save_dir)
-            
             if args.use_lora:
                 save_lora_weight(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))                
                 for _up, _down in extract_lora_ups_down(pipeline.unet):
@@ -812,9 +792,50 @@ def main(args):
                         os.path.join(save_dir, "lora_text_encoder.pt"),
                         target_replace_module=["CLIPAttention"],
                     )
+                    
+                pipeline = StableDiffusionPipeline.from_pretrained(
+                    args.pretrained_model_name_or_path,
+                    text_encoder=CLIPTextModel.from_pretrained(
+                        args.pretrained_model_name_or_path, 
+                        subfolder="text_encoder", 
+                        revision=args.revision
+                    ),
+                    vae=AutoencoderKL.from_pretrained(
+                        args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
+                        subfolder=None if args.pretrained_vae_name_or_path else "vae",
+                        revision=None if args.pretrained_vae_name_or_path else args.revision,
+                    ),
+                    safety_checker=None,
+                    scheduler=scheduler,
+                    torch_dtype=torch.float16,
+                    revision=args.revision,
+                )
+                monkeypatch_lora(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))
+                monkeypatch_lora(pipeline.text_encoder, os.path.join(save_dir, "lora_text_encoder.pt"), target_replace_module=["CLIPAttention"])
+                tune_lora_scale(pipeline.unet, 1.00)
+            else:
+                if args.train_text_encoder:
+                    text_enc_model = accelerator.unwrap_model(text_encoder)
+                else:
+                    text_enc_model = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
 
-            with open(os.path.join(save_dir, "args.json"), "w") as f:
-                json.dump(args.__dict__, f, indent=2)
+                pipeline = StableDiffusionPipeline.from_pretrained(
+                    args.pretrained_model_name_or_path,
+                    unet=accelerator.unwrap_model(
+                            ema_unet.averaged_model if args.use_ema else unet
+                        ),
+                    text_encoder=text_enc_model,
+                    vae=AutoencoderKL.from_pretrained(
+                        args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
+                        subfolder=None if args.pretrained_vae_name_or_path else "vae",
+                        revision=None if args.pretrained_vae_name_or_path else args.revision,
+                    ),
+                    safety_checker=None,
+                    scheduler=scheduler,
+                    torch_dtype=torch.float16,
+                    revision=args.revision,
+                )
+                pipeline.save_pretrained(save_dir)
 
             if args.save_sample_prompt is not None:
                 save_sample_prompt = args.save_sample_prompt
