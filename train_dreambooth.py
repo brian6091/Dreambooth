@@ -798,13 +798,11 @@ def main(args):
                 pipeline.save_pretrained(save_dir)
             
             if args.use_lora:
-                #filename = f"{args.output_dir}/lora_weight_e{epoch}_s{global_step}.pt"
-                #print(f"save weights {filename}")
                 save_lora_weight(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))
                 for _up, _down in extract_lora_ups_down(pipeline.unet):
                     print("First Layer's Up Weight is now : ", _up.weight)
                     print("First Layer's Down Weight is now : ", _down.weight)
-                if args.train_text_encoder
+                if args.train_text_encoder:
                     save_lora_weight(
                         pipeline.text_encoder,
                         os.path.join(save_dir, "lora_text_encoder.pt"),
