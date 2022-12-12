@@ -796,13 +796,13 @@ def main(args):
             )
             save_dir = os.path.join(args.output_dir, f"{step}")
             if not os.path.exists(save_dir):
-                os.makedirs(savedir)
+                os.makedirs(save_dir)
                 
             if not args.use_lora:
                 pipeline.save_pretrained(save_dir)
             
             if args.use_lora:
-                save_lora_weight(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))
+                save_lora_weight(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))                
                 for _up, _down in extract_lora_ups_down(pipeline.unet):
                     print("First Layer's Up Weight is now : ", _up.weight)
                     print("First Layer's Down Weight is now : ", _down.weight)
