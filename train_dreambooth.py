@@ -833,8 +833,8 @@ def main(args):
                     torch_dtype=torch.float16,
                     revision=args.revision,
                 )
-                monkeypatch_lora(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))
-                #monkeypatch_lora(pipeline.text_encoder, os.path.join(save_dir, "lora_text_encoder.pt"), target_replace_module=["CLIPAttention"])
+                monkeypatch_lora(pipeline.unet, torch.load(os.path.join(save_dir, "lora_unet.pt")))
+                monkeypatch_lora(pipeline.text_encoder, torch.load(os.path.join(save_dir, "lora_text_encoder.pt")), target_replace_module=["CLIPAttention"])
                 tune_lora_scale(pipeline.unet, 1.00)
             else:
                 pipeline.save_pretrained(save_dir)
