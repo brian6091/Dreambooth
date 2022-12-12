@@ -33,6 +33,7 @@ from lora import (
     save_lora_weight,
     monkeypatch_lora,
     extract_lora_ups_down,
+    tune_lora_scale,
 )
 
 
