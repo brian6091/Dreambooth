@@ -764,6 +764,8 @@ def main(args):
     def save_weights(step):
         # Create the pipeline using using the trained modules and save it.
         if accelerator.is_main_process:
+            pipeline = None
+            
             save_dir = os.path.join(args.output_dir, f"{step}")
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
@@ -774,16 +776,7 @@ def main(args):
             if args.train_text_encoder:
                 text_enc_model = accelerator.unwrap_model(text_encoder)
             else:
-                text_enc_model = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
-
-            scheduler = DDIMScheduler(
-                beta_start=0.00085, 
-                beta_end=0.012, 
-                beta_schedule="scaled_linear", 
-                clip_sample=False, 
-                set_alpha_to_one=False,
-                steps_offset=1,
-            )            
+                text_enc_model = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)        
 
             pipeline = StableDiffusionPipeline.from_pretrained(
                 args.pretrained_model_name_or_path,
@@ -797,7 +790,6 @@ def main(args):
                     revision=None if args.pretrained_vae_name_or_path else args.revision,
                 ),
                 safety_checker=None,
-                scheduler=scheduler,
                 torch_dtype=torch.float16,
                 revision=args.revision,
             )
