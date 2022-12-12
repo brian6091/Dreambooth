@@ -27,6 +27,13 @@ from torchvision import transforms
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
+import re
+from lora_diffusion import (
+    inject_trainable_lora,
+    save_lora_weight,
+    extract_lora_ups_down,
+)
+
 
 logger = get_logger(__name__)
 
@@ -260,15 +267,9 @@ def parse_args(input_args=None):
         default=0.0,
         help="Probability that conditioning is dropped.",
     )
-#     parser.add_argument(
-#         "--conditioning_dropout_prob_in_batch",
-#         type=float,
-#         default=1.0,
-#         help="Probability that conditioning is dropped.",
-#     )
-#     parser.add_argument(
-#         "--use_class_dropout", action="store_true", help="Whether or not to apply text-conditioning dropout to class images."
-#     )
+    parser.add_argument(
+        "--use_lora", action="store_true", help="Whether or not to use lora."
+    )
     parser.add_argument("--unconditional_prompt", type=str, default=" ", help="Prompt for conditioning dropout.")
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
 
@@ -567,6 +568,15 @@ def main(args):
         low_cpu_mem_usage=False,
     )
 
+    if args.use_lora:
+        unet.requires_grad_(False)
+        unet_lora_params, train_names = inject_trainable_lora(unet)
+
+        for _up, _down in extract_lora_ups_down(unet):
+            print(_up.weight)
+            print(_down.weight)
+            break
+    
     vae.requires_grad_(False)
     if not args.train_text_encoder:
         text_encoder.requires_grad_(False)
@@ -594,9 +604,15 @@ def main(args):
     else:
         optimizer_class = torch.optim.AdamW
 
-    params_to_optimize = (
-        itertools.chain(unet.parameters(), text_encoder.parameters()) if args.train_text_encoder else unet.parameters()
-    )
+    if args.use_lora:
+        params_to_optimize = (
+            itertools.chain(*unet_lora_params, text_encoder.parameters()) if args.train_text_encoder else itertools.chain(*unet_lora_params)
+        )
+    else: 
+        params_to_optimize = (
+            itertools.chain(unet.parameters(), text_encoder.parameters()) if args.train_text_encoder else unet.parameters()
+        )
+    
     optimizer = optimizer_class(
         params_to_optimize,
         lr=args.learning_rate,
@@ -766,7 +782,17 @@ def main(args):
                 revision=args.revision,
             )
             save_dir = os.path.join(args.output_dir, f"{step}")
-            pipeline.save_pretrained(save_dir)
+            if args.train_text_encoder or not args.use_lora
+                pipeline.save_pretrained(save_dir)
+            
+            if args.use_lora:
+                #filename = f"{args.output_dir}/lora_weight_e{epoch}_s{global_step}.pt"
+                #print(f"save weights {filename}")
+                save_lora_weight(pipeline.unet, os.path.join(args.output_dir, f"{step}", "lora_weights.pt"))
+                for _up, _down in extract_lora_ups_down(pipeline.unet):
+                    print("First Layer's Up Weight is now : ", _up.weight)
+                    print("First Layer's Down Weight is now : ", _down.weight)
+
             with open(os.path.join(save_dir, "args.json"), "w") as f:
                 json.dump(args.__dict__, f, indent=2)
 
@@ -849,11 +875,18 @@ def main(args):
 
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:
-                    params_to_clip = (
-                        itertools.chain(unet.parameters(), text_encoder.parameters())
-                        if args.train_text_encoder
-                        else unet.parameters()
-                    )
+                    if args.use_lora:
+                         params_to_clip = (
+                            itertools.chain(*unet_lora_params, text_encoder.parameters())
+                            if args.train_text_encoder
+                            else *unet_lora_params
+                        )
+                    else:
+                        params_to_clip = (
+                            itertools.chain(unet.parameters(), text_encoder.parameters())
+                            if args.train_text_encoder
+                            else unet.parameters()
+                        )
                     accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
                 optimizer.step()
                 lr_scheduler.step()
