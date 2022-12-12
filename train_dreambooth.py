@@ -572,7 +572,7 @@ def main(args):
 
     if args.use_lora:
         unet.requires_grad_(False)
-        unet_lora_params, _ = inject_trainable_lora(unet)
+        unet_lora_params, unet_names = inject_trainable_lora(unet)
 
         for _up, _down in extract_lora_ups_down(unet):
             print("Before training: Unet First Layer lora up", _up.weight)
@@ -583,7 +583,7 @@ def main(args):
     
     if args.train_text_encoder and args.use_lora:
         text_encoder.requires_grad_(False)
-        text_encoder_lora_params, _ = inject_trainable_lora(
+        text_encoder_lora_params, text_encoder_names = inject_trainable_lora(
             text_encoder, target_replace_module=["CLIPAttention"]
         )
         for _up, _down in extract_lora_ups_down(
