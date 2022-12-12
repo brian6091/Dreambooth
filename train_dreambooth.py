@@ -575,8 +575,8 @@ def main(args):
         unet_lora_params, _ = inject_trainable_lora(unet)
 
         for _up, _down in extract_lora_ups_down(unet):
-            print("Before training: Unet First Layer lora up", _up.weight.data)
-            print("Before training: Unet First Layer lora down", _down.weight.data)
+            print("Before training: Unet First Layer lora up", _up.weight)
+            print("Before training: Unet First Layer lora down", _down.weight)
             break
     
     vae.requires_grad_(False)
@@ -589,8 +589,8 @@ def main(args):
         for _up, _down in extract_lora_ups_down(
             text_encoder, target_replace_module=["CLIPAttention"]
         ):
-            print("Before training: text encoder First Layer lora up", _up.weight.data)
-            print("Before training: text encoder First Layer lora down", _down.weight.data)
+            print("Before training: text encoder First Layer lora up", _up.weight)
+            print("Before training: text encoder First Layer lora down", _down.weight)
             break
     else:
         text_encoder.requires_grad_(False)
@@ -807,8 +807,8 @@ def main(args):
             if args.use_lora:
                 save_lora_weight(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))                
                 for _up, _down in extract_lora_ups_down(pipeline.unet):
-                    print("First Unet Layer's Up Weight is now : ", _up.weight.data)
-                    print("First Unet Layer's Down Weight is now : ", _down.weight.data)
+                    print("First Unet Layer's Up Weight is now : ", _up.weight)
+                    print("First Unet Layer's Down Weight is now : ", _down.weight)
                     break
                     
                 if args.train_text_encoder:
@@ -821,8 +821,8 @@ def main(args):
                         pipeline.text_encoder,
                         target_replace_module=["CLIPAttention"],
                     ):
-                        print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
-                        print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
+                        print("First Text Encoder Layer's Up Weight is now : ", _up.weight)
+                        print("First Text Encoder Layer's Down Weight is now : ", _down.weight)
                         break
 #                 del pipeline
 #                 pipeline = StableDiffusionPipeline.from_pretrained(
