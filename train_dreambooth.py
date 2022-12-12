@@ -31,6 +31,7 @@ from transformers import CLIPTextModel, CLIPTokenizer
 from lora import (
     inject_trainable_lora,
     save_lora_weight,
+    monkeypatch_lora,
     extract_lora_ups_down,
 )
 
@@ -794,6 +795,9 @@ def main(args):
                 revision=args.revision,
             )
             save_dir = os.path.join(args.output_dir, f"{step}")
+            if not os.path.exists(save_dir):
+                os.makedirs(savedir)
+                
             if not args.use_lora:
                 pipeline.save_pretrained(save_dir)
             
