@@ -657,8 +657,6 @@ def main(args):
             if args.train_text_encoder
             else unet.parameters()
         )
-        if args.train_text_encoder
-        else unet.parameters()
     
     optimizer = optimizer_class(
         params_to_optimize,
