@@ -673,9 +673,9 @@ def main(args):
         )
 
     if args.debug:
-        print(summary(vae, col_names=["num_params", "params_percent", "trainable"], verbose=2))
-        print(summary(unet, col_names=["num_params", "params_percent", "trainable"], verbose=2))
-        print(summary(text_encoder, col_names=["num_params", "params_percent", "trainable"], verbose=2))
+        print(summary(vae, col_names=["num_params", "trainable"], verbose=2))
+        print(summary(unet, col_names=["num_params", "trainable"], verbose=2))
+        print(summary(text_encoder, col_names=["num_params", "trainable"], verbose=2))
         
     optimizer = optimizer_class(
         params_to_optimize,
