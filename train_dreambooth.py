@@ -16,6 +16,7 @@ import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
 from torch.utils.data import Dataset
+from torchinfo import summary
 
 from accelerate import Accelerator
 from accelerate.logging import get_logger
@@ -284,6 +285,9 @@ def parse_args(input_args=None):
         type=int,
         default=4,
         help="Rank reduction for LoRA.",
+    )
+    parser.add_argument(
+        "--debug, action="store_true", help="Some exra verbosity."
     )
     parser.add_argument("--unconditional_prompt", type=str, default=" ", help="Prompt for conditioning dropout.")
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
@@ -586,10 +590,11 @@ def main(args):
     if args.use_lora:
         unet.requires_grad_(False)
         unet_lora_params, unet_names = inject_trainable_lora(unet, r=args.lora_rank)
-        for _up, _down in extract_lora_ups_down(unet):
-            print("Before training: Unet First Layer lora up", _up.weight.data)
-            print("Before training: Unet First Layer lora down", _down.weight.data)
-            break
+        if args.debug:
+            for _up, _down in extract_lora_ups_down(unet):
+                print("Before training: Unet First Layer lora up", _up.weight.data)
+                print("Before training: Unet First Layer lora down", _down.weight.data)
+                break
     
     vae.requires_grad_(False)
     
@@ -599,12 +604,13 @@ def main(args):
             text_encoder, target_replace_module=["CLIPAttention"],
             r=args.lora_rank,
         )
-        for _up, _down in extract_lora_ups_down(
-            text_encoder, target_replace_module=["CLIPAttention"]
-        ):
-            print("Before training: text encoder First Layer lora up", _up.weight.data)
-            print("Before training: text encoder First Layer lora down", _down.weight.data)
-            break
+        if args.debug
+            for _up, _down in extract_lora_ups_down(
+                text_encoder, target_replace_module=["CLIPAttention"]
+            ):
+                print("Before training: text encoder First Layer lora up", _up.weight.data)
+                print("Before training: text encoder First Layer lora down", _down.weight.data)
+                break
     elif not args.train_text_encoder:
         text_encoder.requires_grad_(False)
             
@@ -651,6 +657,10 @@ def main(args):
             if args.train_text_encoder
             else itertools.chain(*unet_lora_params)
         )
+        if args.debug:
+            print(summary(unet))
+            print(summary(text_encoder))
+            
     else: 
          params_to_optimize = (
             [
@@ -843,11 +853,12 @@ def main(args):
             )
             
             if args.use_lora:
-                save_lora_weight(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))                
-                for _up, _down in extract_lora_ups_down(pipeline.unet):
-                    print("First Unet Layer's Up Weight is now : ", _up.weight.data)
-                    print("First Unet Layer's Down Weight is now : ", _down.weight.data)
-                    break
+                save_lora_weight(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))
+                if args.debug
+                    for _up, _down in extract_lora_ups_down(pipeline.unet):
+                        print("First Unet Layer's Up Weight is now : ", _up.weight.data)
+                        print("First Unet Layer's Down Weight is now : ", _down.weight.data)
+                        break
                     
                 if args.train_text_encoder:
                     save_lora_weight(
@@ -855,13 +866,14 @@ def main(args):
                         os.path.join(save_dir, "lora_text_encoder.pt"),
                         target_replace_module=["CLIPAttention"],
                     )
-                    for _up, _down in extract_lora_ups_down(
-                        pipeline.text_encoder,
-                        target_replace_module=["CLIPAttention"],
-                    ):
-                        print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
-                        print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
-                        break
+                    if args.debug
+                        for _up, _down in extract_lora_ups_down(
+                            pipeline.text_encoder,
+                            target_replace_module=["CLIPAttention"],
+                        ):
+                            print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
+                            print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
+                            break
                 del pipeline
                 pipeline = StableDiffusionPipeline.from_pretrained(
                     args.pretrained_model_name_or_path,
