@@ -591,7 +591,7 @@ def main(args):
             print("Before training: text encoder First Layer lora up", _up.weight)
             print("Before training: text encoder First Layer lora down", _down.weight)
             break
-    else:
+    elif not args.train_text_encoder:
         text_encoder.requires_grad_(False)
             
     if args.gradient_checkpointing:
