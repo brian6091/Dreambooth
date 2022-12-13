@@ -979,9 +979,9 @@ def main(args):
                 logs = {"Loss/pred": pred_loss.detach().item(),
                         "Loss/prior": prior_loss.detach().item(),
                         "Loss/total": loss.detach().item(),
-                        "lr": lr_scheduler.get_last_lr()[0]}
+                       }
             else:
-                logs = {"Loss/pred": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
+                logs = {"Loss/pred": loss.detach().item()}
 
             if args.learning_rate_text is None:
                 logs["lr"] = lr_scheduler.get_last_lr()[0]
