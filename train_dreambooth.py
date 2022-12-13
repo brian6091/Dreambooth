@@ -567,7 +567,6 @@ def main(args):
         args.pretrained_model_name_or_path,
         subfolder="unet",
         revision=args.revision,
-        low_cpu_mem_usage=False,
     )
 
     if args.use_lora:
@@ -753,14 +752,14 @@ def main(args):
     # Train!
     total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
-    logger.info("***** Running training *****")
-    logger.info(f"  Num examples = {len(train_dataset)}")
-    logger.info(f"  Num batches each epoch = {len(train_dataloader)}")
-    logger.info(f"  Num Epochs = {args.num_train_epochs}")
-    logger.info(f"  Instantaneous batch size per device = {args.train_batch_size}")
-    logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
-    logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
-    logger.info(f"  Total optimization steps = {args.max_train_steps}")
+    print("***** Running training *****")
+    print(f"  Num examples = {len(train_dataset)}")
+    print(f"  Num batches each epoch = {len(train_dataloader)}")
+    print(f"  Num Epochs = {args.num_train_epochs}")
+    print(f"  Instantaneous batch size per device = {args.train_batch_size}")
+    print(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
+    print(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
+    print(f"  Total optimization steps = {args.max_train_steps}")
 
     def save_weights(step):
         # Create the pipeline using using the trained modules and save it.
@@ -796,8 +795,8 @@ def main(args):
             if args.use_lora:
                 save_lora_weight(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))                
                 for _up, _down in extract_lora_ups_down(pipeline.unet):
-                    print("First Unet Layer's Up Weight is now : ", _up.weight)
-                    print("First Unet Layer's Down Weight is now : ", _down.weight)
+                    print("First Unet Layer's Up Weight is now : ", _up.weight.data)
+                    print("First Unet Layer's Down Weight is now : ", _down.weight.data)
                     break
                     
                 if args.train_text_encoder:
@@ -810,8 +809,8 @@ def main(args):
                         pipeline.text_encoder,
                         target_replace_module=["CLIPAttention"],
                     ):
-                        print("First Text Encoder Layer's Up Weight is now : ", _up.weight)
-                        print("First Text Encoder Layer's Down Weight is now : ", _down.weight)
+                        print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
+                        print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
                         break
                 del pipeline
                 pipeline = StableDiffusionPipeline.from_pretrained(
