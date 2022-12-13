@@ -866,32 +866,33 @@ def main(args):
                 progress_bar.update(1)
                 global_step += 1
             
-            if args.with_prior_preservation:
-                logs = {"Loss/pred": pred_loss.detach().item(),
-                        "Loss/prior": prior_loss.detach().item(),
-                        "Loss/total": loss.detach().item(),
-                        "lr": lr_scheduler.get_last_lr()[0]}
-            else:
-                logs = {"Loss/pred": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
+                if args.with_prior_preservation:
+                    logs = {"Loss/pred": pred_loss.detach().item(),
+                            "Loss/prior": prior_loss.detach().item(),
+                            "Loss/total": loss.detach().item(),
+                            "lr": lr_scheduler.get_last_lr()[0]}
+                else:
+                    logs = {"Loss/pred": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
 
-            if args.log_gpu:
-                logs["GPU"] = get_gpu_memory_map()[0]
-                                
-            if args.use_ema:
-                logs["ema_decay"] = ema_unet.decay
-                    
-            progress_bar.set_postfix(**logs)
-            accelerator.log(logs, step=global_step)
+                if args.log_gpu:
+                    logs["GPU"] = get_gpu_memory_map()[0]
 
-            if global_step > 0 and not global_step % args.save_interval and global_step >= args.save_min_steps:
-                save_weights(global_step)
-                
-            if global_step >= args.max_train_steps:
-                break
+                if args.use_ema:
+                    logs["ema_decay"] = ema_unet.decay
+
+                progress_bar.set_postfix(**logs)
+                accelerator.log(logs, step=global_step)
+
+                if global_step > 0 and not global_step % args.save_interval and global_step >= args.save_min_steps:
+                    save_weights(global_step)
+
+                if global_step >= args.max_train_steps:
+                    break
             
         accelerator.wait_for_everyone()
 
-    save_weights(global_step)
+    if accelerator.is_main_process:
+        save_weights(global_step)
     
     accelerator.end_training()
 
