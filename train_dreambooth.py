@@ -656,11 +656,7 @@ def main(args):
             ]
             if args.train_text_encoder
             else itertools.chain(*unet_lora_params)
-        )
-        if args.debug:
-            print(summary(unet))
-            print(summary(text_encoder))
-            
+        )   
     else: 
          params_to_optimize = (
             [
@@ -675,7 +671,11 @@ def main(args):
             if args.train_text_encoder
             else unet.parameters()
         )
-    
+
+    if args.debug:
+        print(summary(unet, col_names=["num_params", "params_percent", "trainable"], verbose=2))
+        print(summary(text_encoder, col_names=["num_params", "params_percent", "trainable"], verbose=2))
+        
     optimizer = optimizer_class(
         params_to_optimize,
         lr=args.learning_rate,
