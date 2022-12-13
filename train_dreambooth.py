@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Iterable, Optional
 import subprocess
 import sys
+from typing import Optional
 
 import torch
 import torch.nn.functional as F
@@ -192,6 +193,12 @@ def parse_args(input_args=None):
         type=float,
         default=5e-6,
         help="Initial learning rate (after the potential warmup period) to use.",
+    )
+    parser.add_argument(
+        "--learning_rate_text",
+        type=float,
+        default=5e-6,
+        help="Initial learning rate for text encoder (after the potential warmup period) to use.",
     )
     parser.add_argument(
         "--scale_lr",
@@ -616,14 +623,36 @@ def main(args):
     else:
         optimizer_class = torch.optim.AdamW
 
+    text_lr = (
+        args.learning_rate
+        if args.learning_rate_text is None
+        else args.learning_rate_text
+    )
+    
     if args.use_lora:
-        params_to_optimize = (
-            itertools.chain(*unet_lora_params, *text_encoder_lora_params) if args.train_text_encoder else itertools.chain(*unet_lora_params)
-        )
+        [
+            {
+                "params": itertools.chain(*unet_lora_params), "lr": args.learning_rate
+            },
+            {
+                "params": itertools.chain(*text_encoder_lora_params),
+                "lr": text_lr,
+            },
+        ]
+        if args.train_text_encoder
+        else itertools.chain(*unet_lora_params)
     else: 
-        params_to_optimize = (
-            itertools.chain(unet.parameters(), text_encoder.parameters()) if args.train_text_encoder else unet.parameters()
-        )
+        [
+            {
+                "params": itertools.chain(unet.parameters()), "lr": args.learning_rate
+            },
+            {
+                "params": itertools.chain(text_encoder.parameters()),
+                "lr": text_lr,
+            },
+        ]
+        if args.train_text_encoder
+        else unet.parameters()
     
     optimizer = optimizer_class(
         params_to_optimize,
@@ -770,16 +799,25 @@ def main(args):
 
             with open(os.path.join(save_dir, "args.json"), "w") as f:
                 json.dump(args.__dict__, f, indent=2)
-                
+
+            # https://github.com/huggingface/diffusers/issues/1566
+            accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
+                inspect.signature(accelerator.unwrap_model).parameters.keys()
+            )
+            extra_args = (
+                {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
+            )
+                    
             if args.train_text_encoder:
-                text_enc_model = accelerator.unwrap_model(text_encoder)
+                text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
             else:
                 text_enc_model = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
 
             pipeline = StableDiffusionPipeline.from_pretrained(
                 args.pretrained_model_name_or_path,
                 unet=accelerator.unwrap_model(
-                        ema_unet.averaged_model if args.use_ema else unet
+                        ema_unet.averaged_model if args.use_ema else unet,
+                        **extra_args,
                     ),
                 text_encoder=text_enc_model,
                 vae=AutoencoderKL.from_pretrained(
