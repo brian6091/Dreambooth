@@ -631,9 +631,7 @@ def main(args):
     
     if args.use_lora:
         [
-            {
-                "params": itertools.chain(*unet_lora_params), "lr": args.learning_rate
-            },
+            {"params": itertools.chain(*unet_lora_params), "lr": args.learning_rate},
             {
                 "params": itertools.chain(*text_encoder_lora_params),
                 "lr": text_lr,
@@ -643,9 +641,7 @@ def main(args):
         else itertools.chain(*unet_lora_params)
     else: 
         [
-            {
-                "params": itertools.chain(unet.parameters()), "lr": args.learning_rate
-            },
+            {"params": itertools.chain(unet.parameters()), "lr": args.learning_rate},
             {
                 "params": itertools.chain(text_encoder.parameters()),
                 "lr": text_lr,
