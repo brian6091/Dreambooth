@@ -1,16 +1,21 @@
 # Dreambooth-style fine tuning of Stable Diffusion models
 
-[![Train In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brian6091/Dreambooth/blob/main/Dreambooth_colab.ipynb)
+For classic Dreambooth
+[![Train In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brian6091/Dreambooth/blob/lora/Dreambooth_colab.ipynb)
 
-Yet another notebook for training Stable Diffusion models.
+For Low-rank Adaptation (LoRA)
+[![Train In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brian6091/Dreambooth/blob/lora/LoRA_colab.ipynb)
 
-Tested with Tesla T4 and A100 GPUs on Google Colab.
+Some notebooks for fine-tuning Stable Diffusion models.
+
+Tested with Tesla T4 and A100 GPUs on Google Colab (some settings will not work on T4 due to limited memory)
 
 Tested with [Stable Diffusion v1-5](https://huggingface.co/runwayml/stable-diffusion-v1-5) and [Stable Diffusion v2-base](https://huggingface.co/stabilityai/stable-diffusion-2-base).
 
 There are lots of notebooks for Dreambooth-style training. This one borrows elements from [
 ShivamShrirao's](https://github.com/ShivamShrirao/diffusers) implementation, but is distinguished by some additional features:
 * based on [Hugging Face](https://huggingface.co/) [Diffusers🧨](https://github.com/huggingface/diffusers) implementation so it's easy to stay up-to-date
+* Low-rank Adaptation (LoRA) for fast text-to-image fine-tuning (using [cloneofsimo's implementation](https://github.com/cloneofsimo/lora))
 * exposes lesser-explored parameters for experimentation (ADAM optimizer parameters, [cosine_with_restarts](https://huggingface.co/transformers/v2.9.1/main_classes/optimizer_schedules.html#transformers.get_cosine_with_hard_restarts_schedule_with_warmup) learning rate scheduler, etc), all of which are dumped to a json file so you can remember what you did
 * possibility to drop some text-conditioning to improve classifier-free guidance sampling (e.g., how [SD V1-5 was fine-tuned](https://huggingface.co/runwayml/stable-diffusion-v1-5))
 * training loss and prior class loss are tracked separately (can be visualized using tensorboard)
