@@ -854,7 +854,7 @@ def main(args):
             
             if args.use_lora:
                 save_lora_weight(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))
-                if args.debug
+                if args.debug:
                     for _up, _down in extract_lora_ups_down(pipeline.unet):
                         print("First Unet Layer's Up Weight is now : ", _up.weight.data)
                         print("First Unet Layer's Down Weight is now : ", _down.weight.data)
@@ -866,7 +866,7 @@ def main(args):
                         os.path.join(save_dir, "lora_text_encoder.pt"),
                         target_replace_module=["CLIPAttention"],
                     )
-                    if args.debug
+                    if args.debug:
                         for _up, _down in extract_lora_ups_down(
                             pipeline.text_encoder,
                             target_replace_module=["CLIPAttention"],
