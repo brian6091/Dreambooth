@@ -673,9 +673,19 @@ def main(args):
         )
 
     if args.debug:
-        print(summary(vae, col_names=["num_params", "trainable"], verbose=2))
-        print(summary(unet, col_names=["num_params", "trainable"], verbose=2))
-        print(summary(text_encoder, col_names=["num_params", "trainable"], verbose=2))
+        print(summary(vae, col_names=["num_params", "trainable"], verbose=1))
+        print(summary(unet, col_names=["num_params", "trainable"], verbose=1))
+        print(summary(text_encoder, col_names=["num_params", "trainable"], verbose=1))
+
+        with open(os.path.join(args.output_dir, "vae.txt"), "w") as f:
+            f.write(str(vae, col_names=["num_params", "trainable"], verbose=2))
+            f.close()
+        with open(os.path.join(args.output_dir, "unet.txt"), "w") as f:
+            f.write(str(unet, col_names=["num_params", "trainable"], verbose=2))
+            f.close()
+        with open(os.path.join(args.output_dir, "text_encoder.txt"), "w") as f:
+            f.write(str(text_encoder, col_names=["num_params", "trainable"], verbose=2))
+            f.close()
         
     optimizer = optimizer_class(
         params_to_optimize,
