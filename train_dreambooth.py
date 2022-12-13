@@ -459,7 +459,8 @@ def image_grid(imgs, rows, cols):
         grid.paste(img, box=(i%cols*w, i//cols*h))
     return grid
 
-def main(args):    
+def main(args):
+    torch.set_printoptions(precision=10)
     logging_dir = Path(args.output_dir, args.logging_dir)
 
     accelerator = Accelerator(
