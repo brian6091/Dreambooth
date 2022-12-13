@@ -585,7 +585,6 @@ def main(args):
         args.pretrained_model_name_or_path,
         subfolder="unet",
         revision=args.revision,
-        low_cpu_mem_usage=False,
     )
 
     if args.use_lora:
