@@ -982,6 +982,12 @@ def main(args):
             else:
                 logs = {"Loss/pred": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
 
+            if args.learning_rate_text is None:
+                logs["lr"] = lr_scheduler.get_last_lr()[0]
+            else:
+                logs["lr/unet"] = lr_scheduler.get_last_lr()[0]
+                logs["lr/text"] = lr_scheduler.get_last_lr()[1]
+                
             if args.log_gpu:
                 logs["GPU"] = get_gpu_memory_map()[0]
                                 
