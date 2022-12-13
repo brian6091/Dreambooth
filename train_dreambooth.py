@@ -28,7 +28,7 @@ from tqdm.auto import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
 #import re
-from lora import (
+from lora_diffusion import (
     inject_trainable_lora,
     save_lora_weight,
     extract_lora_ups_down,
