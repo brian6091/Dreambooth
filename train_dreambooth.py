@@ -11,7 +11,6 @@ import subprocess
 import sys
 from typing import Optional
 import inspect
-#import re
 
 import torch
 import torch.nn.functional as F
@@ -279,6 +278,12 @@ def parse_args(input_args=None):
     )
     parser.add_argument(
         "--use_lora", action="store_true", help="Whether or not to use lora."
+    )
+    parser.add_argument(
+        "--lora_rank",
+        type=int,
+        default=4,
+        help="Rank reduction for LoRA.",
     )
     parser.add_argument("--unconditional_prompt", type=str, default=" ", help="Prompt for conditioning dropout.")
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
@@ -580,7 +585,7 @@ def main(args):
 
     if args.use_lora:
         unet.requires_grad_(False)
-        unet_lora_params, unet_names = inject_trainable_lora(unet)
+        unet_lora_params, unet_names = inject_trainable_lora(unet, r=args.lora_rank)
         for _up, _down in extract_lora_ups_down(unet):
             print("Before training: Unet First Layer lora up", _up.weight)
             print("Before training: Unet First Layer lora down", _down.weight)
@@ -591,7 +596,8 @@ def main(args):
     if args.train_text_encoder and args.use_lora:
         text_encoder.requires_grad_(False)
         text_encoder_lora_params, text_encoder_names = inject_trainable_lora(
-            text_encoder, target_replace_module=["CLIPAttention"]
+            text_encoder, target_replace_module=["CLIPAttention"],
+            r=args.lora_rank,
         )
         for _up, _down in extract_lora_ups_down(
             text_encoder, target_replace_module=["CLIPAttention"]
