@@ -10,6 +10,7 @@ from typing import Iterable, Optional
 import subprocess
 import sys
 from typing import Optional
+import re
 
 import torch
 import torch.nn.functional as F
@@ -28,7 +29,6 @@ from torchvision import transforms
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
-#import re
 from lora_diffusion import (
     inject_trainable_lora,
     save_lora_weight,
