@@ -287,7 +287,7 @@ def parse_args(input_args=None):
         help="Rank reduction for LoRA.",
     )
     parser.add_argument(
-        "--debug, action="store_true", help="Some exra verbosity."
+        "--debug", action="store_true", help="Some exra verbosity."
     )
     parser.add_argument("--unconditional_prompt", type=str, default=" ", help="Prompt for conditioning dropout.")
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
