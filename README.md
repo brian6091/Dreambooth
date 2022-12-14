@@ -1,8 +1,12 @@
 # Dreambooth-style fine tuning of Stable Diffusion models
 
+Link to notebook for classic Dreambooth:
+
 [![Train In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brian6091/Dreambooth/blob/main/Dreambooth_colab.ipynb)
 
-Yet another notebook for training Stable Diffusion models.
+If you're looking to fine-tune using [Low-rank Adaptation (LoRA)](https://github.com/cloneofsimo/lora), you can find a notebook on [this branch](https://github.com/brian6091/Dreambooth/tree/lora), or follow this link:
+
+[![Train In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brian6091/Dreambooth/blob/lora/LoRA_colab.ipynb)
 
 Tested with Tesla T4 and A100 GPUs on Google Colab.
 
