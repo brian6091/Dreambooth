@@ -310,7 +310,7 @@ def parse_args(input_args=None):
             raise ValueError("You must specify a data directory for class images.")
         if args.class_prompt is None:
             raise ValueError("You must specify prompt for class images.")
-    else:
+    #else:
         #if args.class_data_dir is not None:
         #    logger.warning("You need not use --class_data_dir without --with_prior_preservation.")
         #if args.class_prompt is not None:
