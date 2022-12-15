@@ -25,4 +25,9 @@ This notebook one borrows elements from [ShivamShrirao's](https://github.com/Shi
 * easily switch in different variational autoencoders (VAE) or text encoders
 * inference with trained models is done using [Diffusers🧨](https://github.com/huggingface/diffusers) pipelines, does not rely on any web-apps
 
+Image comparing Dreambooth and LoRa ([more information here](https://github.com/cloneofsimo/lora/discussions/37)):
+
+<a><img src="https://drive.google.com/uc?id=1PQqL3omKCWStkrJgW3JecOrne3xqbScr"></a>
+[full-size image here for the pixel-peepers](https://drive.google.com/file/d/16aQcDOg-DJ_1PB6ypzQAauaJEcbn0Vkx/view?usp=share_link "Comparison full-size")
+
 [<a href="https://www.buymeacoffee.com/jvsurfsqv" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" height="45px" width="162px" alt="Buy Me A Coffee"></a>](https://www.buymeacoffee.com/jvsurfsqv)
