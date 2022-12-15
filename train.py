@@ -163,7 +163,10 @@ def parse_args(input_args=None):
         ),
     )
     parser.add_argument(
-        "--center_crop", action="store_true", help="Whether to center crop images before resizing to resolution"
+        "--augment_center_crop", action="store_true", help="Whether to center crop images before resizing to resolution"
+    )
+    parser.add_argument(
+        "--augment_hflip", action="store_true", help="Whether to center crop images before resizing to resolution"
     )
     parser.add_argument("--train_text_encoder", action="store_true", help="Whether to train the text encoder")
     parser.add_argument(
@@ -331,10 +334,12 @@ class DreamBoothDataset(Dataset):
         class_prompt=None,
         unconditional_prompt=" ",
         size=512,
-        center_crop=False,
+        augment_center_crop=False,
+        augment_hflip=False,
     ):
         self.size = size
-        self.center_crop = center_crop
+        self.augment_center_crop = augment_center_crop
+        self.augment_hflip = augment_hflip
         self.tokenizer = tokenizer
         self.image_captions_filename = None
 
@@ -363,14 +368,28 @@ class DreamBoothDataset(Dataset):
 
         self.unconditional_prompt = unconditional_prompt
             
-        self.image_transforms = transforms.Compose(
-            [
-                transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR),
-                transforms.CenterCrop(size) if center_crop else transforms.RandomCrop(size),
-                transforms.ToTensor(),
-                transforms.Normalize([0.5], [0.5]),
-            ]
-        )
+        transform_list = []
+        if augment_center_crop:
+            transform_list.append(transforms.CenterCrop(size))
+        else:
+            transform_list.append(transforms.RandomCrop(size))
+            
+        if augment_hflip:
+            transform_list.append(transforms.RandomHorizontalFlip(0.5))
+
+        #transform_list.append(transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR))
+        transform_list.append(transforms.ToTensor())
+        transform_list.append(transforms.Normalize([0.5], [0.5]))
+        
+        self.image_transforms = transforms.Compose(transform_list)
+#         self.image_transforms = transforms.Compose(
+#             [
+#                 transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR),
+#                 transforms.CenterCrop(size) if center_crop else transforms.RandomCrop(size),
+#                 transforms.ToTensor(),
+#                 transforms.Normalize([0.5], [0.5]),
+#             ]
+#         )
 
     def __len__(self):
         return self._length
@@ -715,7 +734,8 @@ def main(args):
         unconditional_prompt=args.unconditional_prompt,
         tokenizer=tokenizer,
         size=args.resolution,
-        center_crop=args.center_crop,
+        augment_center_crop=args.augment_center_crop,
+        augment_hflip=args.augment_hflip,
     )
 
     def collate_fn(examples):
