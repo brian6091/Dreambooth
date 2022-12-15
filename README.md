@@ -1,5 +1,7 @@
 # Dreambooth-style fine tuning of Stable Diffusion models
 
+*NOTE*: This branch exists for the sole purpose of not breaking old links. Go to the [main branch](https://github.com/brian6091/Dreambooth), which has already merged in these updates, and probably does cooler stuff by now.
+
 For classic Dreambooth
 [![Train In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/brian6091/Dreambooth/blob/lora/Dreambooth_colab.ipynb)
 
