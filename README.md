@@ -1,4 +1,4 @@
-# Dreambooth-style fine tuning of Stable Diffusion models
+# Fine-tuning of Stable Diffusion models
 
 
 Run [Dreambooth](https://arxiv.org/abs/2208.12242) or [Low-rank Adaptation (LoRA)](https://github.com/cloneofsimo/lora) from the same notebook:
