@@ -1054,7 +1054,8 @@ def main(args):
             
         accelerator.wait_for_everyone()
 
-    save_weights(global_step)
+    if accelerator.is_main_process:
+        save_weights(global_step)
     
     accelerator.end_training()
 
