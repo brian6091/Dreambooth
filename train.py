@@ -9,11 +9,14 @@ from pathlib import Path
 from typing import Iterable, Optional
 import subprocess
 import sys
+from typing import Optional
+import inspect
 
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
 from torch.utils.data import Dataset
+from torchinfo import summary
 
 from accelerate import Accelerator
 from accelerate.logging import get_logger
@@ -21,11 +24,20 @@ from accelerate.utils import set_seed
 from diffusers import AutoencoderKL, DDPMScheduler, DDIMScheduler, StableDiffusionPipeline, UNet2DConditionModel
 from diffusers.optimization import get_scheduler, get_cosine_with_hard_restarts_schedule_with_warmup
 from diffusers.training_utils import EMAModel
+from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import HfFolder, Repository, whoami
 from PIL import Image
 from torchvision import transforms
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
+
+from lora_diffusion import (
+    inject_trainable_lora,
+    save_lora_weight,
+    extract_lora_ups_down,
+    monkeypatch_lora,
+    tune_lora_scale,
+)
 
 
 logger = get_logger(__name__)
@@ -130,8 +142,8 @@ def parse_args(input_args=None):
         type=int,
         default=100,
         help=(
-            "Minimal class images for prior preservation loss. If not have enough images, additional images will be"
-            " sampled with class_prompt."
+            "Minimal class images for prior preservation loss. If there are not enough images already present in"
+            " class_data_dir, additional images will be sampled with class_prompt."
         ),
     )
     parser.add_argument(
@@ -183,6 +195,12 @@ def parse_args(input_args=None):
         type=float,
         default=5e-6,
         help="Initial learning rate (after the potential warmup period) to use.",
+    )
+    parser.add_argument(
+        "--learning_rate_text",
+        type=float,
+        default=5e-6,
+        help="Initial learning rate for text encoder (after the potential warmup period) to use.",
     )
     parser.add_argument(
         "--scale_lr",
@@ -260,15 +278,18 @@ def parse_args(input_args=None):
         default=0.0,
         help="Probability that conditioning is dropped.",
     )
-#     parser.add_argument(
-#         "--conditioning_dropout_prob_in_batch",
-#         type=float,
-#         default=1.0,
-#         help="Probability that conditioning is dropped.",
-#     )
-#     parser.add_argument(
-#         "--use_class_dropout", action="store_true", help="Whether or not to apply text-conditioning dropout to class images."
-#     )
+    parser.add_argument(
+        "--use_lora", action="store_true", help="Whether or not to use lora."
+    )
+    parser.add_argument(
+        "--lora_rank",
+        type=int,
+        default=4,
+        help="Rank reduction for LoRA.",
+    )
+    parser.add_argument(
+        "--debug", action="store_true", help="Some exra verbosity."
+    )
     parser.add_argument("--unconditional_prompt", type=str, default=" ", help="Prompt for conditioning dropout.")
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
 
@@ -448,7 +469,8 @@ def image_grid(imgs, rows, cols):
         grid.paste(img, box=(i%cols*w, i//cols*h))
     return grid
 
-def main(args):    
+def main(args):
+    torch.set_printoptions(precision=10)
     logging_dir = Path(args.output_dir, args.logging_dir)
 
     accelerator = Accelerator(
@@ -488,7 +510,7 @@ def main(args):
                         args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
                         subfolder=None if args.pretrained_vae_name_or_path else "vae",
                         revision=None if args.pretrained_vae_name_or_path else args.revision,
-                        torch_dtype=torch_dtype
+                        torch_dtype=torch_dtype,
                     ),
                     torch_dtype=torch_dtype,
                     safety_checker=None,
@@ -555,22 +577,53 @@ def main(args):
         subfolder="text_encoder",
         revision=args.revision,
     )
-    vae = AutoencoderKL.from_pretrained(
-        args.pretrained_model_name_or_path,
-        subfolder="vae",
-        revision=args.revision,
+    vae = AutoencoderKL.from_pretrained(        
+        args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
+        subfolder=None if args.pretrained_vae_name_or_path else "vae",
+        revision=None if args.pretrained_vae_name_or_path else args.revision,
     )
     unet = UNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path,
         subfolder="unet",
         revision=args.revision,
-        low_cpu_mem_usage=False,
     )
 
-    vae.requires_grad_(False)
-    if not args.train_text_encoder:
-        text_encoder.requires_grad_(False)
+    if is_xformers_available():
+        try:
+            unet.enable_xformers_memory_efficient_attention()
+        except Exception as e:
+            logger.warning(
+                "Could not enable memory efficient attention. Make sure xformers is installed"
+                f" correctly and a GPU is available: {e}"
+            )
 
+    if args.use_lora:
+        unet.requires_grad_(False)
+        unet_lora_params, unet_names = inject_trainable_lora(unet, r=args.lora_rank)
+        if args.debug:
+            for _up, _down in extract_lora_ups_down(unet):
+                print("Before training: Unet First Layer lora up", _up.weight.data)
+                print("Before training: Unet First Layer lora down", _down.weight.data)
+                break
+    
+    vae.requires_grad_(False)
+    
+    if args.train_text_encoder and args.use_lora:
+        text_encoder.requires_grad_(False)
+        text_encoder_lora_params, text_encoder_names = inject_trainable_lora(
+            text_encoder, target_replace_module=["CLIPAttention"],
+            r=args.lora_rank,
+        )
+        if args.debug:
+            for _up, _down in extract_lora_ups_down(
+                text_encoder, target_replace_module=["CLIPAttention"]
+            ):
+                print("Before training: text encoder First Layer lora up", _up.weight.data)
+                print("Before training: text encoder First Layer lora down", _down.weight.data)
+                break
+    elif not args.train_text_encoder:
+        text_encoder.requires_grad_(False)
+            
     if args.gradient_checkpointing:
         unet.enable_gradient_checkpointing()
         if args.train_text_encoder:
@@ -594,9 +647,56 @@ def main(args):
     else:
         optimizer_class = torch.optim.AdamW
 
-    params_to_optimize = (
-        itertools.chain(unet.parameters(), text_encoder.parameters()) if args.train_text_encoder else unet.parameters()
+    text_lr = (
+        args.learning_rate
+        if args.learning_rate_text is None
+        else args.learning_rate_text
     )
+    
+    if args.use_lora:
+        params_to_optimize = (
+            [
+                {
+                    "params": itertools.chain(*unet_lora_params), "lr": args.learning_rate
+                },
+                {
+                    "params": itertools.chain(*text_encoder_lora_params),
+                    "lr": text_lr,
+                },
+            ]
+            if args.train_text_encoder
+            else itertools.chain(*unet_lora_params)
+        )   
+    else: 
+         params_to_optimize = (
+            [
+                {
+                    "params": itertools.chain(unet.parameters()), "lr": args.learning_rate
+                },
+                {
+                    "params": itertools.chain(text_encoder.parameters()),
+                    "lr": text_lr,
+                },
+            ]
+            if args.train_text_encoder
+            else unet.parameters()
+        )
+
+    if args.debug:
+        print(summary(vae, col_names=["num_params", "trainable"], verbose=1))
+        print(summary(unet, col_names=["num_params", "trainable"], verbose=1))
+        print(summary(text_encoder, col_names=["num_params", "trainable"], verbose=1))
+
+        with open(os.path.join(args.output_dir, "vae.txt"), "w") as f:
+            f.write(str(summary(vae, col_names=["num_params", "trainable"], verbose=2)))
+            f.close()
+        with open(os.path.join(args.output_dir, "unet.txt"), "w") as f:
+            f.write(str(summary(unet, col_names=["num_params", "trainable"], verbose=2)))
+            f.close()
+        with open(os.path.join(args.output_dir, "text_encoder.txt"), "w") as f:
+            f.write(str(summary(text_encoder, col_names=["num_params", "trainable"], verbose=2)))
+            f.close()
+        
     optimizer = optimizer_class(
         params_to_optimize,
         lr=args.learning_rate,
@@ -724,35 +824,43 @@ def main(args):
     # Train!
     total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
-    logger.info("***** Running training *****")
-    logger.info(f"  Num examples = {len(train_dataset)}")
-    logger.info(f"  Num batches each epoch = {len(train_dataloader)}")
-    logger.info(f"  Num Epochs = {args.num_train_epochs}")
-    logger.info(f"  Instantaneous batch size per device = {args.train_batch_size}")
-    logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
-    logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
-    logger.info(f"  Total optimization steps = {args.max_train_steps}")
+    print("***** Running training *****")
+    print(f"  Num examples = {len(train_dataset)}")
+    print(f"  Num batches each epoch = {len(train_dataloader)}")
+    print(f"  Num Epochs = {args.num_train_epochs}")
+    print(f"  Instantaneous batch size per device = {args.train_batch_size}")
+    print(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
+    print(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
+    print(f"  Total optimization steps = {args.max_train_steps}")
 
     def save_weights(step):
         # Create the pipeline using using the trained modules and save it.
         if accelerator.is_main_process:
+            save_dir = os.path.join(args.output_dir, f"{step}")
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+
+            with open(os.path.join(save_dir, "args.json"), "w") as f:
+                json.dump(args.__dict__, f, indent=2)
+
+            # https://github.com/huggingface/diffusers/issues/1566
+            accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
+                inspect.signature(accelerator.unwrap_model).parameters.keys()
+            )
+            extra_args = (
+                {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
+            )
+                    
             if args.train_text_encoder:
-                text_enc_model = accelerator.unwrap_model(text_encoder)
+                text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
             else:
                 text_enc_model = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
-            scheduler = DDIMScheduler(
-                beta_start=0.00085, 
-                beta_end=0.012, 
-                beta_schedule="scaled_linear", 
-                clip_sample=False, 
-                set_alpha_to_one=False,
-                steps_offset=1,
-            )
-            
+
             pipeline = StableDiffusionPipeline.from_pretrained(
                 args.pretrained_model_name_or_path,
                 unet=accelerator.unwrap_model(
-                        ema_unet.averaged_model if args.use_ema else unet
+                        ema_unet.averaged_model if args.use_ema else unet,
+                        **extra_args,
                     ),
                 text_encoder=text_enc_model,
                 vae=AutoencoderKL.from_pretrained(
@@ -761,14 +869,54 @@ def main(args):
                     revision=None if args.pretrained_vae_name_or_path else args.revision,
                 ),
                 safety_checker=None,
-                scheduler=scheduler,
                 torch_dtype=torch.float16,
                 revision=args.revision,
             )
-            save_dir = os.path.join(args.output_dir, f"{step}")
-            pipeline.save_pretrained(save_dir)
-            with open(os.path.join(save_dir, "args.json"), "w") as f:
-                json.dump(args.__dict__, f, indent=2)
+            
+            if args.use_lora:
+                save_lora_weight(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))
+                if args.debug:
+                    for _up, _down in extract_lora_ups_down(pipeline.unet):
+                        print("First Unet Layer's Up Weight is now : ", _up.weight.data)
+                        print("First Unet Layer's Down Weight is now : ", _down.weight.data)
+                        break
+                    
+                if args.train_text_encoder:
+                    save_lora_weight(
+                        pipeline.text_encoder,
+                        os.path.join(save_dir, "lora_text_encoder.pt"),
+                        target_replace_module=["CLIPAttention"],
+                    )
+                    if args.debug:
+                        for _up, _down in extract_lora_ups_down(
+                            pipeline.text_encoder,
+                            target_replace_module=["CLIPAttention"],
+                        ):
+                            print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
+                            print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
+                            break
+                del pipeline
+                pipeline = StableDiffusionPipeline.from_pretrained(
+                    args.pretrained_model_name_or_path,
+                    text_encoder=CLIPTextModel.from_pretrained(
+                        args.pretrained_model_name_or_path, 
+                        subfolder="text_encoder", 
+                        revision=args.revision
+                    ),
+                    vae=AutoencoderKL.from_pretrained(
+                        args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
+                        subfolder=None if args.pretrained_vae_name_or_path else "vae",
+                        revision=None if args.pretrained_vae_name_or_path else args.revision,
+                    ),
+                    safety_checker=None,
+                    torch_dtype=torch.float16,
+                    revision=args.revision,
+                )
+                monkeypatch_lora(pipeline.unet, torch.load(os.path.join(save_dir, "lora_unet.pt")))
+                monkeypatch_lora(pipeline.text_encoder, torch.load(os.path.join(save_dir, "lora_text_encoder.pt")), target_replace_module=["CLIPAttention"])
+                tune_lora_scale(pipeline.unet, 1.00)
+            else:
+                pipeline.save_pretrained(save_dir)
 
             if args.save_sample_prompt is not None:
                 save_sample_prompt = args.save_sample_prompt
@@ -829,23 +977,31 @@ def main(args):
                 encoder_hidden_states = text_encoder(batch["input_ids"])[0]
 
                 # Predict the noise residual
-                noise_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
+                model_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
+
+                # Get the target for loss depending on the prediction type
+                if noise_scheduler.config.prediction_type == "epsilon":
+                    target = noise
+                elif noise_scheduler.config.prediction_type == "v_prediction":
+                    target = noise_scheduler.get_velocity(latents, noise, timesteps)
+                else:
+                    raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
 
                 if args.with_prior_preservation:
-                    # Chunk the noise and noise_pred into two parts and compute the loss on each part separately.
-                    noise_pred, noise_pred_prior = torch.chunk(noise_pred, 2, dim=0)
-                    noise, noise_prior = torch.chunk(noise, 2, dim=0)
+                    # Chunk the noise and model_pred into two parts and compute the loss on each part separately.
+                    model_pred, model_pred_prior = torch.chunk(model_pred, 2, dim=0)
+                    target, target_prior = torch.chunk(target, 2, dim=0)
 
                     # Compute instance loss
-                    pred_loss = F.mse_loss(noise_pred.float(), noise.float(), reduction="none").mean([1, 2, 3]).mean()
+                    pred_loss = F.mse_loss(model_pred.float(), target.float(), reduction="none").mean([1, 2, 3]).mean()
 
                     # Compute prior loss
-                    prior_loss = F.mse_loss(noise_pred_prior.float(), noise_prior.float(), reduction="mean")
+                    prior_loss = F.mse_loss(model_pred_prior.float(), target_prior.float(), reduction="mean")
 
                     # Add the prior loss to the instance loss.
                     loss = pred_loss + args.prior_loss_weight * prior_loss
                 else:
-                    loss = F.mse_loss(noise_pred.float(), noise.float(), reduction="mean")
+                    loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
 
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:
@@ -865,29 +1021,36 @@ def main(args):
             if accelerator.sync_gradients:
                 progress_bar.update(1)
                 global_step += 1
-            
-                if args.with_prior_preservation:
-                    logs = {"Loss/pred": pred_loss.detach().item(),
-                            "Loss/prior": prior_loss.detach().item(),
-                            "Loss/total": loss.detach().item(),
-                            "lr": lr_scheduler.get_last_lr()[0]}
-                else:
-                    logs = {"Loss/pred": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
-
-                if args.log_gpu:
-                    logs["GPU"] = get_gpu_memory_map()[0]
-
-                if args.use_ema:
-                    logs["ema_decay"] = ema_unet.decay
-
-                progress_bar.set_postfix(**logs)
-                accelerator.log(logs, step=global_step)
-
+                
                 if global_step > 0 and not global_step % args.save_interval and global_step >= args.save_min_steps:
                     save_weights(global_step)
+                            
+            if args.with_prior_preservation:
+                logs = {"Loss/pred": pred_loss.detach().item(),
+                        "Loss/prior": prior_loss.detach().item(),
+                        "Loss/total": loss.detach().item(),
+                       }
+            else:
+                logs = {"Loss/pred": loss.detach().item()}
 
-                if global_step >= args.max_train_steps:
-                    break
+            if args.learning_rate_text is None:
+                logs["lr"] = lr_scheduler.get_last_lr()[0]
+            else:
+                logs["lr/unet"] = lr_scheduler.get_last_lr()[0]
+                logs["lr/text"] = lr_scheduler.get_last_lr()[1]
+                
+            if args.log_gpu:
+                logs["GPU"] = get_gpu_memory_map()[0]
+                                
+            if args.use_ema:
+                logs["ema_decay"] = ema_unet.decay
+                    
+            progress_bar.set_postfix(**logs)
+            accelerator.log(logs, step=global_step)
+
+
+            if global_step >= args.max_train_steps:
+                break
             
         accelerator.wait_for_everyone()
 
