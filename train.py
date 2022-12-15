@@ -410,8 +410,6 @@ class DreamBoothDataset(Dataset):
             pt=pt.replace(")","")
             pt=pt.replace("-","")
             instance_prompt = pt
-            sys.stdout.write(" [0;32m" +instance_prompt+" [0m")
-            sys.stdout.flush()
 
         example["instance_images"] = self.image_transforms(instance_image)
         example["instance_prompt_ids"] = self.tokenizer(
