@@ -162,8 +162,12 @@ def parse_args(input_args=None):
             " resolution"
         ),
     )
+    parser.add_argument("--augment_min_resolution", type=int, default=None, help="Resize minimum image dimension before augmention pipeline.")
     parser.add_argument(
-        "--center_crop", action="store_true", help="Whether to center crop images before resizing to resolution"
+        "--augment_center_crop", action="store_true", help="Whether to center crop images before resizing to resolution"
+    )
+    parser.add_argument(
+        "--augment_hflip", action="store_true", help="Whether to center crop images before resizing to resolution"
     )
     parser.add_argument("--train_text_encoder", action="store_true", help="Whether to train the text encoder")
     parser.add_argument(
@@ -268,9 +272,9 @@ def parse_args(input_args=None):
         ),
     )
     parser.add_argument(
-        "--image_captions_filename",
+        "--use_image_captions",
         action="store_true",
-        help="Get captions from filename",
+        help="Get captions from textfile, otherwise filename",
     )
     parser.add_argument(
         "--conditioning_dropout_prob",
@@ -307,11 +311,6 @@ def parse_args(input_args=None):
             raise ValueError("You must specify a data directory for class images.")
         if args.class_prompt is None:
             raise ValueError("You must specify prompt for class images.")
-    else:
-        if args.class_data_dir is not None:
-            logger.warning("You need not use --class_data_dir without --with_prior_preservation.")
-        if args.class_prompt is not None:
-            logger.warning("You need not use --class_prompt without --with_prior_preservation.")
 
     return args
 
@@ -329,31 +328,35 @@ class DreamBoothDataset(Dataset):
         tokenizer,
         class_data_root=None,
         class_prompt=None,
+        use_image_captions=False,
         unconditional_prompt=" ",
         size=512,
-        center_crop=False,
+        augment_min_resolution=None,
+        augment_center_crop=False,
+        augment_hflip=False,
+        debug=False,
     ):
-        self.size = size
-        self.center_crop = center_crop
         self.tokenizer = tokenizer
-        self.image_captions_filename = None
+        self.use_image_captions = use_image_captions
+        self.size = size
+        self.augment_center_crop = augment_center_crop
+        self.augment_hflip = augment_hflip
 
         self.instance_data_root = Path(instance_data_root)
         if not self.instance_data_root.exists():
             raise ValueError("Instance images root doesn't exists.")
 
-        self.instance_images_path = list(Path(instance_data_root).iterdir())
+        self.instance_images_path = [path for path in self.instance_data_root.glob('*') if '.txt' not in path.suffix]
         self.num_instance_images = len(self.instance_images_path)
         self.instance_prompt = instance_prompt
+        self.debug = debug
         self._length = self.num_instance_images
-
-        if args.image_captions_filename:
-            self.image_captions_filename = True
 
         if class_data_root is not None:
             self.class_data_root = Path(class_data_root)
             self.class_data_root.mkdir(parents=True, exist_ok=True)
-            self.class_images_path = list(self.class_data_root.iterdir())
+
+            self.class_images_path = [path for path in self.class_data_root.glob('*') if '.txt' not in path.suffix]
             random.shuffle(self.class_images_path)
             self.num_class_images = len(self.class_images_path)
             self._length = max(self.num_class_images, self.num_instance_images)
@@ -362,51 +365,96 @@ class DreamBoothDataset(Dataset):
             self.class_data_root = None
 
         self.unconditional_prompt = unconditional_prompt
+        
+        # Data augmentation pipeline
+        augment_list = []
+        if augment_min_resolution is not None:
+            augment_list.append(transforms.Resize(augment_min_resolution))
+        if augment_center_crop:
+            augment_list.append(transforms.CenterCrop(size))
+        else:
+            augment_list.append(transforms.RandomCrop(size))
+        if augment_hflip:
+            augment_list.append(transforms.RandomHorizontalFlip(0.5))
+
+        # Convert to format usable by model. 
+        # Keep separate in case dumping augmentations to disk
+        transform_list = []
+        transform_list.append(transforms.ToTensor())
+        transform_list.append(transforms.Normalize([0.5], [0.5]))
+        
+        if len(augment_list)>0:
+            self.augment_transforms = transforms.Compose(augment_list)
+        else:
+            self.augment_transforms = None
             
-        self.image_transforms = transforms.Compose(
-            [
-                transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR),
-                transforms.CenterCrop(size) if center_crop else transforms.RandomCrop(size),
-                transforms.ToTensor(),
-                transforms.Normalize([0.5], [0.5]),
-            ]
-        )
+        self.image_transforms = transforms.Compose(transform_list)
 
     def __len__(self):
         return self._length
 
     def __getitem__(self, index):
         example = {}
-        instance_image = Image.open(self.instance_images_path[index % self.num_instance_images])
+        image_path = self.instance_images_path[index % self.num_instance_images]
+        instance_image = Image.open(image_path)
         if not instance_image.mode == "RGB":
             instance_image = instance_image.convert("RGB")
-
-        instance_prompt = self.instance_prompt
-
-        if self.image_captions_filename:
-            filename = Path(path).stem
-            pt=''.join([i for i in filename if not i.isdigit()])
-            pt=pt.replace("_"," ")
-            pt=pt.replace("(","")
-            pt=pt.replace(")","")
-            pt=pt.replace("-","")
-            instance_prompt = pt
-            sys.stdout.write(" [0;32m" +instance_prompt+" [0m")
-            sys.stdout.flush()
-
+        if self.augment_transforms is not None:
+            instance_image = self.augment_transforms(instance_image)
+            if self.debug:
+                hash_image = hashlib.sha1(instance_image.tobytes()).hexdigest()
+                image_filename = image_path.stem + f"-{hash_image}.jpg"
+                instance_image.save(os.path.join("/content/augment", image_filename))
         example["instance_images"] = self.image_transforms(instance_image)
+
+        if self.use_image_captions:
+            caption_path = image_path.with_suffix(".txt")
+            if caption_path.exists():
+                with open(caption_path) as f:
+                    caption = f.read()
+            else:
+                caption = caption_path.stem
+                
+            caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
+            caption = caption.replace("_"," ")
+            self.instance_prompt = caption
+            
         example["instance_prompt_ids"] = self.tokenizer(
             self.instance_prompt,
             padding="do_not_pad",
             truncation=True,
             max_length=self.tokenizer.model_max_length,
         ).input_ids
+        
+        if self.debug:
+            print("\nInstance: " + str(image_path))
+            print(self.instance_prompt)
 
         if self.class_data_root:
-            class_image = Image.open(self.class_images_path[index % self.num_class_images])
+            image_path = self.class_images_path[index % self.num_class_images]
+            class_image = Image.open(image_path)
             if not class_image.mode == "RGB":
                 class_image = class_image.convert("RGB")
+            if self.augment_transforms is not None:
+                class_image = self.augment_transforms(class_image)
+                if self.debug:
+                    hash_image = hashlib.sha1(class_image.tobytes()).hexdigest()
+                    image_filename = image_path.stem + f"-{hash_image}.jpg"
+                    class_image.save(os.path.join("/content/augment", image_filename))
             example["class_images"] = self.image_transforms(class_image)
+            
+            if self.use_image_captions:
+                caption_path = image_path.with_suffix(".txt")
+                if caption_path.exists():
+                    with open(caption_path) as f:
+                        caption = f.read()
+                else:
+                    caption = caption_path.stem
+
+                caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
+                caption = caption.replace("_"," ")
+                self.class_prompt = caption
+            
             example["class_prompt_ids"] = self.tokenizer(
                 self.class_prompt,
                 padding="do_not_pad",
@@ -414,6 +462,10 @@ class DreamBoothDataset(Dataset):
                 max_length=self.tokenizer.model_max_length,
             ).input_ids
             
+            if self.debug:
+                print("\nClass: " + str(image_path))
+                print(self.class_prompt)
+
         example["unconditional_prompt_ids"] = self.tokenizer(
                 self.unconditional_prompt,
                 padding="do_not_pad",
@@ -460,6 +512,7 @@ def get_gpu_memory_map():
     gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
     return gpu_memory_map
         
+    
 def image_grid(imgs, rows, cols):
     assert len(imgs) == rows*cols
     w, h = imgs[0].size
@@ -468,6 +521,7 @@ def image_grid(imgs, rows, cols):
     for i, img in enumerate(imgs):
         grid.paste(img, box=(i%cols*w, i//cols*h))
     return grid
+
 
 def main(args):
     torch.set_printoptions(precision=10)
@@ -712,10 +766,14 @@ def main(args):
         instance_prompt=args.instance_prompt,
         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
         class_prompt=args.class_prompt,
+        use_image_captions=args.use_image_captions,
         unconditional_prompt=args.unconditional_prompt,
         tokenizer=tokenizer,
         size=args.resolution,
-        center_crop=args.center_crop,
+        augment_min_resolution=args.augment_min_resolution,
+        augment_center_crop=args.augment_center_crop,
+        augment_hflip=args.augment_hflip,
+        debug=args.debug,
     )
 
     def collate_fn(examples):
