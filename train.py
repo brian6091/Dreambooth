@@ -407,7 +407,7 @@ class DreamBoothDataset(Dataset):
         if self.augment_transforms is not None:
             instance_image = self.augment_transforms(instance_image)
             if self.debug:
-                hash_image = hashlib.sha1(image.tobytes()).hexdigest()
+                hash_image = hashlib.sha1(instance_image.tobytes()).hexdigest()
                 image_filename = image_path.stem + f"-{hash_image}.jpg"
                 os.path.join("/content/augment", image_filename )
                 instance_image.save(os.path.basename(path))
@@ -444,7 +444,7 @@ class DreamBoothDataset(Dataset):
             if self.augment_transforms is not None:
                 class_image = self.augment_transforms(class_image)
                 if self.debug:
-                    hash_image = hashlib.sha1(image.tobytes()).hexdigest()
+                    hash_image = hashlib.sha1(class_image.tobytes()).hexdigest()
                     image_filename = image_path.stem + f"-{hash_image}.jpg"
                     os.path.join("/content/augment", image_filename )
                     class_image.save(os.path.basename(path))
