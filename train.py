@@ -415,8 +415,8 @@ class DreamBoothDataset(Dataset):
         ).input_ids
         
         if self.debug:
-            print("Instance: " + str(image_path) + "\n")
-            print(self.instance_prompt)
+            print("Instance: " + str(image_path))
+            print(self.instance_prompt + "\n")
 
         if self.class_data_root:
             image_path = self.class_images_path[index % self.num_class_images]
@@ -446,8 +446,8 @@ class DreamBoothDataset(Dataset):
             ).input_ids
             
             if self.debug:
-                print("Class: " + str(image_path) + "\n")
-                print(self.class_prompt)
+                print("Class: " + str(image_path))
+                print(self.class_prompt + "\n")
 
         example["unconditional_prompt_ids"] = self.tokenizer(
                 self.unconditional_prompt,
