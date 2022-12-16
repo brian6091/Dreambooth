@@ -311,11 +311,6 @@ def parse_args(input_args=None):
             raise ValueError("You must specify a data directory for class images.")
         if args.class_prompt is None:
             raise ValueError("You must specify prompt for class images.")
-    #else:
-        #if args.class_data_dir is not None:
-        #    logger.warning("You need not use --class_data_dir without --with_prior_preservation.")
-        #if args.class_prompt is not None:
-        #    logger.warning("You need not use --class_prompt without --with_prior_preservation.")
 
     return args
 
@@ -370,21 +365,21 @@ class DreamBoothDataset(Dataset):
             self.class_data_root = None
 
         self.unconditional_prompt = unconditional_prompt
-            
+        
+        # Data augmentation pipeline
         augment_list = []
         if augment_min_resolution is not None:
             augment_list.append(transforms.Resize(augment_min_resolution))
-        
         if augment_center_crop:
             augment_list.append(transforms.CenterCrop(size))
         else:
             augment_list.append(transforms.RandomCrop(size))
-            
         if augment_hflip:
             augment_list.append(transforms.RandomHorizontalFlip(0.5))
 
+        # Convert to format usable by model. 
+        # Keep separate in case dumping augmentations to disk
         transform_list = []
-        #transform_list.append(transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR))
         transform_list.append(transforms.ToTensor())
         transform_list.append(transforms.Normalize([0.5], [0.5]))
         
