@@ -271,9 +271,9 @@ def parse_args(input_args=None):
         ),
     )
     parser.add_argument(
-        "--image_captions_filename",
+        "--use_image_captions",
         action="store_true",
-        help="Get captions from filename",
+        help="Get captions from textfile, otherwise filename",
     )
     parser.add_argument(
         "--conditioning_dropout_prob",
@@ -332,6 +332,7 @@ class DreamBoothDataset(Dataset):
         tokenizer,
         class_data_root=None,
         class_prompt=None,
+        use_image_captions=False,
         unconditional_prompt=" ",
         size=512,
         augment_center_crop=False,
@@ -341,7 +342,7 @@ class DreamBoothDataset(Dataset):
         self.augment_center_crop = augment_center_crop
         self.augment_hflip = augment_hflip
         self.tokenizer = tokenizer
-        self.image_captions_filename = None
+        self.use_image_captions = use_image_captions
 
         self.instance_data_root = Path(instance_data_root)
         if not self.instance_data_root.exists():
@@ -352,8 +353,8 @@ class DreamBoothDataset(Dataset):
         self.instance_prompt = instance_prompt
         self._length = self.num_instance_images
 
-        if args.image_captions_filename:
-            self.image_captions_filename = True
+        #if args.image_captions_filename:
+        #    self.image_captions_filename = True
 
         if class_data_root is not None:
             self.class_data_root = Path(class_data_root)
@@ -396,22 +397,24 @@ class DreamBoothDataset(Dataset):
 
     def __getitem__(self, index):
         example = {}
-        instance_image = Image.open(self.instance_images_path[index % self.num_instance_images])
+        image_path = self.instance_images_path[index % self.num_instance_images]
+        instance_image = Image.open(image_path)
         if not instance_image.mode == "RGB":
             instance_image = instance_image.convert("RGB")
-
-        instance_prompt = self.instance_prompt
-
-        if self.image_captions_filename:
-            filename = Path(path).stem
-            pt=''.join([i for i in filename if not i.isdigit()])
-            pt=pt.replace("_"," ")
-            pt=pt.replace("(","")
-            pt=pt.replace(")","")
-            pt=pt.replace("-","")
-            instance_prompt = pt
-
         example["instance_images"] = self.image_transforms(instance_image)
+
+        if self.use_image_captions:
+            caption_path = Path(image_path).with_suffix(".txt")
+            if caption_path.exists():
+                with open(caption_path) as f:
+                    caption = f.read()
+            else:
+                caption = Path(path).stem
+                
+            caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
+            caption = .replace("_"," ")
+            self.instance_prompt = caption  
+            
         example["instance_prompt_ids"] = self.tokenizer(
             self.instance_prompt,
             padding="do_not_pad",
@@ -420,10 +423,12 @@ class DreamBoothDataset(Dataset):
         ).input_ids
 
         if self.class_data_root:
-            class_image = Image.open(self.class_images_path[index % self.num_class_images])
+            image_path = self.class_images_path[index % self.num_class_images]
+            class_image = Image.open(image_path)
             if not class_image.mode == "RGB":
                 class_image = class_image.convert("RGB")
             example["class_images"] = self.image_transforms(class_image)
+                        
             example["class_prompt_ids"] = self.tokenizer(
                 self.class_prompt,
                 padding="do_not_pad",
@@ -729,6 +734,7 @@ def main(args):
         instance_prompt=args.instance_prompt,
         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
         class_prompt=args.class_prompt,
+        use_image_captions=args.use_image_captions,
         unconditional_prompt=args.unconditional_prompt,
         tokenizer=tokenizer,
         size=args.resolution,
