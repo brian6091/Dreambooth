@@ -162,6 +162,7 @@ def parse_args(input_args=None):
             " resolution"
         ),
     )
+    parser.add_argument("--augment_min_resolution", type=int, default=None, help="Resize minimum image dimension before augmention pipeline.")
     parser.add_argument(
         "--augment_center_crop", action="store_true", help="Whether to center crop images before resizing to resolution"
     )
@@ -335,6 +336,7 @@ class DreamBoothDataset(Dataset):
         use_image_captions=False,
         unconditional_prompt=" ",
         size=512,
+        augment_min_resolution=None,
         augment_center_crop=False,
         augment_hflip=False,
         debug=False,
@@ -369,19 +371,28 @@ class DreamBoothDataset(Dataset):
 
         self.unconditional_prompt = unconditional_prompt
             
-        transform_list = []
+        augment_list = []
+        if augment_min_resolution not None:
+            augment_list.append(transforms.Resize(augment_min_resolution))
+        
         if augment_center_crop:
-            transform_list.append(transforms.CenterCrop(size))
+            augment_list.append(transforms.CenterCrop(size))
         else:
-            transform_list.append(transforms.RandomCrop(size))
+            augment_list.append(transforms.RandomCrop(size))
             
         if augment_hflip:
-            transform_list.append(transforms.RandomHorizontalFlip(0.5))
+            augment_list.append(transforms.RandomHorizontalFlip(0.5))
 
+        transform_list = []
         #transform_list.append(transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR))
         transform_list.append(transforms.ToTensor())
         transform_list.append(transforms.Normalize([0.5], [0.5]))
         
+        if len(augment_list)>0:
+            self.augment_transforms = transforms.Compose(augment_list)
+        else:
+            self.augment_transforms = None
+            
         self.image_transforms = transforms.Compose(transform_list)
 
     def __len__(self):
@@ -393,6 +404,13 @@ class DreamBoothDataset(Dataset):
         instance_image = Image.open(image_path)
         if not instance_image.mode == "RGB":
             instance_image = instance_image.convert("RGB")
+        if self.augment_transforms is not None:
+            instance_image = self.augment_transforms(instance_image)
+            if self.debug:
+                hash_image = hashlib.sha1(image.tobytes()).hexdigest()
+                image_filename = image_path.stem + f"-{hash_image}.jpg"
+                os.path.join('/content/augment", image_filename )
+                instance_image.save(os.path.basename(path))
         example["instance_images"] = self.image_transforms(instance_image)
 
         if self.use_image_captions:
@@ -423,6 +441,13 @@ class DreamBoothDataset(Dataset):
             class_image = Image.open(image_path)
             if not class_image.mode == "RGB":
                 class_image = class_image.convert("RGB")
+            if self.augment_transforms is not None:
+                class_image = self.augment_transforms(class_image)
+                if self.debug:
+                    hash_image = hashlib.sha1(image.tobytes()).hexdigest()
+                    image_filename = image_path.stem + f"-{hash_image}.jpg"
+                    os.path.join('/content/augment", image_filename )
+                    class_image.save(os.path.basename(path))
             example["class_images"] = self.image_transforms(class_image)
             
             if self.use_image_captions:
@@ -752,6 +777,7 @@ def main(args):
         unconditional_prompt=args.unconditional_prompt,
         tokenizer=tokenizer,
         size=args.resolution,
+        augment_min_resolution=args.augment_min_resolution,
         augment_center_crop=args.augment_center_crop,
         augment_hflip=args.augment_hflip,
         debug=args.debug,
