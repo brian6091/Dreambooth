@@ -399,7 +399,7 @@ class DreamBoothDataset(Dataset):
                 with open(caption_path) as f:
                     caption = f.read()
             else:
-                caption = Path(path).stem
+                caption = Path(caption_path).stem
                 
             caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
             caption = caption.replace("_"," ")
@@ -426,7 +426,7 @@ class DreamBoothDataset(Dataset):
                     with open(caption_path) as f:
                         caption = f.read()
                 else:
-                    caption = Path(path).stem
+                    caption = Path(caption_path).stem
 
                 caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
                 caption = caption.replace("_"," ")
