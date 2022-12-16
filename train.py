@@ -414,7 +414,7 @@ class DreamBoothDataset(Dataset):
             max_length=self.tokenizer.model_max_length,
         ).input_ids
         
-        if self.debug
+        if self.debug:
             print("Instance: " + str(image_path) + "\n")
             print(self.instance_prompt)
 
@@ -445,7 +445,7 @@ class DreamBoothDataset(Dataset):
                 max_length=self.tokenizer.model_max_length,
             ).input_ids
             
-            if self.debug
+            if self.debug:
                 print("Class: " + str(image_path) + "\n")
                 print(self.class_prompt)
 
@@ -755,6 +755,7 @@ def main(args):
         size=args.resolution,
         augment_center_crop=args.augment_center_crop,
         augment_hflip=args.augment_hflip,
+        debug=args.debug,
     )
 
     def collate_fn(examples):
