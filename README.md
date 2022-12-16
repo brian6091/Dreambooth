@@ -13,10 +13,10 @@ Tested with Tesla T4 and A100 GPUs on Google Colab (some settings will not work 
 
 Tested with [Stable Diffusion v1-5](https://huggingface.co/runwayml/stable-diffusion-v1-5) and [Stable Diffusion v2-base](https://huggingface.co/stabilityai/stable-diffusion-2-base).
 
-This notebook borrows elements from [ShivamShrirao's](https://github.com/ShivamShrirao/diffusers) implementation, but is distinguished by some additional features:
-* Based on [Hugging Face](https://huggingface.co/) [Diffusers🧨](https://github.com/huggingface/diffusers) so it's easy to stay up-to-date
+This notebook borrows elements from [ShivamShrirao's](https://github.com/ShivamShrirao/diffusers) implementation, but is distinguished by some features:
+* Based on main [Hugging Face](https://huggingface.co/) [Diffusers🧨](https://github.com/huggingface/diffusers) so it's easy to stay up-to-date
 * Low-rank Adaptation (LoRA) for faster and more efficient fine-tuning (using [cloneofsimo's implementation](https://github.com/cloneofsimo/lora))
-* Data augmentation such as random cropping, flipping and resizing, which let you avoid having to manually prep and crop images in certain cases (e.g., training a style)
+* Data augmentation such as random cropping, flipping and resizing, which can minimize manually prepping and cropping images in certain cases (e.g., training a style)
 * More parameters for experimentation ([modify LoRA rank approximation](https://github.com/cloneofsimo/lora/discussions/37), ADAM optimizer parameters, [cosine_with_restarts](https://huggingface.co/transformers/v2.9.1/main_classes/optimizer_schedules.html#transformers.get_cosine_with_hard_restarts_schedule_with_warmup) learning rate scheduler, etc), all of which are dumped to a json file so you can remember what you did
 * Drop some text-conditioning to improve classifier-free guidance sampling (e.g., how [SD V1-5 was fine-tuned](https://huggingface.co/runwayml/stable-diffusion-v1-5))
 * Image captioning using filenames or associated textfiles
