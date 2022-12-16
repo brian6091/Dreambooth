@@ -353,14 +353,13 @@ class DreamBoothDataset(Dataset):
         self.instance_prompt = instance_prompt
         self._length = self.num_instance_images
 
-        #if args.image_captions_filename:
-        #    self.image_captions_filename = True
-
         if class_data_root is not None:
             self.class_data_root = Path(class_data_root)
             self.class_data_root.mkdir(parents=True, exist_ok=True)
             self.class_images_path = list(self.class_data_root.iterdir())
+            
             random.shuffle(self.class_images_path)
+            
             self.num_class_images = len(self.class_images_path)
             self._length = max(self.num_class_images, self.num_instance_images)
             self.class_prompt = class_prompt
@@ -383,14 +382,6 @@ class DreamBoothDataset(Dataset):
         transform_list.append(transforms.Normalize([0.5], [0.5]))
         
         self.image_transforms = transforms.Compose(transform_list)
-#         self.image_transforms = transforms.Compose(
-#             [
-#                 transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR),
-#                 transforms.CenterCrop(size) if center_crop else transforms.RandomCrop(size),
-#                 transforms.ToTensor(),
-#                 transforms.Normalize([0.5], [0.5]),
-#             ]
-#         )
 
     def __len__(self):
         return self._length
@@ -404,7 +395,7 @@ class DreamBoothDataset(Dataset):
         example["instance_images"] = self.image_transforms(instance_image)
 
         if self.use_image_captions:
-            caption_path = Path(image_path).with_suffix(".txt")
+            caption_path = image_path.with_suffix(".txt") #Path(image_path).with_suffix(".txt")
             if caption_path.exists():
                 with open(caption_path) as f:
                     caption = f.read()
@@ -413,7 +404,8 @@ class DreamBoothDataset(Dataset):
                 
             caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
             caption = .replace("_"," ")
-            self.instance_prompt = caption  
+            self.instance_prompt = caption
+            print(self.instance_prompt)
             
         example["instance_prompt_ids"] = self.tokenizer(
             self.instance_prompt,
@@ -428,7 +420,20 @@ class DreamBoothDataset(Dataset):
             if not class_image.mode == "RGB":
                 class_image = class_image.convert("RGB")
             example["class_images"] = self.image_transforms(class_image)
-                        
+            
+            if self.use_image_captions:
+                caption_path = image_path.with_suffix(".txt")
+                if caption_path.exists():
+                    with open(caption_path) as f:
+                        caption = f.read()
+                else:
+                    caption = Path(path).stem
+
+                caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
+                caption = .replace("_"," ")
+                self.class_prompt = caption
+                print(self.class_prompt)
+            
             example["class_prompt_ids"] = self.tokenizer(
                 self.class_prompt,
                 padding="do_not_pad",
@@ -482,6 +487,7 @@ def get_gpu_memory_map():
     gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
     return gpu_memory_map
         
+    
 def image_grid(imgs, rows, cols):
     assert len(imgs) == rows*cols
     w, h = imgs[0].size
@@ -490,6 +496,7 @@ def image_grid(imgs, rows, cols):
     for i, img in enumerate(imgs):
         grid.paste(img, box=(i%cols*w, i//cols*h))
     return grid
+
 
 def main(args):
     torch.set_printoptions(precision=10)
