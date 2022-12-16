@@ -348,7 +348,7 @@ class DreamBoothDataset(Dataset):
         if not self.instance_data_root.exists():
             raise ValueError("Instance images root doesn't exists.")
 
-        self.instance_images_path = list(Path(instance_data_root).iterdir())
+        self.instance_images_path = [path for path in self.instance_data_root.glob('*') if '.txt' not in path.suffix]
         self.num_instance_images = len(self.instance_images_path)
         self.instance_prompt = instance_prompt
         self._length = self.num_instance_images
@@ -356,10 +356,9 @@ class DreamBoothDataset(Dataset):
         if class_data_root is not None:
             self.class_data_root = Path(class_data_root)
             self.class_data_root.mkdir(parents=True, exist_ok=True)
-            self.class_images_path = list(self.class_data_root.iterdir())
-            
+
+            self.class_images_path = [path for path in self.class_data_root.glob('*') if '.txt' not in path.suffix]
             random.shuffle(self.class_images_path)
-            
             self.num_class_images = len(self.class_images_path)
             self._length = max(self.num_class_images, self.num_instance_images)
             self.class_prompt = class_prompt
