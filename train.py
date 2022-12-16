@@ -403,7 +403,7 @@ class DreamBoothDataset(Dataset):
                 caption = Path(path).stem
                 
             caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
-            caption = .replace("_"," ")
+            caption = caption.replace("_"," ")
             self.instance_prompt = caption
             print(self.instance_prompt)
             
@@ -430,7 +430,7 @@ class DreamBoothDataset(Dataset):
                     caption = Path(path).stem
 
                 caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
-                caption = .replace("_"," ")
+                caption = caption.replace("_"," ")
                 self.class_prompt = caption
                 print(self.class_prompt)
             
