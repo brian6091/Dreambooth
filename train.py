@@ -337,12 +337,13 @@ class DreamBoothDataset(Dataset):
         size=512,
         augment_center_crop=False,
         augment_hflip=False,
+        debug=False,
     ):
+        self.tokenizer = tokenizer
+        self.use_image_captions = use_image_captions
         self.size = size
         self.augment_center_crop = augment_center_crop
         self.augment_hflip = augment_hflip
-        self.tokenizer = tokenizer
-        self.use_image_captions = use_image_captions
 
         self.instance_data_root = Path(instance_data_root)
         if not self.instance_data_root.exists():
@@ -351,6 +352,7 @@ class DreamBoothDataset(Dataset):
         self.instance_images_path = [path for path in self.instance_data_root.glob('*') if '.txt' not in path.suffix]
         self.num_instance_images = len(self.instance_images_path)
         self.instance_prompt = instance_prompt
+        self.debug = debug
         self._length = self.num_instance_images
 
         if class_data_root is not None:
@@ -394,7 +396,7 @@ class DreamBoothDataset(Dataset):
         example["instance_images"] = self.image_transforms(instance_image)
 
         if self.use_image_captions:
-            caption_path = image_path.with_suffix(".txt") #Path(image_path).with_suffix(".txt")
+            caption_path = image_path.with_suffix(".txt")
             if caption_path.exists():
                 with open(caption_path) as f:
                     caption = f.read()
@@ -404,7 +406,6 @@ class DreamBoothDataset(Dataset):
             caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
             caption = caption.replace("_"," ")
             self.instance_prompt = caption
-            print(self.instance_prompt)
             
         example["instance_prompt_ids"] = self.tokenizer(
             self.instance_prompt,
@@ -412,6 +413,10 @@ class DreamBoothDataset(Dataset):
             truncation=True,
             max_length=self.tokenizer.model_max_length,
         ).input_ids
+        
+        if self.debug
+            print("Instance: " + str(image_path) + "\n")
+            print(self.instance_prompt)
 
         if self.class_data_root:
             image_path = self.class_images_path[index % self.num_class_images]
@@ -440,6 +445,10 @@ class DreamBoothDataset(Dataset):
                 max_length=self.tokenizer.model_max_length,
             ).input_ids
             
+            if self.debug
+                print("Class: " + str(image_path) + "\n")
+                print(self.class_prompt)
+
         example["unconditional_prompt_ids"] = self.tokenizer(
                 self.unconditional_prompt,
                 padding="do_not_pad",
