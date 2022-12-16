@@ -436,7 +436,6 @@ class DreamBoothDataset(Dataset):
                 caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
                 caption = caption.replace("_"," ")
                 self.class_prompt = caption
-                print(self.class_prompt)
             
             example["class_prompt_ids"] = self.tokenizer(
                 self.class_prompt,
