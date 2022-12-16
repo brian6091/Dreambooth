@@ -372,7 +372,7 @@ class DreamBoothDataset(Dataset):
         self.unconditional_prompt = unconditional_prompt
             
         augment_list = []
-        if augment_min_resolution not None:
+        if augment_min_resolution is not None:
             augment_list.append(transforms.Resize(augment_min_resolution))
         
         if augment_center_crop:
