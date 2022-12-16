@@ -409,8 +409,7 @@ class DreamBoothDataset(Dataset):
             if self.debug:
                 hash_image = hashlib.sha1(instance_image.tobytes()).hexdigest()
                 image_filename = image_path.stem + f"-{hash_image}.jpg"
-                os.path.join("/content/augment", image_filename )
-                instance_image.save(os.path.basename(path))
+                instance_image.save(os.path.join("/content/augment", image_filename))
         example["instance_images"] = self.image_transforms(instance_image)
 
         if self.use_image_captions:
@@ -446,8 +445,7 @@ class DreamBoothDataset(Dataset):
                 if self.debug:
                     hash_image = hashlib.sha1(class_image.tobytes()).hexdigest()
                     image_filename = image_path.stem + f"-{hash_image}.jpg"
-                    os.path.join("/content/augment", image_filename )
-                    class_image.save(os.path.basename(path))
+                    class_image.save(os.path.join("/content/augment", image_filename))
             example["class_images"] = self.image_transforms(class_image)
             
             if self.use_image_captions:
