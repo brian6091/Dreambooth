@@ -72,6 +72,9 @@ def parse_args(input_args=None):
         help="Pretrained tokenizer name or path if not the same as model_name",
     )
     parser.add_argument(
+        "--add_instance_token", action="store_true", help="Whether to add instance token to tokenizer dictionary"
+    )
+    parser.add_argument(
         "--instance_data_dir",
         type=str,
         default=None,
@@ -170,6 +173,7 @@ def parse_args(input_args=None):
         "--augment_hflip", action="store_true", help="Whether to center crop images before resizing to resolution"
     )
     parser.add_argument("--train_text_encoder", action="store_true", help="Whether to train the text encoder")
+    parser.add_argument("--train_text_embedding", action="store_true", help="Whether to train the text embedding")
     parser.add_argument(
         "--train_batch_size", type=int, default=4, help="Batch size (per device) for the training dataloader."
     )
