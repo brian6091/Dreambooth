@@ -39,7 +39,7 @@ from lora_diffusion import (
     tune_lora_scale,
 )
 
-from utils.datasets import FineTuningDataset
+from utils.datasets import FineTuningDataset, PromptDataset
 from utils.textual_inversion_templates import object_templates, style_templates
 
 
