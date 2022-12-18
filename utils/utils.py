@@ -1,4 +1,5 @@
 import subprocess
+from typing import Iterable, Optional
 from PIL import Image
 from huggingface_hub import HfFolder, whoami
 
