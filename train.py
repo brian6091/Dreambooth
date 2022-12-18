@@ -679,6 +679,9 @@ def main(args):
                 f"The tokenizer already contains the token {args.instance_token}. Please pass a different"
                 " `instance_token` that is not already in the tokenizer."
             )
+        else:
+            if args.debug:
+                print(f"{args.instance_token} added to tokenizer.")
 # From diffusers textual_inversion script, what they call placeholder is instance_token for me
 # seems to be used only to check that other token embeddings not changed
 # initializer_token would be equivalent to my class_token, used only to initialize parameters for 
