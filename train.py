@@ -39,8 +39,8 @@ from lora_diffusion import (
     tune_lora_scale,
 )
 
-from data import datasets
-from data.textual_inversion_templates import
+from utils import datasets
+from utils.textual_inversion_templates import object_templates, style_templates
 
 
 logger = get_logger(__name__)
@@ -883,13 +883,24 @@ def main(args):
 #         debug=args.debug,
 #     )
 
+    if args.textual_inversion_templates=="None":
+        textual_inversion_templates = args.instance_prompt
+    elif args.textual_inversion_templates=="object":
+        textual_inversion_templates = object_templates
+    elif args.textual_inversion_templates=="style":
+        textual_inversion_templates = style_templates
+    else:
+        raise ValueError(
+            f"{args.textual_inversion_templates} is not a known set of templates for textual inversion."
+        )
+        
     train_dataset = FineTuningDataset(
         tokenizer=tokenizer,
         add_instance_token=args.add_instance_token,
         instance_data_root=args.instance_data_dir,
         instance_token=args.instance_token,
         instance_prompt=args.instance_prompt,
-        textual_inversion_templates=args.textual_inversion_templates,
+        textual_inversion_templates=textual_inversion_templates,
         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
         class_prompt=args.class_prompt,
         use_image_captions=args.use_image_captions,
