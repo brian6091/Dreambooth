@@ -682,6 +682,10 @@ def main(args):
         else:
             if args.debug:
                 print(f"{args.instance_token} added to tokenizer.")
+                
+        # Resize the token embeddings as we are adding new special tokens to the tokenizer
+        text_encoder.resize_token_embeddings(len(tokenizer))
+
 # From diffusers textual_inversion script, what they call placeholder is instance_token for me
 # seems to be used only to check that other token embeddings not changed
 # initializer_token would be equivalent to my class_token, used only to initialize parameters for 
