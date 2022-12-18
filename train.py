@@ -948,6 +948,9 @@ def main(args):
             max_length=tokenizer.model_max_length,
             return_tensors="pt",
         ).input_ids
+        
+        if args.debug
+            print(input_ids)
 
         batch = {
             "input_ids": input_ids,
