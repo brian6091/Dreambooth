@@ -8,18 +8,40 @@ from torch.utils.data import Dataset
 from PIL import Image
 from torchvision import transforms
 
+from textual_inversion_templates import 
+
+
 class FineTuningDataset(Dataset):
     """
     A dataset to prepare the instance and class images with the prompts for fine-tuning the model.
     It pre-processes the images and the tokenizes prompts.
+    
+    Textual inversion:
+    add_instance_token=True
+    use_textual_inversion_templates=True
+    train_text_embedding=True (in main script)
+    train_text_encoder=False
+    no prior preservation
+    
+    Dreambooth:
+    add_instance_token=False
+    use_textual_inversion_templates=False
+    train_text_embedding=True (in main script)
+    train_text_encoder=True
+    
+    train_text_embedding and train_text_encoder should be exclusive?
+    otherwise
+    train_text_embedding_only and train_text_encoder
     """
 
     def __init__(
         self,
         tokenizer,
+        add_instance_token=False,
         instance_data_root,
-        instance_token=None,
-        instance_prompt,
+        instance_token,
+        instance_prompt=None,
+        use_textual_inversion_templates=False,
         class_data_root=None,
         class_prompt=None,
         use_image_captions=False,
@@ -31,6 +53,7 @@ class FineTuningDataset(Dataset):
         debug=False,
     ):
         self.tokenizer = tokenizer
+        self.add_instance_token = add_instance_token
         self.instance_data_root = Path(instance_data_root)
         
         if not self.instance_data_root.exists():
@@ -41,6 +64,7 @@ class FineTuningDataset(Dataset):
         self._length = self.num_instance_images
 
         self.instance_prompt = instance_prompt
+        self.use_textual_inversion_templates = use_textual_inversion_templates
         
         if class_data_root is not None:
             self.class_data_root = Path(class_data_root)
@@ -78,6 +102,7 @@ class FineTuningDataset(Dataset):
         # Keep separate in case dumping augmentations to disk
         transform_list = []
         transform_list.append(transforms.ToTensor())
+        # check that this matches for textual inversion image = (image / 127.5 - 1.0).astype(np.float32)
         transform_list.append(transforms.Normalize([0.5], [0.5]))
         
         if len(augment_list)>0:
@@ -93,18 +118,20 @@ class FineTuningDataset(Dataset):
     def __getitem__(self, index):
         example = {}
         image_path = self.instance_images_path[index % self.num_instance_images]
-        instance_image = Image.open(image_path)
-        if not instance_image.mode == "RGB":
-            instance_image = instance_image.convert("RGB")
+        image = Image.open(image_path)
+        if not image.mode == "RGB":
+            image = image.convert("RGB")
         if self.augment_transforms is not None:
-            instance_image = self.augment_transforms(instance_image)
+            image = self.augment_transforms(image)
             if self.debug:
-                hash_image = hashlib.sha1(instance_image.tobytes()).hexdigest()
+                hash_image = hashlib.sha1(image.tobytes()).hexdigest()
                 image_filename = image_path.stem + f"-{hash_image}.jpg"
-                instance_image.save(os.path.join("/content/augment", image_filename))
-        example["instance_images"] = self.image_transforms(instance_image)
+                image.save(os.path.join("/content/augment", image_filename))
+        example["instance_images"] = self.image_transforms(image)
 
-        if self.use_image_captions:
+        if args.use_textual_inversion_templates:
+            self.instance_prompt = random.choice(self.templates).format(self.instance_token)
+        elif self.use_image_captions:
             caption_path = image_path.with_suffix(".txt")
             if caption_path.exists():
                 with open(caption_path) as f:
@@ -115,7 +142,10 @@ class FineTuningDataset(Dataset):
             caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
             caption = caption.replace("_"," ")
             self.instance_prompt = caption
-            
+        else:
+            if self.instance_prompt is None:
+                raise ValueError("An instance_prompt must be provided if use_textual_inversion_templates=False, and use_image_captions=False.")
+
         example["instance_prompt_ids"] = self.tokenizer(
             self.instance_prompt,
             padding="do_not_pad",
@@ -129,16 +159,16 @@ class FineTuningDataset(Dataset):
 
         if self.class_data_root:
             image_path = self.class_images_path[index % self.num_class_images]
-            class_image = Image.open(image_path)
-            if not class_image.mode == "RGB":
-                class_image = class_image.convert("RGB")
+            image = Image.open(image_path)
+            if not image.mode == "RGB":
+                image = image.convert("RGB")
             if self.augment_transforms is not None:
-                class_image = self.augment_transforms(class_image)
+                image = self.augment_transforms(image)
                 if self.debug:
-                    hash_image = hashlib.sha1(class_image.tobytes()).hexdigest()
+                    hash_image = hashlib.sha1(image.tobytes()).hexdigest()
                     image_filename = image_path.stem + f"-{hash_image}.jpg"
-                    class_image.save(os.path.join("/content/augment", image_filename))
-            example["class_images"] = self.image_transforms(class_image)
+                    image.save(os.path.join("/content/augment", image_filename))
+            example["class_images"] = self.image_transforms(image)
             
             if self.use_image_captions:
                 caption_path = image_path.with_suffix(".txt")
