@@ -949,7 +949,8 @@ def main(args):
             return_tensors="pt",
         ).input_ids
         
-        if args.debug
+        if args.debug:
+            print("in collate_fn")
             print(input_ids)
 
         batch = {
