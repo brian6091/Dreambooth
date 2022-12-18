@@ -8,9 +8,6 @@ from torch.utils.data import Dataset
 from PIL import Image
 from torchvision import transforms
 
-from textual_inversion_templates import 
-
-
 class FineTuningDataset(Dataset):
     """
     A dataset to prepare the instance and class images with the prompts for fine-tuning the model.
@@ -18,14 +15,14 @@ class FineTuningDataset(Dataset):
     
     Textual inversion:
     add_instance_token=True
-    use_textual_inversion_templates=True
+    prompt_templates!="None"
     train_text_embedding=True (in main script)
     train_text_encoder=False
     no prior preservation
     
     Dreambooth:
     add_instance_token=False
-    use_textual_inversion_templates=False
+    prompt_templates=ignored?
     train_text_embedding=True (in main script)
     train_text_encoder=True
     
@@ -41,7 +38,7 @@ class FineTuningDataset(Dataset):
         instance_data_root,
         instance_token,
         instance_prompt=None,
-        use_textual_inversion_templates=False,
+        prompt_templates=None,
         class_data_root=None,
         class_prompt=None,
         use_image_captions=False,
@@ -64,7 +61,7 @@ class FineTuningDataset(Dataset):
         self._length = self.num_instance_images
 
         self.instance_prompt = instance_prompt
-        self.use_textual_inversion_templates = use_textual_inversion_templates
+        self.prompt_templates = prompt_templates
         
         if class_data_root is not None:
             self.class_data_root = Path(class_data_root)
@@ -129,8 +126,8 @@ class FineTuningDataset(Dataset):
                 image.save(os.path.join("/content/augment", image_filename))
         example["instance_images"] = self.image_transforms(image)
 
-        if args.use_textual_inversion_templates:
-            self.instance_prompt = random.choice(self.templates).format(self.instance_token)
+        if args.prompt_templates is not None:
+            self.instance_prompt = random.choice(self.prompt_templates).format(self.instance_token)
         elif self.use_image_captions:
             caption_path = image_path.with_suffix(".txt")
             if caption_path.exists():
