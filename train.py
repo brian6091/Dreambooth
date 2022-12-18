@@ -39,6 +39,9 @@ from lora_diffusion import (
     tune_lora_scale,
 )
 
+from data import datasets
+from data.textual_inversion_templates import
+
 
 logger = get_logger(__name__)
 
@@ -90,6 +93,11 @@ def parse_args(input_args=None):
         "--add_instance_token",
         action="store_true",
         help="Whether to add instance token to tokenizer dictionary",
+    )
+    parser.add_argument(
+        "--use_textual_inversion_templates",
+        action="store_true",
+        help="Whether to add use textual inversion prompt templates",
     )
     parser.add_argument(
         "--instance_token",
@@ -182,7 +190,7 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="text-inversion-model",
+        default="models",
         help="The output directory where the model predictions and checkpoints will be written.",
     )
     parser.add_argument("--seed", type=int, default=None, help="A seed for reproducible training.")
@@ -525,14 +533,14 @@ def parse_args(input_args=None):
 #         return example
 
 
-def get_full_repo_name(model_id: str, organization: Optional[str] = None, token: Optional[str] = None):
-    if token is None:
-        token = HfFolder.get_token()
-    if organization is None:
-        username = whoami(token)["name"]
-        return f"{username}/{model_id}"
-    else:
-        return f"{organization}/{model_id}"
+# def get_full_repo_name(model_id: str, organization: Optional[str] = None, token: Optional[str] = None):
+#     if token is None:
+#         token = HfFolder.get_token()
+#     if organization is None:
+#         username = whoami(token)["name"]
+#         return f"{username}/{model_id}"
+#     else:
+#         return f"{organization}/{model_id}"
 
 # def get_gpu_memory_map():
 #     result = subprocess.check_output(
@@ -702,6 +710,14 @@ def main(args):
                 f" correctly and a GPU is available: {e}"
             )
 
+    learning_rate_text = (
+        args.learning_rate
+        if args.learning_rate_text is None
+        else args.learning_rate_text
+    )
+    
+    vae.requires_grad_(False)
+
     if args.train_unet and args.use_lora:
         unet.requires_grad_(False)
         unet_lora_params, unet_names = inject_trainable_lora(unet, r=args.lora_rank)
@@ -710,10 +726,19 @@ def main(args):
                 print("Before training: Unet First Layer lora up", _up.weight.data)
                 print("Before training: Unet First Layer lora down", _down.weight.data)
                 break
+                
+        unet_params_to_optimize = {
+            "params": itertools.chain(*unet_lora_params),
+            "lr": args.learning_rate,
+        }
     elif not args.train_unet:
         unet.requires_grad_(False)
-    
-    vae.requires_grad_(False)
+        #unet_params_to_optimize = None
+    else:
+        unet_params_to_optimize = {
+            "params": itertools.chain(unet.parameters()),
+            "lr": args.learning_rate,
+        }
     
     if args.train_text_encoder and args.use_lora:
         text_encoder.requires_grad_(False)
@@ -728,11 +753,42 @@ def main(args):
                 print("Before training: text encoder First Layer lora up", _up.weight.data)
                 print("Before training: text encoder First Layer lora down", _down.weight.data)
                 break
+                
+        text_params_to_optimize = {
+            "params": itertools.chain(*text_encoder_lora_params),
+            "lr": learning_rate_text,
+        }
     elif not args.train_text_encoder:
-        text_encoder.requires_grad_(False)
+        if args.train_text_embedding:
+            text_encoder.requires_grad_(False)
+            text_encoder.get_input_embeddings().parameters()
+            text_params_to_optimize = {
+                "params": itertools.chain(text_encoder.get_input_embeddings().parameters()),
+                "lr": learning_rate_text,
+            }
+        else:
+            text_encoder.requires_grad_(False)
+    else:
+        text_params_to_optimize = {
+            "params": itertools.chain(text_encoder.parameters()),
+            "lr": learning_rate_text,
+        }
+        
+    params_to_optimize = []
+    if args.train_unet:
+        params_to_optimize.append(unet_params_to_optimize)
+    if args.train_text_encoder or args.train_text_embedding:
+        params_to_optimize.append(text_params_to_optimize)    
+            
+    if len(params_to_optimize)==0:
+        raise ValueError(
+            f"This configuration does not train anything. Unet: {args.instance_token},"
+            f" text_encoder: {args.train_text_encoder}, text_embedding: {args.train_text_embedding}."
+        )
             
     if args.gradient_checkpointing:
-        unet.enable_gradient_checkpointing()
+        if args.train_unet
+            unet.enable_gradient_checkpointing()
         if args.train_text_encoder:
             text_encoder.gradient_checkpointing_enable()
 
@@ -753,41 +809,35 @@ def main(args):
         optimizer_class = bnb.optim.AdamW8bit
     else:
         optimizer_class = torch.optim.AdamW
-
-    text_lr = (
-        args.learning_rate
-        if args.learning_rate_text is None
-        else args.learning_rate_text
-    )
     
-    if args.use_lora:
-        params_to_optimize = (
-            [
-                {
-                    "params": itertools.chain(*unet_lora_params), "lr": args.learning_rate
-                },
-                {
-                    "params": itertools.chain(*text_encoder_lora_params),
-                    "lr": text_lr,
-                },
-            ]
-            if args.train_text_encoder
-            else itertools.chain(*unet_lora_params)
-        )   
-    else: 
-         params_to_optimize = (
-            [
-                {
-                    "params": itertools.chain(unet.parameters()), "lr": args.learning_rate
-                },
-                {
-                    "params": itertools.chain(text_encoder.parameters()),
-                    "lr": text_lr,
-                },
-            ]
-            if args.train_text_encoder
-            else unet.parameters()
-        )
+#     if args.use_lora:
+#         params_to_optimize = (
+#             [
+#                 {
+#                     "params": itertools.chain(*unet_lora_params), "lr": args.learning_rate
+#                 },
+#                 {
+#                     "params": itertools.chain(*text_encoder_lora_params),
+#                     "lr": learning_rate_text,
+#                 },
+#             ]
+#             if args.train_text_encoder
+#             else itertools.chain(*unet_lora_params)
+#         )   
+#     else: 
+#          params_to_optimize = (
+#             [
+#                 {
+#                     "params": itertools.chain(unet.parameters()), "lr": args.learning_rate
+#                 },
+#                 {
+#                     "params": itertools.chain(text_encoder.parameters()),
+#                     "lr": learning_rate_text,
+#                 },
+#             ]
+#             if args.train_text_encoder
+#             else unet.parameters()
+#         )
 
     if args.debug:
         print(summary(vae, col_names=["num_params", "trainable"], verbose=1))
@@ -814,21 +864,38 @@ def main(args):
 
     noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
-    train_dataset = DreamBoothDataset(
+#     train_dataset = DreamBoothDataset(
+#         instance_data_root=args.instance_data_dir,
+#         instance_prompt=args.instance_prompt,
+#         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
+#         class_prompt=args.class_prompt,
+#         use_image_captions=args.use_image_captions,
+#         unconditional_prompt=args.unconditional_prompt,
+#         tokenizer=tokenizer,
+#         size=args.resolution,
+#         augment_min_resolution=args.augment_min_resolution,
+#         augment_center_crop=args.augment_center_crop,
+#         augment_hflip=args.augment_hflip,
+#         debug=args.debug,
+#     )
+    train_dataset = FineTuningDataset(
+        tokenizer=tokenizer,
+        add_instance_token=args.add_instance_token,
         instance_data_root=args.instance_data_dir,
+        instance_token=args.instance_token,
         instance_prompt=args.instance_prompt,
+        use_textual_inversion_templates=args.use_textual_inversion_templates,
         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
         class_prompt=args.class_prompt,
         use_image_captions=args.use_image_captions,
-        unconditional_prompt=args.unconditional_prompt,
-        tokenizer=tokenizer,
+        unconditional_prompt=" ",
         size=args.resolution,
         augment_min_resolution=args.augment_min_resolution,
         augment_center_crop=args.augment_center_crop,
         augment_hflip=args.augment_hflip,
-        debug=args.debug,
+        debug=False,
     )
-
+    
     def collate_fn(examples):
         input_ids = [example["instance_prompt_ids"] for example in examples]
         pixel_values = [example["instance_images"] for example in examples]
@@ -888,7 +955,7 @@ def main(args):
             num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
         )
 
-    if args.train_text_encoder:
+    if args.train_text_encoder or args.train_text_embedding:
         unet, text_encoder, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
             unet, text_encoder, optimizer, train_dataloader, lr_scheduler
         )
@@ -907,8 +974,13 @@ def main(args):
     # For mixed precision training we cast the text_encoder and vae weights to half-precision
     # as these models are only used for inference, keeping weights in full precision is not required.
     vae.to(accelerator.device, dtype=weight_dtype)
-    if not args.train_text_encoder:
+    #vae.eval()
+    if not args.train_unet:
+        unet.to(accelerator.device, dtype=weight_dtype)
+        #unet.eval()
+    if not args.train_text_encoder and is not args.train_text_embedding:
         text_encoder.to(accelerator.device, dtype=weight_dtype)
+        #text_encoder.eval()
 
     # Create EMA for the unet.
     if args.use_ema:
@@ -969,6 +1041,7 @@ def main(args):
 
             pipeline = StableDiffusionPipeline.from_pretrained(
                 args.pretrained_model_name_or_path,
+                tokenizer=tokenizer,
                 unet=accelerator.unwrap_model(
                         ema_unet.averaged_model if args.use_ema else unet,
                         **extra_args,
@@ -985,6 +1058,7 @@ def main(args):
             )
             
             if args.use_lora:
+                # TODO: if add_instance_token, I assume we have to save the tokenizer?
                 save_lora_weight(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))
                 if args.debug:
                     for _up, _down in extract_lora_ups_down(pipeline.unet):
@@ -1009,6 +1083,7 @@ def main(args):
                 del pipeline
                 pipeline = StableDiffusionPipeline.from_pretrained(
                     args.pretrained_model_name_or_path,
+                    tokenizer=tokenizer,
                     text_encoder=CLIPTextModel.from_pretrained(
                         args.pretrained_model_name_or_path, 
                         subfolder="text_encoder", 
@@ -1063,11 +1138,18 @@ def main(args):
     progress_bar.set_description("Steps")
     global_step = 0
 
+    # TODO: eventually move to debug
+    if args.train_text_encoder or args.train_text_embedding:
+        instance_token_id = tokenizer.convert_tokens_to_ids(args.instance_token)
+        # keep original embeddings as reference
+        orig_embeds_params = text_encoder.get_input_embeddings().weight.data.clone()
+
     for epoch in range(args.num_train_epochs):
         unet.train()
-        if args.train_text_encoder:
+        if args.train_text_encoder or args.train_text_embedding:
             text_encoder.train()
         for step, batch in enumerate(train_dataloader):
+            # TODO: how to handle context setting when unet is not training?
             with accelerator.accumulate(unet):
                 # Convert images to latent space
                 latents = vae.encode(batch["pixel_values"].to(dtype=weight_dtype)).latent_dist.sample()
@@ -1128,6 +1210,15 @@ def main(args):
                     ema_unet.step(unet)
                 optimizer.zero_grad()
 
+                if args.train_text_encoder or args.train_text_embedding:
+                    # TODO: eventually move all of this to debug
+                    # Let's make sure we don't update any embedding weights besides the newly added token
+                    index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
+                    with torch.no_grad():
+                        if args.debug:
+                            print(text_encoder.get_input_embeddings().weight[index_no_updates])
+                        text_encoder.get_input_embeddings().weight[index_no_updates] = orig_embeds_params[index_no_updates]
+                
             # Checks if the accelerator has performed an optimization step behind the scenes
             if accelerator.sync_gradients:
                 progress_bar.update(1)
