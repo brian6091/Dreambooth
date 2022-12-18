@@ -60,6 +60,7 @@ class FineTuningDataset(Dataset):
         self.num_instance_images = len(self.instance_images_path)
         self._length = self.num_instance_images
 
+        self.instance_token = instance_token
         self.instance_prompt = instance_prompt
         self.prompt_templates = prompt_templates
         
