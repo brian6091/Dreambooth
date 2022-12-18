@@ -682,9 +682,6 @@ def main(args):
         else:
             if args.debug:
                 print(f"{args.instance_token} added to tokenizer.")
-                
-        # Resize the token embeddings as we are adding new special tokens to the tokenizer
-        text_encoder.resize_token_embeddings(len(tokenizer))
 
 # From diffusers textual_inversion script, what they call placeholder is instance_token for me
 # seems to be used only to check that other token embeddings not changed
@@ -705,6 +702,11 @@ def main(args):
         subfolder="text_encoder",
         revision=args.revision,
     )
+    
+    if args.add_instance_token
+        # Resize the token embeddings as we are adding new special tokens to the tokenizer
+        text_encoder.resize_token_embeddings(len(tokenizer))
+    
     vae = AutoencoderKL.from_pretrained(        
         args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
         subfolder=None if args.pretrained_vae_name_or_path else "vae",
