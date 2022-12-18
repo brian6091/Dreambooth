@@ -892,13 +892,13 @@ def main(args):
 
     if args.prompt_templates=="None":
         prompt_templates = None
-    elif args.textual_inversion_templates=="object":
+    elif args.prompt_templates=="object":
         prompt_templates = object_templates
-    elif args.textual_inversion_templates=="style":
+    elif args.prompt_templates=="style":
         prompt_templates = style_templates
     else:
         raise ValueError(
-            f"{args.textual_inversion_templates} is not a known set of templates for textual inversion."
+            f"{args.prompt_templates} is not a known set of templates for textual inversion."
         )
         
     train_dataset = FineTuningDataset(
