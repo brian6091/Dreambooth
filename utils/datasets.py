@@ -154,6 +154,7 @@ class FineTuningDataset(Dataset):
         if self.debug:
             print("\nInstance: " + str(image_path))
             print(self.instance_prompt)
+            print(example["instance_prompt_ids"])
 
         if self.class_data_root:
             image_path = self.class_images_path[index % self.num_class_images]
