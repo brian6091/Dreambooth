@@ -1168,12 +1168,13 @@ def main(args):
         orig_embeds_params = text_encoder.get_input_embeddings().weight.data.clone()
 
     for epoch in range(args.num_train_epochs):
-        unet.train()
+        if args.train_unet:
+            unet.train()
         if args.train_text_encoder or args.train_text_embedding:
             text_encoder.train()
         for step, batch in enumerate(train_dataloader):
             # TODO: how to handle context setting when unet is not training?
-            with accelerator.accumulate(unet):
+            with accelerator.accumulate(text_encoder):
                 # Convert images to latent space
                 latents = vae.encode(batch["pixel_values"].to(dtype=weight_dtype)).latent_dist.sample()
                 latents = latents * 0.18215
