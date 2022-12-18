@@ -788,7 +788,7 @@ def main(args):
         )
             
     if args.gradient_checkpointing:
-        if args.train_unet
+        if args.train_unet:
             unet.enable_gradient_checkpointing()
         if args.train_text_encoder:
             text_encoder.gradient_checkpointing_enable()
