@@ -854,6 +854,9 @@ def main(args):
             f.write(str(summary(text_encoder, col_names=["num_params", "trainable"], verbose=2)))
             f.close()
         
+    # May want to add lambda here: 
+    # https://discuss.pytorch.org/t/parameters-with-requires-grad-false-are-updated-during-training/90096/9
+    # since optimizer may have momentum, etc
     optimizer = optimizer_class(
         params_to_optimize,
         lr=args.learning_rate,
