@@ -664,7 +664,7 @@ def main(args):
             subfolder="tokenizer",
         )
         
-    if args.add_instance_token
+    if args.add_instance_token:
         # Add the instance token in tokenizer
         num_added_tokens = tokenizer.add_tokens(args.instance_token)
         if num_added_tokens == 0:
