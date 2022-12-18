@@ -95,10 +95,10 @@ def parse_args(input_args=None):
         help="Whether to add instance token to tokenizer dictionary",
     )
     parser.add_argument(
-        "--textual_inversion_templates",
+        "--prompt_templates",
         type=str,
         default=None,
-        help="Which textual inversion templates to use, object, style, or None",
+        help="Which prompt templates to use, object, style, or None",
     )
     parser.add_argument(
         "--instance_token",
@@ -883,12 +883,12 @@ def main(args):
 #         debug=args.debug,
 #     )
 
-    if args.textual_inversion_templates=="None":
-        textual_inversion_templates = args.instance_prompt
+    if args.prompt_templates=="None":
+        prompt_templates = None
     elif args.textual_inversion_templates=="object":
-        textual_inversion_templates = object_templates
+        prompt_templates = object_templates
     elif args.textual_inversion_templates=="style":
-        textual_inversion_templates = style_templates
+        prompt_templates = style_templates
     else:
         raise ValueError(
             f"{args.textual_inversion_templates} is not a known set of templates for textual inversion."
@@ -900,7 +900,7 @@ def main(args):
         instance_data_root=args.instance_data_dir,
         instance_token=args.instance_token,
         instance_prompt=args.instance_prompt,
-        textual_inversion_templates=textual_inversion_templates,
+        prompt_templates=prompt_templates,
         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
         class_prompt=args.class_prompt,
         use_image_captions=args.use_image_captions,
