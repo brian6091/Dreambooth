@@ -670,7 +670,13 @@ def main(args):
             args.pretrained_model_name_or_path,
             subfolder="tokenizer",
         )
-        
+
+    text_encoder = CLIPTextModel.from_pretrained(
+        args.pretrained_model_name_or_path,
+        subfolder="text_encoder",
+        revision=args.revision,
+    )
+    
     if args.add_instance_token:
         # Add the instance token in tokenizer
         num_added_tokens = tokenizer.add_tokens(args.instance_token)
@@ -683,6 +689,9 @@ def main(args):
             if args.debug:
                 print(f"{args.instance_token} added to tokenizer.")
 
+        # Resize the token embeddings as we are adding new special tokens to the tokenizer
+        text_encoder.resize_token_embeddings(len(tokenizer))
+    
 # From diffusers textual_inversion script, what they call placeholder is instance_token for me
 # seems to be used only to check that other token embeddings not changed
 # initializer_token would be equivalent to my class_token, used only to initialize parameters for 
@@ -696,22 +705,13 @@ def main(args):
 #         initializer_token_id = token_ids[0]
 #         placeholder_token_id = tokenizer.convert_tokens_to_ids(args.placeholder_token)
 
-    # Load models and create wrapper for stable diffusion
-    text_encoder = CLIPTextModel.from_pretrained(
-        args.pretrained_model_name_or_path,
-        subfolder="text_encoder",
-        revision=args.revision,
-    )
-    
-    if args.add_instance_token
-        # Resize the token embeddings as we are adding new special tokens to the tokenizer
-        text_encoder.resize_token_embeddings(len(tokenizer))
-    
+
     vae = AutoencoderKL.from_pretrained(        
         args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
         subfolder=None if args.pretrained_vae_name_or_path else "vae",
         revision=None if args.pretrained_vae_name_or_path else args.revision,
     )
+    
     unet = UNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path,
         subfolder="unet",
