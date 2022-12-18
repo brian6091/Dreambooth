@@ -95,9 +95,10 @@ def parse_args(input_args=None):
         help="Whether to add instance token to tokenizer dictionary",
     )
     parser.add_argument(
-        "--use_textual_inversion_templates",
-        action="store_true",
-        help="Whether to add use textual inversion prompt templates",
+        "--textual_inversion_templates",
+        type=str,
+        default=None,
+        help="Which textual inversion templates to use, object, style, or None",
     )
     parser.add_argument(
         "--instance_token",
@@ -881,13 +882,14 @@ def main(args):
 #         augment_hflip=args.augment_hflip,
 #         debug=args.debug,
 #     )
+
     train_dataset = FineTuningDataset(
         tokenizer=tokenizer,
         add_instance_token=args.add_instance_token,
         instance_data_root=args.instance_data_dir,
         instance_token=args.instance_token,
         instance_prompt=args.instance_prompt,
-        use_textual_inversion_templates=args.use_textual_inversion_templates,
+        textual_inversion_templates=args.textual_inversion_templates,
         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
         class_prompt=args.class_prompt,
         use_image_captions=args.use_image_captions,
