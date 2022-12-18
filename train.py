@@ -355,7 +355,14 @@ def parse_args(input_args=None):
 
     return args
 
+def freeze_params(params):
+    for param in params:
+        param.requires_grad = False
 
+def unfreeze_params(params):
+    for param in params:
+        param.requires_grad = True
+        
 # class DreamBoothDataset(Dataset):
 #     """
 #     A dataset to prepare the instance and class images with the prompts for fine-tuning the model.
@@ -762,7 +769,7 @@ def main(args):
     elif not args.train_text_encoder:
         if args.train_text_embedding:
             text_encoder.requires_grad_(False)
-            text_encoder.get_input_embeddings().parameters()
+            unfreeze_params(text_encoder.get_input_embeddings().parameters())
             text_params_to_optimize = {
                 "params": itertools.chain(text_encoder.get_input_embeddings().parameters()),
                 "lr": learning_rate_text,
