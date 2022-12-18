@@ -126,7 +126,7 @@ class FineTuningDataset(Dataset):
                 image.save(os.path.join("/content/augment", image_filename))
         example["instance_images"] = self.image_transforms(image)
 
-        if args.prompt_templates is not None:
+        if self.prompt_templates is not None:
             self.instance_prompt = random.choice(self.prompt_templates).format(self.instance_token)
         elif self.use_image_captions:
             caption_path = image_path.with_suffix(".txt")
