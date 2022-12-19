@@ -678,7 +678,7 @@ def main(args):
     )
     
     if args.add_instance_token:
-        # Add the instance token in tokenizer
+        # Add the instance_token to tokenizer
         num_added_tokens = tokenizer.add_tokens(args.instance_token)
         if num_added_tokens == 0:
             raise ValueError(
@@ -691,6 +691,24 @@ def main(args):
 
         # Resize the token embeddings as we are adding new special tokens to the tokenizer
         text_encoder.resize_token_embeddings(len(tokenizer))
+        
+        # Convert the class_token to ids
+        token_ids = tokenizer.encode(args.class_token, add_special_tokens=False)
+        class_token_id = token_ids[0]
+        
+        # Check if initializer_token is a single token or a sequence of tokens
+        if len(token_ids) > 1:
+            raise ValueError("The class token must be a single token.")
+            
+        # Initialise the newly added instance token with the embeddings of the class token
+        token_embeds = text_encoder.get_input_embeddings().weight.data
+        instance_token_id = tokenizer.convert_tokens_to_ids(args.instance_token)
+        if args.debug:
+            print("Instance weights: " + token_embeds[instance_token_id]))
+        token_embeds[instance_token_id] = token_embeds[class_token_id]
+        if args.debug:
+            print("Instance weights intialized: " + token_embeds[instance_token_id]))
+
     
 # From diffusers textual_inversion script, what they call placeholder is instance_token for me
 # seems to be used only to check that other token embeddings not changed
@@ -1176,7 +1194,6 @@ def main(args):
 
     # TODO: eventually move to debug
     if args.train_text_encoder or args.train_text_embedding:
-        instance_token_id = tokenizer.convert_tokens_to_ids(args.instance_token)
         # keep original embeddings as reference
         orig_embeds_params = text_encoder.get_input_embeddings().weight.data.clone()
         if args.debug:
