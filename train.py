@@ -355,6 +355,7 @@ def parse_args(input_args=None):
 
     return args
 
+
 def freeze_params(params):
     for param in params:
         param.requires_grad = False
@@ -363,213 +364,6 @@ def unfreeze_params(params):
     for param in params:
         param.requires_grad = True
         
-# class DreamBoothDataset(Dataset):
-#     """
-#     A dataset to prepare the instance and class images with the prompts for fine-tuning the model.
-#     It pre-processes the images and the tokenizes prompts.
-#     """
-
-#     def __init__(
-#         self,
-#         instance_data_root,
-#         instance_prompt,
-#         tokenizer,
-#         class_data_root=None,
-#         class_prompt=None,
-#         use_image_captions=False,
-#         unconditional_prompt=" ",
-#         size=512,
-#         augment_min_resolution=None,
-#         augment_center_crop=False,
-#         augment_hflip=False,
-#         debug=False,
-#     ):
-#         self.tokenizer = tokenizer
-#         self.use_image_captions = use_image_captions
-#         self.size = size
-#         self.augment_center_crop = augment_center_crop
-#         self.augment_hflip = augment_hflip
-
-#         self.instance_data_root = Path(instance_data_root)
-#         if not self.instance_data_root.exists():
-#             raise ValueError("Instance images root doesn't exists.")
-
-#         self.instance_images_path = [path for path in self.instance_data_root.glob('*') if '.txt' not in path.suffix]
-#         self.num_instance_images = len(self.instance_images_path)
-#         self.instance_prompt = instance_prompt
-#         self.debug = debug
-#         self._length = self.num_instance_images
-
-#         if class_data_root is not None:
-#             self.class_data_root = Path(class_data_root)
-#             self.class_data_root.mkdir(parents=True, exist_ok=True)
-
-#             self.class_images_path = [path for path in self.class_data_root.glob('*') if '.txt' not in path.suffix]
-#             random.shuffle(self.class_images_path)
-#             self.num_class_images = len(self.class_images_path)
-#             self._length = max(self.num_class_images, self.num_instance_images)
-#             self.class_prompt = class_prompt
-#         else:
-#             self.class_data_root = None
-
-#         self.unconditional_prompt = unconditional_prompt
-        
-#         # Data augmentation pipeline
-#         augment_list = []
-#         if augment_min_resolution is not None:
-#             augment_list.append(transforms.Resize(augment_min_resolution))
-#         if augment_center_crop:
-#             augment_list.append(transforms.CenterCrop(size))
-#         else:
-#             augment_list.append(transforms.RandomCrop(size))
-#         if augment_hflip:
-#             augment_list.append(transforms.RandomHorizontalFlip(0.5))
-
-#         # Convert to format usable by model. 
-#         # Keep separate in case dumping augmentations to disk
-#         transform_list = []
-#         transform_list.append(transforms.ToTensor())
-#         transform_list.append(transforms.Normalize([0.5], [0.5]))
-        
-#         if len(augment_list)>0:
-#             self.augment_transforms = transforms.Compose(augment_list)
-#         else:
-#             self.augment_transforms = None
-            
-#         self.image_transforms = transforms.Compose(transform_list)
-
-#     def __len__(self):
-#         return self._length
-
-#     def __getitem__(self, index):
-#         example = {}
-#         image_path = self.instance_images_path[index % self.num_instance_images]
-#         instance_image = Image.open(image_path)
-#         if not instance_image.mode == "RGB":
-#             instance_image = instance_image.convert("RGB")
-#         if self.augment_transforms is not None:
-#             instance_image = self.augment_transforms(instance_image)
-#             if self.debug:
-#                 hash_image = hashlib.sha1(instance_image.tobytes()).hexdigest()
-#                 image_filename = image_path.stem + f"-{hash_image}.jpg"
-#                 instance_image.save(os.path.join("/content/augment", image_filename))
-#         example["instance_images"] = self.image_transforms(instance_image)
-
-#         if self.use_image_captions:
-#             caption_path = image_path.with_suffix(".txt")
-#             if caption_path.exists():
-#                 with open(caption_path) as f:
-#                     caption = f.read()
-#             else:
-#                 caption = caption_path.stem
-                
-#             caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
-#             caption = caption.replace("_"," ")
-#             self.instance_prompt = caption
-            
-#         example["instance_prompt_ids"] = self.tokenizer(
-#             self.instance_prompt,
-#             padding="do_not_pad",
-#             truncation=True,
-#             max_length=self.tokenizer.model_max_length,
-#         ).input_ids
-        
-#         if self.debug:
-#             print("\nInstance: " + str(image_path))
-#             print(self.instance_prompt)
-
-#         if self.class_data_root:
-#             image_path = self.class_images_path[index % self.num_class_images]
-#             class_image = Image.open(image_path)
-#             if not class_image.mode == "RGB":
-#                 class_image = class_image.convert("RGB")
-#             if self.augment_transforms is not None:
-#                 class_image = self.augment_transforms(class_image)
-#                 if self.debug:
-#                     hash_image = hashlib.sha1(class_image.tobytes()).hexdigest()
-#                     image_filename = image_path.stem + f"-{hash_image}.jpg"
-#                     class_image.save(os.path.join("/content/augment", image_filename))
-#             example["class_images"] = self.image_transforms(class_image)
-            
-#             if self.use_image_captions:
-#                 caption_path = image_path.with_suffix(".txt")
-#                 if caption_path.exists():
-#                     with open(caption_path) as f:
-#                         caption = f.read()
-#                 else:
-#                     caption = caption_path.stem
-
-#                 caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
-#                 caption = caption.replace("_"," ")
-#                 self.class_prompt = caption
-            
-#             example["class_prompt_ids"] = self.tokenizer(
-#                 self.class_prompt,
-#                 padding="do_not_pad",
-#                 truncation=True,
-#                 max_length=self.tokenizer.model_max_length,
-#             ).input_ids
-            
-#             if self.debug:
-#                 print("\nClass: " + str(image_path))
-#                 print(self.class_prompt)
-
-#         example["unconditional_prompt_ids"] = self.tokenizer(
-#                 self.unconditional_prompt,
-#                 padding="do_not_pad",
-#                 truncation=True,
-#                 max_length=self.tokenizer.model_max_length,
-#             ).input_ids
-
-#         return example
-
-
-# class PromptDataset(Dataset):
-#     "A simple dataset to prepare the prompts to generate class images on multiple GPUs."
-
-#     def __init__(self, prompt, num_samples):
-#         self.prompt = prompt
-#         self.num_samples = num_samples
-
-#     def __len__(self):
-#         return self.num_samples
-
-#     def __getitem__(self, index):
-#         example = {}
-#         example["prompt"] = self.prompt
-#         example["index"] = index
-#         return example
-
-
-# def get_full_repo_name(model_id: str, organization: Optional[str] = None, token: Optional[str] = None):
-#     if token is None:
-#         token = HfFolder.get_token()
-#     if organization is None:
-#         username = whoami(token)["name"]
-#         return f"{username}/{model_id}"
-#     else:
-#         return f"{organization}/{model_id}"
-
-# def get_gpu_memory_map():
-#     result = subprocess.check_output(
-#         [
-#             'nvidia-smi', '--query-gpu=memory.used',
-#             '--format=csv,nounits,noheader'
-#         ], encoding='utf-8')
-#     gpu_memory = [int(x) for x in result.strip().split('\n')]
-#     gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
-#     return gpu_memory_map
-        
-    
-# def image_grid(imgs, rows, cols):
-#     assert len(imgs) == rows*cols
-#     w, h = imgs[0].size
-#     grid = Image.new('RGB', size=(cols*w, rows*h))
-#     grid_w, grid_h = grid.size
-#     for i, img in enumerate(imgs):
-#         grid.paste(img, box=(i%cols*w, i//cols*h))
-#     return grid
-
 
 def main(args):
     torch.set_printoptions(precision=10)
@@ -757,7 +551,6 @@ def main(args):
         }
     elif not args.train_unet:
         unet.requires_grad_(False)
-        #unet_params_to_optimize = None
     else:
         unet_params_to_optimize = {
             "params": itertools.chain(unet.parameters()),
@@ -890,21 +683,6 @@ def main(args):
     )
 
     noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
-
-#     train_dataset = DreamBoothDataset(
-#         instance_data_root=args.instance_data_dir,
-#         instance_prompt=args.instance_prompt,
-#         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
-#         class_prompt=args.class_prompt,
-#         use_image_captions=args.use_image_captions,
-#         unconditional_prompt=args.unconditional_prompt,
-#         tokenizer=tokenizer,
-#         size=args.resolution,
-#         augment_min_resolution=args.augment_min_resolution,
-#         augment_center_crop=args.augment_center_crop,
-#         augment_hflip=args.augment_hflip,
-#         debug=args.debug,
-#     )
 
     if args.prompt_templates=="None":
         prompt_templates = None
@@ -1261,6 +1039,10 @@ def main(args):
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
                     with torch.no_grad():
                         if args.debug:
+                            print("Are we changing?")
+                            print("original")
+                            print(orig_embeds_params[index_no_updates])
+                            print("After step")
                             print(text_encoder.get_input_embeddings().weight[index_no_updates])
                         text_encoder.get_input_embeddings().weight[index_no_updates] = orig_embeds_params[index_no_updates]
                 
