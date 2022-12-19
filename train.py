@@ -856,7 +856,7 @@ def main(args):
                         print("First Unet Layer's Down Weight is now : ", _down.weight.data)
                         break
                     
-                if args.train_text_encoder:
+                if args.train_text_encoder or args.train_text_embedding:
                     save_lora_weight(
                         pipeline.text_encoder,
                         os.path.join(save_dir, "lora_text_encoder.pt"),
@@ -870,15 +870,20 @@ def main(args):
                             print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
                             print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
                             break
+                            
+                    text_enc = pipeline.text_encoder
+                else:
+                    text_enc = CLIPTextModel.from_pretrained(
+                        args.pretrained_model_name_or_path, 
+                        subfolder="text_encoder", 
+                        revision=args.revision
+                    )
+                
                 del pipeline
                 pipeline = StableDiffusionPipeline.from_pretrained(
                     args.pretrained_model_name_or_path,
                     tokenizer=tokenizer,
-                    text_encoder=CLIPTextModel.from_pretrained(
-                        args.pretrained_model_name_or_path, 
-                        subfolder="text_encoder", 
-                        revision=args.revision
-                    ),
+                    text_encoder=text_enc,
                     vae=AutoencoderKL.from_pretrained(
                         args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
                         subfolder=None if args.pretrained_vae_name_or_path else "vae",
