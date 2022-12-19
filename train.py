@@ -705,10 +705,12 @@ def main(args):
             token_embeds = text_encoder.get_input_embeddings().weight.data
             instance_token_id = tokenizer.convert_tokens_to_ids(args.instance_token)
             if args.debug:
-                print("Instance weights: " + token_embeds[instance_token_id])
+                print("Instance weights: ")
+                print(token_embeds[instance_token_id])
             token_embeds[instance_token_id] = token_embeds[class_token_id]
             if args.debug:
-                print("Instance weights intialized: " + token_embeds[instance_token_id])
+                print("Instance weights intialized: ")
+                print(token_embeds[instance_token_id])
 
 
     vae = AutoencoderKL.from_pretrained(        
