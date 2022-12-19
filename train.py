@@ -7,8 +7,6 @@ import random
 import os
 from pathlib import Path
 from typing import Iterable, Optional
-#import subprocess
-#import sys
 from typing import Optional
 import inspect
 
@@ -626,35 +624,6 @@ def main(args):
         optimizer_class = bnb.optim.AdamW8bit
     else:
         optimizer_class = torch.optim.AdamW
-    
-#     if args.use_lora:
-#         params_to_optimize = (
-#             [
-#                 {
-#                     "params": itertools.chain(*unet_lora_params), "lr": args.learning_rate
-#                 },
-#                 {
-#                     "params": itertools.chain(*text_encoder_lora_params),
-#                     "lr": learning_rate_text,
-#                 },
-#             ]
-#             if args.train_text_encoder
-#             else itertools.chain(*unet_lora_params)
-#         )   
-#     else: 
-#          params_to_optimize = (
-#             [
-#                 {
-#                     "params": itertools.chain(unet.parameters()), "lr": args.learning_rate
-#                 },
-#                 {
-#                     "params": itertools.chain(text_encoder.parameters()),
-#                     "lr": learning_rate_text,
-#                 },
-#             ]
-#             if args.train_text_encoder
-#             else unet.parameters()
-#         )
 
     if args.debug:
         print(summary(vae, col_names=["num_params", "trainable"], verbose=1))
@@ -1062,6 +1031,7 @@ def main(args):
             else:
                 logs = {"Loss/pred": loss.detach().item()}
 
+            # TODO: if args.train_text_encoder or args.train_text_embedding:
             #if args.learning_rate_text is None:
                 logs["lr"] = lr_scheduler.get_last_lr()[0]
             #else:
