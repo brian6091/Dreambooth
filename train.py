@@ -1033,7 +1033,7 @@ def main(args):
                     ema_unet.step(unet)
                 optimizer.zero_grad()
 
-                if args.train_text_encoder or args.train_text_embedding:
+                if args.debug and (args.train_text_encoder or args.train_text_embedding):
                     # TODO: eventually move all of this to debug
                     # Let's make sure we don't update any embedding weights besides the newly added token
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
