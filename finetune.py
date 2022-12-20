@@ -47,9 +47,16 @@ logger = get_logger(__name__)
 
 
 def parse_args(input_args=None):
-    #parser = argparse.ArgumentParser(description="Simple example of a training script.")
     parser = configargparse.ArgParser(config_file_parser_class=configargparse.YAMLConfigFileParser)
-    parser.add_argument('-c', '--config', required=False, is_config_file=True, help='config file path', type=yaml.safe_load)
+    
+    parser.add_argument(
+        '-c',
+        '--config',
+        required=False,
+        is_config_file=True,
+        help='config file path',
+        type=yaml.safe_load,
+    )
     
     parser.add_argument(
         "--pretrained_model_name_or_path",
