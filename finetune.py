@@ -681,7 +681,7 @@ def main(args):
         use_image_captions=args.use_image_captions,
         unconditional_prompt=" ",
         size=args.resolution,
-        augment_output_dir=args.augment_output_dir,
+        augment_output_dir=None if args.augment_output_dir=="" else args.augment_output_dir,
         augment_min_resolution=args.augment_min_resolution,
         augment_center_crop=args.augment_center_crop,
         augment_hflip=args.augment_hflip,
