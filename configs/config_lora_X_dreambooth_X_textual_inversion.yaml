@@ -10,7 +10,8 @@ lora_rank: 4
 add_instance_token: true
 prompt_templates: None
 instance_token: <sks>
-instance_prompt: a photo of <sks>
+# {} in instance_prompt is automatically replaced by instance_token
+instance_prompt: a photo of {}
 instance_data_dir: /content/gdrive/MyDrive/InstanceImages/
 class_data_dir: /content/gdrive/MyDrive/RegularizationImages/
 class_token: person
@@ -52,6 +53,7 @@ ema_power: 0.75
 ema_min_value: 0.0
 ema_max_value: 0.9999
 output_dir: /content/models/
+# {} in save_sample_prompt is automatically replaced by instance_token
 save_sample_prompt: a photo of a person // a photo of Keanu Reeves // a photo of {}
   // an painting of {} by Picasso
 save_sample_negative_prompt: hands, border
