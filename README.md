@@ -1,7 +1,7 @@
 # Fine-tuning of Stable Diffusion models
 
 
-Run [Dreambooth](https://arxiv.org/abs/2208.12242) or [Low-rank Adaptation (LoRA)](https://github.com/cloneofsimo/lora) from the same notebook:
+Run [Dreambooth](https://arxiv.org/abs/2208.12242), [Textual inversion](https://arxiv.org/abs/2208.01618), or [Low-rank Adaptation (LoRA)](https://arxiv.org/abs/2106.09685)-based fine-tuning from the same notebook:
 
 <a target="_blank" href="https://colab.research.google.com/github/brian6091/Dreambooth/blob/main/FineTuning_colab.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" height="28px" width="162px" alt="Open In Colab"/>
@@ -13,8 +13,9 @@ Tested with Tesla T4 and A100 GPUs on Google Colab (some settings will not work 
 
 Tested with [Stable Diffusion v1-5](https://huggingface.co/runwayml/stable-diffusion-v1-5) and [Stable Diffusion v2-base](https://huggingface.co/stabilityai/stable-diffusion-2-base).
 
-This notebook borrows elements from [ShivamShrirao's](https://github.com/ShivamShrirao/diffusers) implementation, but is distinguished by some features:
+This notebook was initially inspired by [ShivamShrirao's](https://github.com/ShivamShrirao/diffusers) implementation, but has since evolved to include some unique features:
 * Based on main [Hugging Face](https://huggingface.co/) [Diffusers🧨](https://github.com/huggingface/diffusers) so it's easy to stay up-to-date
+* Mix-and-match different fine-tuning methods (LoRAXDreambooth, DreamboothXTextual inversion, etc)
 * Low-rank Adaptation (LoRA) for faster and more efficient fine-tuning (using [cloneofsimo's implementation](https://github.com/cloneofsimo/lora))
 * Data augmentation such as random cropping, flipping and resizing, which can minimize manually prepping and cropping images in certain cases (e.g., training a style)
 * More parameters for experimentation ([modify LoRA rank approximation](https://github.com/cloneofsimo/lora/discussions/37), ADAM optimizer parameters, [cosine_with_restarts](https://huggingface.co/transformers/v2.9.1/main_classes/optimizer_schedules.html#transformers.get_cosine_with_hard_restarts_schedule_with_warmup) learning rate scheduler, etc), all of which are dumped to a json file so you can remember what you did
