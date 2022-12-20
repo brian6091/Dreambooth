@@ -47,8 +47,10 @@ logger = get_logger(__name__)
 
 
 def parse_args(input_args=None):
-    parser = argparse.ArgumentParser(description="Simple example of a training script.")
-
+    #parser = argparse.ArgumentParser(description="Simple example of a training script.")
+    parser = configargparse.ArgParser(config_file_parser_class=configargparse.YAMLConfigFileParser)
+    parser.add_argument('-c', '--config', required=False, is_config_file=True, help='config file path', type=yaml.safe_load)
+    
     parser.add_argument(
         "--pretrained_model_name_or_path",
         type=str,
@@ -183,8 +185,6 @@ def parse_args(input_args=None):
         help="Get captions from textfile, otherwise filename",
     )
 
-
-
     parser.add_argument(
         "--conditioning_dropout_prob",
         type=float,
@@ -196,9 +196,6 @@ def parse_args(input_args=None):
         default=" ",
         help="Prompt for conditioning dropout.",
     )
-
-
-
 
     parser.add_argument(
         "--augment_output_dir",
@@ -377,7 +374,6 @@ def parse_args(input_args=None):
         default=0.9999,
         help="The maximum EMA decay rate.",
     )
-
 
     parser.add_argument(
         "--output_dir",
