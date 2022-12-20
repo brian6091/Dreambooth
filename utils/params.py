@@ -1,4 +1,5 @@
 import configargparse
+import yaml
 
 def none_or_str(value):
     if value == 'None':
