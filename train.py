@@ -202,7 +202,15 @@ def parse_args(input_args=None):
             " resolution"
         ),
     )
-    parser.add_argument("--augment_min_resolution", type=int, default=None, help="Resize minimum image dimension before augmention pipeline.")
+    parser.add_argument(
+        "--augment_output_dir",
+        type=str,
+        default="",
+        help="The output directory where the image data augmentations will be saved.",
+    )
+    parser.add_argument(
+        "--augment_min_resolution", type=int, default=None, help="Resize minimum image dimension before augmention pipeline."
+    )
     parser.add_argument(
         "--augment_center_crop", action="store_true", help="Whether to center crop images before resizing to resolution"
     )
@@ -488,12 +496,10 @@ def main(args):
             # Convert the class_token to ids
             token_ids = tokenizer.encode(args.class_token, add_special_tokens=False)
             class_token_id = token_ids[0]
-
-            # Check if initializer_token is a single token or a sequence of tokens
             if len(token_ids) > 1:
                 raise ValueError("The class token must be a single token.")
 
-            # Initialise the newly added instance token with the embeddings of the class token
+            # Initialise the instance token with the embeddings of the class token
             token_embeds = text_encoder.get_input_embeddings().weight.data
             instance_token_id = tokenizer.convert_tokens_to_ids(args.instance_token)
             if args.debug:
@@ -503,7 +509,6 @@ def main(args):
             if args.debug:
                 print("Instance weights intialized: ")
                 print(token_embeds[instance_token_id])
-
 
     vae = AutoencoderKL.from_pretrained(        
         args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
@@ -676,6 +681,7 @@ def main(args):
         use_image_captions=args.use_image_captions,
         unconditional_prompt=" ",
         size=args.resolution,
+        augment_output_dir=args.augment_output_dir,
         augment_min_resolution=args.augment_min_resolution,
         augment_center_crop=args.augment_center_crop,
         augment_hflip=args.augment_hflip,
