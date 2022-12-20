@@ -46,7 +46,10 @@ logger = get_logger(__name__)
 
 
 def parse_args(input_args=None):
-    parser = configargparse.ArgParser(config_file_parser_class=configargparse.YAMLConfigFileParser)
+    parser = configargparse.ArgParser(
+        description='finetune.py',
+        config_file_parser_class=configargparse.YAMLConfigFileParser,
+    )
     
     parser.add_argument(
         '-c',
