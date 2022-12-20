@@ -62,7 +62,7 @@ class FineTuningDataset(Dataset):
         self._length = self.num_instance_images
 
         self.instance_token = instance_token
-        self.instance_prompt = instance_prompt
+        self.instance_prompt = instance_prompt.format(instance_token)
         self.prompt_templates = prompt_templates
         
         if class_data_root is not None:
