@@ -806,7 +806,7 @@ def main(args):
         add_instance_token=args.add_instance_token,
         instance_data_root=args.instance_data_dir,
         instance_token=args.instance_token,
-        instance_prompt=args.instance_prompt,
+        instance_prompt=args.instance_prompt.format(args.instance_token),
         prompt_templates=prompt_templates,
         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
         class_prompt=args.class_prompt,
