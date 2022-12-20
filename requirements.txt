@@ -7,3 +7,4 @@ tensorboard
 modelcards
 bitsandbytes
 huggingface_hub
+configargparse
