@@ -15,7 +15,7 @@ Tested with [Stable Diffusion v1-5](https://huggingface.co/runwayml/stable-diffu
 
 This notebook was initially inspired by [ShivamShrirao's](https://github.com/ShivamShrirao/diffusers) implementation, but has since evolved to include some unique features:
 * Based on main [Hugging Face](https://huggingface.co/) [Diffusers🧨](https://github.com/huggingface/diffusers) so it's easy to stay up-to-date
-* Mix-and-match different fine-tuning methods (LoRAXDreambooth, DreamboothXTextual inversion, etc)
+* Mix-and-match different fine-tuning methods (LoRA X Dreambooth, Dreambooth X Textual inversion, etc)
 * Low-rank Adaptation (LoRA) for faster and more efficient fine-tuning (using [cloneofsimo's implementation](https://github.com/cloneofsimo/lora))
 * Data augmentation such as random cropping, flipping and resizing, which can minimize manually prepping and cropping images in certain cases (e.g., training a style)
 * More parameters for experimentation ([modify LoRA rank approximation](https://github.com/cloneofsimo/lora/discussions/37), ADAM optimizer parameters, [cosine_with_restarts](https://huggingface.co/transformers/v2.9.1/main_classes/optimizer_schedules.html#transformers.get_cosine_with_hard_restarts_schedule_with_warmup) learning rate scheduler, etc), all of which are dumped to a json file so you can remember what you did
