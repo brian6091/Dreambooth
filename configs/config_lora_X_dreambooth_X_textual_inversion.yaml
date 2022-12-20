@@ -40,7 +40,6 @@ adam_beta2: 0.999
 adam_weight_decay: 0.01
 adam_epsilon: 1.0e-08
 max_grad_norm: 1.0
-push_to_hub: false
 learning_rate: 0.0001
 learning_rate_text: 1.0e-06
 scale_lr: false
@@ -65,7 +64,8 @@ save_guidance_scale: 7.5
 save_infer_steps: 50
 hub_token: null
 hub_model_id: null
+push_to_hub: false
 logging_dir: /content/logs/
-log_gpu: true
+log_gpu: false
 debug: false
 local_rank: -1
