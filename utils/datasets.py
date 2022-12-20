@@ -44,6 +44,7 @@ class FineTuningDataset(Dataset):
         use_image_captions=False,
         unconditional_prompt=" ",
         size=512,
+        augment_output_dir=None,
         augment_min_resolution=None,
         augment_center_crop=False,
         augment_hflip=False,
@@ -80,6 +81,8 @@ class FineTuningDataset(Dataset):
         self.unconditional_prompt = unconditional_prompt
         
         self.size = size
+        self.augment_output_dir = augment_output_dir
+        self.augment_min_resolution = augment_min_resolution
         self.augment_center_crop = augment_center_crop
         self.augment_hflip = augment_hflip
 
@@ -121,10 +124,10 @@ class FineTuningDataset(Dataset):
             image = image.convert("RGB")
         if self.augment_transforms is not None:
             image = self.augment_transforms(image)
-            if self.debug:
+            if self.augment_output_dir is not None:
                 hash_image = hashlib.sha1(image.tobytes()).hexdigest()
                 image_filename = image_path.stem + f"-{hash_image}.jpg"
-                image.save(os.path.join("/content/augment", image_filename))
+                image.save(os.path.join(self.augment_output_dir, image_filename))
         example["instance_images"] = self.image_transforms(image)
 
         if self.prompt_templates is not None:
@@ -163,10 +166,10 @@ class FineTuningDataset(Dataset):
                 image = image.convert("RGB")
             if self.augment_transforms is not None:
                 image = self.augment_transforms(image)
-                if self.debug:
+                if self.augment_output_dir is not None:
                     hash_image = hashlib.sha1(image.tobytes()).hexdigest()
                     image_filename = image_path.stem + f"-{hash_image}.jpg"
-                    image.save(os.path.join("/content/augment", image_filename))
+                    image.save(os.path.join(self.augment_output_dir, image_filename))
             example["class_images"] = self.image_transforms(image)
             
             if self.use_image_captions:
