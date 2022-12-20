@@ -44,6 +44,11 @@ from utils.utils import image_grid, get_full_repo_name, get_gpu_memory_map
 logger = get_logger(__name__)
 
 
+def none_or_str(value):
+    if value == 'None':
+        return None
+    return value
+
 def parse_args(input_args=None):
     parser = configargparse.ArgParser(
         description='finetune.py',
@@ -213,7 +218,8 @@ def parse_args(input_args=None):
     )
     parser.add_argument(
         "--augment_min_resolution",
-        type=int,
+        type=none_or_str,
+        nargs='?',
         default=None,
         help="Resize minimum image dimension before augmention pipeline.",
     )
