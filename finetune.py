@@ -1,8 +1,10 @@
 import argparse
+import configargparse
+import yaml
 import hashlib
 import itertools
 import math
-import json
+#import json
 import random
 import os
 from pathlib import Path
@@ -947,8 +949,8 @@ def main(args):
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
 
-            with open(os.path.join(save_dir, "args.json"), "w") as f:
-                json.dump(args.__dict__, f, indent=2)
+            with open(os.path.join(save_dir, "args.yaml"), "w") as f:
+                yaml.dump(args.__dict__, f, indent=2)
 
             # https://github.com/huggingface/diffusers/issues/1566
             accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
