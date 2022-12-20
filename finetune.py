@@ -950,7 +950,7 @@ def main(args):
                 os.makedirs(save_dir)
 
             with open(os.path.join(save_dir, "args.yaml"), "w") as f:
-                yaml.dump(args.__dict__, f, indent=2)
+                yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
 
             # https://github.com/huggingface/diffusers/issues/1566
             accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
