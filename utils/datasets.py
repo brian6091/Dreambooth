@@ -82,6 +82,8 @@ class FineTuningDataset(Dataset):
         
         self.size = size
         self.augment_output_dir = augment_output_dir
+        if augment_output_dir is not None:
+            os.makedirs(augment_output_dir, exist_ok=True)
         self.augment_min_resolution = augment_min_resolution
         self.augment_center_crop = augment_center_crop
         self.augment_hflip = augment_hflip
