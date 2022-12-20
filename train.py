@@ -827,7 +827,10 @@ def main(args):
             if args.train_text_encoder or args.train_text_embedding:
                 text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
             else:
-                text_enc_model = CLIPTextModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision)
+                text_enc_model = CLIPTextModel.from_pretrained(
+                    args.pretrained_model_name_or_path,
+                    subfolder="text_encoder",
+                    )
 
             pipeline = StableDiffusionPipeline.from_pretrained(
                 args.pretrained_model_name_or_path,
@@ -871,19 +874,19 @@ def main(args):
                             print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
                             break
                             
-                    text_enc = pipeline.text_encoder
-                else:
-                    text_enc = CLIPTextModel.from_pretrained(
-                        args.pretrained_model_name_or_path, 
-                        subfolder="text_encoder", 
-                        revision=args.revision
-                    )
+#                     text_enc = pipeline.text_encoder
+#                 else:
+#                     text_enc = CLIPTextModel.from_pretrained(
+#                         args.pretrained_model_name_or_path, 
+#                         subfolder="text_encoder", 
+#                         revision=args.revision
+#                     )
                 
                 del pipeline
                 pipeline = StableDiffusionPipeline.from_pretrained(
                     args.pretrained_model_name_or_path,
                     tokenizer=tokenizer,
-                    text_encoder=text_enc,
+                    text_encoder=text_enc_model,
                     vae=AutoencoderKL.from_pretrained(
                         args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
                         subfolder=None if args.pretrained_vae_name_or_path else "vae",
