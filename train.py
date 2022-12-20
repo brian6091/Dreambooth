@@ -898,9 +898,9 @@ def main(args):
 #                 )
 #                 monkeypatch_lora(pipeline.unet, torch.load(os.path.join(save_dir, "lora_unet.pt")))
 #                 monkeypatch_lora(pipeline.text_encoder, torch.load(os.path.join(save_dir, "lora_text_encoder.pt")), target_replace_module=["CLIPAttention"])
-                if args.train_unet
+                if args.train_unet:
                     tune_lora_scale(pipeline.unet, 1.00)
-                if args.train_text_encoder
+                if args.train_text_encoder:
                     tune_lora_scale(pipeline.text_encoder, 1.00)
             else:
                 pipeline.save_pretrained(save_dir)
