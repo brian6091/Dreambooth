@@ -1022,7 +1022,7 @@ def main(args):
                 pipeline.save_pretrained(save_dir)
 
             if args.save_sample_prompt is not None:
-                save_sample_prompt = args.save_sample_prompt
+                save_sample_prompt = args.save_sample_prompt.format(args.instance_token)
                 save_sample_prompt = list(map(str.strip, save_sample_prompt.split('//')))
                 pipeline = pipeline.to(accelerator.device)
                 g_cuda = torch.Generator(device=accelerator.device).manual_seed(args.seed)
