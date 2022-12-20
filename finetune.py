@@ -1,4 +1,3 @@
-import argparse
 import configargparse
 import yaml
 import hashlib
