@@ -232,7 +232,7 @@ def main(args):
         unet_lora_params, unet_names = inject_trainable_lora(
             unet,
             target_replace_module=args.lora_unet_modules,
-            r=args.lora_rank,
+            r=args.lora_unet_rank,
         )
         if args.debug:
             for _up, _down in extract_lora_ups_down(
@@ -279,7 +279,7 @@ def main(args):
         text_encoder_lora_params, text_encoder_names = inject_trainable_lora(
             text_encoder,
             target_replace_module=args.lora_text_modules,
-            r=args.lora_rank,
+            r=args.lora_text_rank,
         )
         if args.debug:
             for _up, _down in extract_lora_ups_down(
