@@ -481,7 +481,13 @@ def parse_args(input_args=None):
         help="Whether or not to push the model to the Hub.",
     )
 
-
+    parser.add_argument(
+        "--local_rank",
+        type=int,
+        default=-1,
+        help="For distributed training: local_rank",
+    )
+    
     parser.add_argument(
         "--log_gpu",
         action="store_true",
@@ -491,13 +497,6 @@ def parse_args(input_args=None):
         "--debug",
         action="store_true",
         help="Some exra verbosity."
-    )
-
-    parser.add_argument(
-        "--local_rank",
-        type=int,
-        default=-1,
-        help="For distributed training: local_rank",
     )
 
     if input_args is not None:
