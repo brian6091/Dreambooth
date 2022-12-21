@@ -59,6 +59,10 @@ def main(args):
             raise ValueError("You must specify prompt for class images.")
             
     logging_dir = Path(args.output_dir, args.logging_dir)
+    
+    if args.debug:
+        with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
+            yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
 
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
