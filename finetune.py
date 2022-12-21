@@ -575,10 +575,10 @@ def main(args):
                             break
                             
                 if args.train_unet:
-                    #monkeypatch_lora(pipeline.unet, torch.load(os.path.join(save_dir, "lora_unet.pt")))
+                    # already monkeypatched
                     tune_lora_scale(pipeline.unet, 1.00)
                 if args.train_text_encoder:
-                    #monkeypatch_lora(pipeline.text_encoder, torch.load(os.path.join(save_dir, "lora_text_encoder.pt")), target_replace_module=["CLIPAttention"])
+                    # already monkeypatched
                     tune_lora_scale(pipeline.text_encoder, 1.00)
             else:
                 pipeline.save_pretrained(save_dir)
