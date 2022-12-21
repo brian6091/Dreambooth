@@ -248,7 +248,26 @@ def main(args):
             "lr": args.learning_rate,
         }
     elif not args.train_unet:
-        unet.requires_grad_(False)
+        if args.train_unet_crossattn_only:
+            unet = unet_change_forward(unet)
+            
+            unet.requires_grad_(False)
+            for name, params in unet.named_parameters():
+                if args.train_unet_crossattn_only=='crossattn':
+                    if 'attn2' in name:
+                        params.requires_grad = True
+                        print(name)
+                else:
+                    if 'attn2.to_k' in name or 'attn2.to_v' in name:
+                        params.requires_grad = True
+                        print(name)
+            
+            unet_params_to_optimize = {
+                "params": itertools.chain(unet.parameters()),
+                "lr": args.learning_rate,
+            }
+        else:
+            unet.requires_grad_(False)
     else:
         unet_params_to_optimize = {
             "params": itertools.chain(unet.parameters()),
@@ -290,7 +309,7 @@ def main(args):
         }
         
     params_to_optimize = []
-    if args.train_unet:
+    if args.train_unet or args.train_unet_crossattn_only:
         params_to_optimize.append(unet_params_to_optimize)
     if args.train_text_encoder or args.train_text_embedding:
         params_to_optimize.append(text_params_to_optimize)    
