@@ -149,9 +149,9 @@ def main(args):
                     gitignore.write("epoch_*\n")
 
     # Load the tokenizer
-    if args.tokenizer_name:
+    if args.pretrained_tokenizer_name_or_path is not None:
         tokenizer = CLIPTokenizer.from_pretrained(
-            args.tokenizer_name,
+            args.pretrained_tokenizer_name_or_path,
         )
     elif args.pretrained_model_name_or_path:
         tokenizer = CLIPTokenizer.from_pretrained(
@@ -286,7 +286,7 @@ def main(args):
             "lr": learning_rate_text,
         }
     elif not args.train_text_encoder:
-        if args.train_text_embedding:
+        if args.train_text_embedding_only:
             text_encoder.requires_grad_(False)
             unfreeze_params(text_encoder.get_input_embeddings().parameters())
             text_params_to_optimize = {
@@ -304,13 +304,13 @@ def main(args):
     params_to_optimize = []
     if args.train_unet or args.train_unet_attn_only:
         params_to_optimize.append(unet_params_to_optimize)
-    if args.train_text_encoder or args.train_text_embedding:
+    if args.train_text_encoder or args.train_text_embedding_only:
         params_to_optimize.append(text_params_to_optimize)    
             
     if len(params_to_optimize)==0:
         raise ValueError(
             f"This configuration does not train anything. Unet: {args.instance_token},"
-            f" text_encoder: {args.train_text_encoder}, text_embedding: {args.train_text_embedding}."
+            f" text_encoder: {args.train_text_encoder}, text_embedding: {args.train_text_embedding_only}."
         )
             
     if args.gradient_checkpointing:
@@ -458,7 +458,7 @@ def main(args):
             num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
         )
 
-    if args.train_text_encoder or args.train_text_embedding:
+    if args.train_text_encoder or args.train_text_embedding_only:
         unet, text_encoder, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
             unet, text_encoder, optimizer, train_dataloader, lr_scheduler
         )
@@ -481,7 +481,7 @@ def main(args):
     if not args.train_unet and not args.train_unet_attn_only:
         unet.to(accelerator.device, dtype=weight_dtype)
         unet.eval()
-    if not args.train_text_encoder and not args.train_text_embedding:
+    if not args.train_text_encoder and not args.train_text_embedding_only:
         text_encoder.to(accelerator.device, dtype=weight_dtype)
         text_encoder.eval()
 
@@ -537,7 +537,7 @@ def main(args):
                 {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
             )
                     
-            if args.train_text_encoder or args.train_text_embedding:
+            if args.train_text_encoder or args.train_text_embedding_only:
                 text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
             else:
                 text_enc_model = CLIPTextModel.from_pretrained(
@@ -572,7 +572,7 @@ def main(args):
                         print("First Unet Layer's Down Weight is now : ", _down.weight.data)
                         break
                     
-                if args.train_text_encoder or args.train_text_embedding:
+                if args.train_text_encoder or args.train_text_embedding_only:
                     save_lora_weight(
                         pipeline.text_encoder,
                         os.path.join(save_dir, "lora_text_encoder.pt"),
@@ -590,8 +590,9 @@ def main(args):
                 if args.train_unet:
                     # already monkeypatched
                     tune_lora_scale(pipeline.unet, 1.00)
-                if args.train_text_encoder:
+                if args.train_text_encoder or args.train_text_embedding_only:
                     # already monkeypatched
+                    # TODO, check what happens when embedding only is trained, lora should not be applied to text_encoder
                     tune_lora_scale(pipeline.text_encoder, 1.00)
             else:
                 pipeline.save_pretrained(save_dir)
@@ -631,7 +632,7 @@ def main(args):
     global_step = 0
 
     # TODO: eventually move to debug
-    if args.train_text_encoder or args.train_text_embedding:
+    if args.train_text_encoder or args.train_text_embedding_only:
         # keep original embeddings as reference
         orig_embeds_params = text_encoder.get_input_embeddings().weight.data.clone()
         if args.debug:
@@ -640,7 +641,7 @@ def main(args):
     for epoch in range(args.num_train_epochs):
         if args.train_unet or args.train_unet_attn_only:
             unet.train()
-        if args.train_text_encoder or args.train_text_embedding:
+        if args.train_text_encoder or args.train_text_embedding_only:
             text_encoder.train()
         for step, batch in enumerate(train_dataloader):
             # TODO: how to handle context setting when unet is not training?
@@ -704,7 +705,7 @@ def main(args):
                     ema_unet.step(unet)
                 optimizer.zero_grad()
 
-                if args.debug and (args.train_text_encoder or args.train_text_embedding):
+                if args.debug and (args.train_text_encoder or args.train_text_embedding_only):
                     # TODO: eventually move all of this to debug
                     # Let's make sure we don't update any embedding weights besides the newly added token
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
@@ -733,7 +734,7 @@ def main(args):
             else:
                 logs = {"Loss/pred": loss.detach().item()}
 
-            if (args.train_text_encoder | args.train_text_embedding) and args.train_unet:
+            if (args.train_text_encoder | args.train_text_embedding_only) and args.train_unet:
                 logs["lr/unet"] = lr_scheduler.get_last_lr()[0]
                 logs["lr/text"] = lr_scheduler.get_last_lr()[1]
             else:
