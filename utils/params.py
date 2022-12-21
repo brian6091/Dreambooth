@@ -93,7 +93,7 @@ def parse_args(input_args=None):
     )
     parser.add_argument(
         "--lora_text_modules",
-        nargs='+'
+        nargs='+',
         help="Modules of the text encoder to apply LoRA to.",
     )
     parser.add_argument(
