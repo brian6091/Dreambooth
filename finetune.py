@@ -535,9 +535,6 @@ def main(args):
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
 
-#             with open(os.path.join(save_dir, "args.yaml"), "w") as f:
-#                 yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
-
             # https://github.com/huggingface/diffusers/issues/1566
             accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
                 inspect.signature(accelerator.unwrap_model).parameters.keys()
@@ -574,9 +571,16 @@ def main(args):
             
             if args.use_lora:
                 # TODO: if add_instance_token, I assume we have to save the tokenizer?
-                save_lora_weight(pipeline.unet, os.path.join(save_dir, "lora_unet.pt"))
+                save_lora_weight(
+                    pipeline.unet,
+                    os.path.join(save_dir, "lora_unet.pt"),
+                    target_replace_module=args.lora_unet_modules,
+                )
                 if args.debug:
-                    for _up, _down in extract_lora_ups_down(pipeline.unet):
+                    for _up, _down in extract_lora_ups_down(
+                        pipeline.unet,
+                        target_replace_module=args.lora_unet_modules,
+                    ):
                         print("First Unet Layer's Up Weight is now : ", _up.weight.data)
                         print("First Unet Layer's Down Weight is now : ", _down.weight.data)
                         break
@@ -585,12 +589,12 @@ def main(args):
                     save_lora_weight(
                         pipeline.text_encoder,
                         os.path.join(save_dir, "lora_text_encoder.pt"),
-                        target_replace_module=["CLIPAttention"],
+                        target_replace_module=args.lora_text_modules,
                     )
                     if args.debug:
                         for _up, _down in extract_lora_ups_down(
                             pipeline.text_encoder,
-                            target_replace_module=["CLIPAttention"],
+                            target_replace_module=args.lora_text_modules,
                         ):
                             print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
                             print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
@@ -606,18 +610,20 @@ def main(args):
             else:
                 pipeline.save_pretrained(save_dir)
 
-            if args.save_sample_prompt is not None:
+            if args.save_n_sample>0:
                 save_sample_prompt = args.save_sample_prompt.replace("{}", args.instance_token)
                 save_sample_prompt = list(map(str.strip, save_sample_prompt.split('//')))
                 pipeline = pipeline.to(accelerator.device)
-                g_cuda = torch.Generator(device=accelerator.device).manual_seed(args.seed)
+                g_cuda = torch.Generator(device=accelerator.device).manual_seed(
+                    args.save_seed if args.save_seed!=None else args.seed,
+                )
                 pipeline.set_progress_bar_config(disable=True)
                 sample_dir = os.path.join(save_dir, "samples")
                 os.makedirs(sample_dir, exist_ok=True)
                 
                 with torch.autocast("cuda"), torch.inference_mode():
                     all_images = []
-                    for i in tqdm(range(args.n_save_sample), desc="Generating samples"):
+                    for i in tqdm(range(args.save_n_sample), desc="Generating samples"):
                         images = pipeline(
                             save_sample_prompt,
                             negative_prompt=[args.save_sample_negative_prompt]*len(save_sample_prompt),
@@ -627,7 +633,7 @@ def main(args):
                         ).images
                         all_images.extend(images)
                         
-                    grid = image_grid(all_images, rows=args.n_save_sample, cols=len(save_sample_prompt))
+                    grid = image_grid(all_images, rows=args.save_n_sample, cols=len(save_sample_prompt))
                     grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
                     
                 del pipeline
