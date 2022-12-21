@@ -203,7 +203,7 @@ def parse_args(input_args=None):
 
     parser.add_argument(
         "--conditioning_dropout_prob",
-        type=float,
+        type=none_or_float,
         default=0.0,
         help="Probability that conditioning is dropped.",
     )
@@ -212,11 +212,17 @@ def parse_args(input_args=None):
         default=" ",
         help="Prompt for conditioning dropout.",
     )
-
+    parser.add_argument(
+        "--clip_skip",
+        type=none_or_int,
+        default=None,
+        help="Clip skip, to be implemented.",
+    )
+    
     parser.add_argument(
         "--augment_output_dir",
-        type=str,
-        default="",
+        type=none_or_str,
+        default=None,
         help="The output directory where the image data augmentations will be saved.",
     )
     parser.add_argument(
@@ -394,6 +400,22 @@ def parse_args(input_args=None):
         help="The output directory where the model predictions and checkpoints will be written.",
     )
     parser.add_argument(
+        "--logging_dir",
+        type=str,
+        default="logs",
+        help=(
+            "[TensorBoard](https://www.tensorflow.org/tensorboard) log directory. Will default to"
+            " *output_dir/runs/**CURRENT_DATETIME_HOSTNAME***."
+        ),
+    )
+    
+    parser.add_argument(
+        "--save_n_sample",
+        type=int,
+        default=4,
+        help="The number of samples to save.",
+    )
+    parser.add_argument(
         "--save_sample_prompt",
         type=str,
         default=None,
@@ -406,13 +428,7 @@ def parse_args(input_args=None):
         help="The negative prompt used to generate sample outputs to save.",
     )
     parser.add_argument(
-        "--n_save_sample",
-        type=int,
-        default=4,
-        help="The number of samples to save.",
-    )
-    parser.add_argument(
-        "--sample_batch_size",
+        "--save_batch_size",
         type=int,
         default=4,
         help="Batch size (per device) for sampling images.",
@@ -459,15 +475,7 @@ def parse_args(input_args=None):
         help="Whether or not to push the model to the Hub.",
     )
 
-    parser.add_argument(
-        "--logging_dir",
-        type=str,
-        default="logs",
-        help=(
-            "[TensorBoard](https://www.tensorflow.org/tensorboard) log directory. Will default to"
-            " *output_dir/runs/**CURRENT_DATETIME_HOSTNAME***."
-        ),
-    )
+
     parser.add_argument(
         "--log_gpu",
         action="store_true",
