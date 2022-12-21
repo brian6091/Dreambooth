@@ -6,6 +6,11 @@ def none_or_str(value):
         return None
     return value
 
+def none_or_int(val):
+    if not val:
+        return None
+    return int(val)
+
 def parse_args(input_args=None):
     parser = configargparse.ArgParser(
         description='finetune.py',
@@ -182,7 +187,7 @@ def parse_args(input_args=None):
     )
     parser.add_argument(
         "--augment_min_resolution",
-        type=int,
+        type=none_or_int,
         nargs='?',
         default=None,
         help="Resize minimum image dimension before augmention pipeline.",
