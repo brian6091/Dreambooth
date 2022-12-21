@@ -256,11 +256,13 @@ def main(args):
                 if args.train_unet_attn_only=='crossattn':
                     if 'attn2' in name:
                         params.requires_grad = True
-                        print(name)
+                        if args.debug
+                            print(name)
                 else:
                     if 'attn2.to_k' in name or 'attn2.to_v' in name:
                         params.requires_grad = True
-                        print(name)
+                        if args.debug
+                            print(name)
             
             unet_params_to_optimize = {
                 "params": itertools.chain(unet.parameters()),
@@ -484,13 +486,13 @@ def main(args):
     # For mixed precision training we cast the text_encoder and vae weights to half-precision
     # as these models are only used for inference, keeping weights in full precision is not required.
     vae.to(accelerator.device, dtype=weight_dtype)
-    #vae.eval()
-    if not args.train_unet:
+    vae.eval()
+    if not args.train_unet and not args.train_unet_attn_only:
         unet.to(accelerator.device, dtype=weight_dtype)
-        #unet.eval()
+        unet.eval()
     if not args.train_text_encoder and not args.train_text_embedding:
         text_encoder.to(accelerator.device, dtype=weight_dtype)
-        #text_encoder.eval()
+        text_encoder.eval()
 
     # Create EMA for the unet.
     if args.use_ema:
@@ -645,7 +647,7 @@ def main(args):
             print(instance_token_id)
 
     for epoch in range(args.num_train_epochs):
-        if args.train_unet:
+        if args.train_unet or args.train_unet_attn_only:
             unet.train()
         if args.train_text_encoder or args.train_text_embedding:
             text_encoder.train()
