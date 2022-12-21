@@ -11,6 +11,11 @@ def none_or_int(val):
         return None
     return int(val)
 
+def none_or_float(val):
+    if not val or (val=='None'):
+        return None
+    return float(val)
+
 def parse_args(input_args=None):
     parser = configargparse.ArgParser(
         description='finetune.py',
@@ -82,23 +87,46 @@ def parse_args(input_args=None):
         help="Whether or not to use lora."
     )
     parser.add_argument(
-        "--lora_rank",
-        type=int,
+        "--lora_unet_modules",
+        nargs='+'
+        help="Modules of the Unet to apply LoRA to.",
+    )
+    parser.add_argument(
+        "--lora_text_modules",
+        nargs='+'
+        help="Modules of the text encoder to apply LoRA to.",
+    )
+    parser.add_argument(
+        "--lora_unet_rank",
+        type=none_or_int,
         default=4,
         help="Rank reduction for LoRA.",
     )
-
+    parser.add_argument(
+        "--lora_text_rank",
+        type=none_or_int,
+        default=4,
+        help="Rank reduction for LoRA.",
+    )
+    parser.add_argument(
+        "--lora_unet_alpha",
+        type=none_or_float,
+        default=4.0,
+        help="Alpha for LoRA in Unet.",
+    )
+    parser.add_argument(
+        "--lora_text_alpha",
+        type=none_or_float,
+        default=4.0,
+        help="Alpha for LoRA in text encoder.",
+    )
+    
     parser.add_argument(
         "--add_instance_token",
         action="store_true",
         help="Whether to add instance token to tokenizer dictionary",
     )
-    parser.add_argument(
-        "--prompt_templates",
-        type=str,
-        default=None,
-        help="Which prompt templates to use, object, style, or None",
-    )
+
     parser.add_argument(
         "--instance_token",
         type=str,
@@ -120,7 +148,13 @@ def parse_args(input_args=None):
         required=True,
         help="A folder containing the training data of instance images.",
     )
-
+    parser.add_argument(
+        "--prompt_templates",
+        type=str,
+        default=None,
+        help="Which prompt templates to use, object, style, or None",
+    )
+    
     parser.add_argument(
         "--class_data_dir",
         type=str,
