@@ -182,7 +182,7 @@ def parse_args(input_args=None):
     )
     parser.add_argument(
         "--augment_min_resolution",
-        type=none_or_str,
+        type=int,
         nargs='?',
         default=None,
         help="Resize minimum image dimension before augmention pipeline.",
