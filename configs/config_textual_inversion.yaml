@@ -1,71 +1,104 @@
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
+pretrained_tokenizer_name_or_path: null
 revision: null
-tokenizer_name: null
+#
+#
 train_unet: false
+train_unet_attn_only: null
 train_text_encoder: false
-train_text_embedding: true
-use_lora: true
-lora_rank: 4
+train_text_embedding_only: false
+use_lora: false
+lora_unet_modules: [CrossAttention, Attention, GEGLU]
+lora_text_modules: [CLIPAttention]
+lora_unet_rank: 4
+lora_text_rank: 4
+lora_unet_alpha: 4.0
+lora_text_alpha: 4.0
+#
+#
 add_instance_token: true
-prompt_templates: style
+#
+#
 instance_token: <sks>
-# {} in instance_prompt is automatically replaced by instance_token
-instance_prompt: {} style
+instance_prompt: a photo of {} person
 instance_data_dir: /content/gdrive/MyDrive/InstanceImages/
+prompt_templates: object
 class_data_dir: /content/gdrive/MyDrive/RegularizationImages/
-class_token: style
-class_prompt: illustration style
-with_prior_preservation: false
+class_token: person
+class_prompt: a photo of a person
+with_prior_preservation: true
 prior_loss_weight: 1.0
-num_class_images: 100
+num_class_images: 1500
 use_image_captions: false
+#
+#
 conditioning_dropout_prob: 0.0
 unconditional_prompt: ' '
-augment_output_dir: ''
-augment_min_resolution: None
+clip_skip: null
+#
+#
+augment_output_dir: null
+augment_min_resolution: null
 augment_center_crop: false
 augment_hflip: false
+#
+#
 seed: 1275017
 resolution: 512
 mixed_precision: fp16
-train_batch_size: 1
-num_train_epochs: 7
+train_batch_size: 4
 max_train_steps: 10000
 gradient_accumulation_steps: 1
 gradient_checkpointing: false
+#
+#
 use_8bit_adam: true
 adam_beta1: 0.9
 adam_beta2: 0.999
 adam_weight_decay: 0.01
 adam_epsilon: 1.0e-08
 max_grad_norm: 1.0
-learning_rate: 0.0001
-learning_rate_text: 1.0e-06
+#
+#
+learning_rate: 1.0e-07
+learning_rate_text: 1.0e-07
 scale_lr: false
 lr_scheduler: cosine
 lr_warmup_steps: 50
 lr_cosine_num_cycles: 5.0
+#
+#
 use_ema: false
 ema_inv_gamma: 1.0
 ema_power: 0.75
 ema_min_value: 0.0
 ema_max_value: 0.9999
+#
+#
 output_dir: /content/models/
-# {} in save_sample_prompt is automatically replaced by instance_token
+logging_dir: /content/logs/
+#
+#
+save_n_sample: 4
 save_sample_prompt: a photo of a person // a photo of Keanu Reeves // a photo of {}
-  // an painting of {} by Picasso
+  person // an painting of {} person by Picasso
 save_sample_negative_prompt: hands, border
-n_save_sample: 4
-sample_batch_size: 4
-save_interval: 500
-save_min_steps: 500
+save_seed: null
+save_batch_size: 4
+save_interval: 200
+save_min_steps: 200
 save_guidance_scale: 7.5
 save_infer_steps: 50
+#
+#
 hub_token: null
 hub_model_id: null
 push_to_hub: false
-logging_dir: /content/logs/
-log_gpu: false
-debug: false
+#
+#
 local_rank: -1
+#
+#
+log_gpu: true
+debug: false
