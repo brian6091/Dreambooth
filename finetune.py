@@ -40,7 +40,6 @@ from utils.datasets import FineTuningDataset, PromptDataset
 from utils.textual_inversion_templates import object_templates, style_templates
 from utils.params import parse_args
 from utils.models import freeze_params, unfreeze_params
-from utils.custom_diffusion import unet_change_forward
 from utils.utils import image_grid, get_full_repo_name, get_gpu_memory_map
 
 logger = get_logger(__name__)
@@ -239,9 +238,7 @@ def main(args):
             "lr": args.learning_rate,
         }
     elif not args.train_unet:
-        if args.train_unet_attn_only:
-            #unet = unet_change_forward(unet)
-            
+        if args.train_unet_attn_only:            
             unet.requires_grad_(False)
             for name, params in unet.named_parameters():
                 if args.train_unet_attn_only=='crossattn':
