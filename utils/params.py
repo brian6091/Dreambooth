@@ -331,13 +331,13 @@ def parse_args(input_args=None):
 
     parser.add_argument(
         "--learning_rate",
-        type=float,
+        type=none_or_float,
         default=5e-6,
         help="Initial learning rate (after the potential warmup period) to use.",
     )
     parser.add_argument(
         "--learning_rate_text",
-        type=float,
+        type=none_or_float,
         default=5e-6,
         help="Initial learning rate for text encoder (after the potential warmup period) to use.",
     )
