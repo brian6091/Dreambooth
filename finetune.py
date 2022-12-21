@@ -256,12 +256,12 @@ def main(args):
                 if args.train_unet_attn_only=='crossattn':
                     if 'attn2' in name:
                         params.requires_grad = True
-                        if args.debug
+                        if args.debug:
                             print(name)
                 else:
                     if 'attn2.to_k' in name or 'attn2.to_v' in name:
                         params.requires_grad = True
-                        if args.debug
+                        if args.debug:
                             print(name)
             
             unet_params_to_optimize = {
