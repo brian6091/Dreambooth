@@ -86,6 +86,7 @@ def parse_args(input_args=None):
         action="store_true",
         help="Whether or not to use lora."
     )
+    #https://stackoverflow.com/a/15753721
     parser.add_argument(
         "--lora_unet_modules",
         nargs='+',
