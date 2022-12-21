@@ -9,14 +9,21 @@ train_unet_attn_only: crossattn_kv
 train_text_encoder: true
 train_text_embedding_only: false
 use_lora: false
-lora_rank: 4
+lora_unet_modules: [CrossAttention, Attention, GEGLU]
+lora_text_modules: [CLIPAttention]
+lora_unet_rank: 4
+lora_text_rank: 4
+lora_unet_alpha: 4.0
+lora_text_alpha: 4.0
+#
+#
 add_instance_token: true
 #
 #
-prompt_templates: null
 instance_token: <sks>
 instance_prompt: a photo of {} person
 instance_data_dir: /content/gdrive/MyDrive/InstanceImages/
+prompt_templates: null
 class_data_dir: /content/gdrive/MyDrive/RegularizationImages/
 class_token: person
 class_prompt: a photo of a person
@@ -28,9 +35,10 @@ use_image_captions: false
 #
 conditioning_dropout_prob: 0.0
 unconditional_prompt: ' '
+clip_skip: null
 #
 #
-augment_output_dir: ''
+augment_output_dir: null
 augment_min_resolution: null
 augment_center_crop: false
 augment_hflip: false
@@ -40,7 +48,6 @@ seed: 1275017
 resolution: 512
 mixed_precision: fp16
 train_batch_size: 4
-num_train_epochs: 7
 max_train_steps: 10000
 gradient_accumulation_steps: 1
 gradient_checkpointing: false
@@ -70,23 +77,28 @@ ema_max_value: 0.9999
 #
 #
 output_dir: /content/models/
+logging_dir: /content/logs/
 #
 #
+save_n_sample: 4
 save_sample_prompt: a photo of a person // a photo of Keanu Reeves // a photo of {}
   person // an painting of {} person by Picasso
 save_sample_negative_prompt: hands, border
-n_save_sample: 4
-sample_batch_size: 4
+save_seed: null
+save_batch_size: 4
 save_interval: 200
 save_min_steps: 200
 save_guidance_scale: 7.5
 save_infer_steps: 50
 #
 #
-hub_token: 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
+hub_token: null
 hub_model_id: null
 push_to_hub: false
-logging_dir: /content/logs/
+#
+#
+local_rank: -1
+#
+#
 log_gpu: true
 debug: false
-local_rank: -1
