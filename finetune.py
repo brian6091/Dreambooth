@@ -229,9 +229,16 @@ def main(args):
 
     if args.train_unet and args.use_lora:
         unet.requires_grad_(False)
-        unet_lora_params, unet_names = inject_trainable_lora(unet, r=args.lora_rank)
+        unet_lora_params, unet_names = inject_trainable_lora(
+            unet,
+            target_replace_module=args.lora_unet_modules,
+            r=args.lora_rank,
+        )
         if args.debug:
-            for _up, _down in extract_lora_ups_down(unet):
+            for _up, _down in extract_lora_ups_down(
+                unet,
+                target_replace_module=args.lora_unet_modules,
+            ):
                 print("Before training: Unet First Layer lora up", _up.weight.data)
                 print("Before training: Unet First Layer lora down", _down.weight.data)
                 break
@@ -270,12 +277,14 @@ def main(args):
     if args.train_text_encoder and args.use_lora:
         text_encoder.requires_grad_(False)
         text_encoder_lora_params, text_encoder_names = inject_trainable_lora(
-            text_encoder, target_replace_module=["CLIPAttention"],
+            text_encoder,
+            target_replace_module=args.lora_text_modules,
             r=args.lora_rank,
         )
         if args.debug:
             for _up, _down in extract_lora_ups_down(
-                text_encoder, target_replace_module=["CLIPAttention"]
+                text_encoder, 
+                target_replace_module=args.lora_text_modules,
             ):
                 print("Before training: text encoder First Layer lora up", _up.weight.data)
                 print("Before training: text encoder First Layer lora down", _down.weight.data)
