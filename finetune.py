@@ -46,15 +46,6 @@ from utils.utils import image_grid, get_full_repo_name, get_gpu_memory_map
 logger = get_logger(__name__)
 
 
-# def freeze_params(params):
-#     for param in params:
-#         param.requires_grad = False
-
-# def unfreeze_params(params):
-#     for param in params:
-#         param.requires_grad = True
-        
-
 def main(args):
     torch.set_printoptions(precision=10)
     
