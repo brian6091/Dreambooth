@@ -29,7 +29,7 @@ class_token: person
 class_prompt: a photo of a person
 with_prior_preservation: true
 prior_loss_weight: 1.0
-num_class_images: 1500
+num_class_images: 500
 use_image_captions: false
 #
 #
@@ -61,8 +61,8 @@ adam_epsilon: 1.0e-08
 max_grad_norm: 1.0
 #
 #
-learning_rate: 1.0e-06
-learning_rate_text: 1.0e-07
+learning_rate: 2.0e-06
+learning_rate_text: 2.0e-07
 scale_lr: false
 lr_scheduler: cosine
 lr_warmup_steps: 50
