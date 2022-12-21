@@ -24,12 +24,18 @@ with_prior_preservation: true
 prior_loss_weight: 1.0
 num_class_images: 1500
 use_image_captions: false
+#
+#
 conditioning_dropout_prob: 0.0
 unconditional_prompt: ' '
+#
+#
 augment_output_dir: ''
 augment_min_resolution: null
 augment_center_crop: false
 augment_hflip: false
+#
+#
 seed: 1275017
 resolution: 512
 mixed_precision: fp16
@@ -38,24 +44,34 @@ num_train_epochs: 7
 max_train_steps: 10000
 gradient_accumulation_steps: 1
 gradient_checkpointing: false
+#
+#
 use_8bit_adam: true
 adam_beta1: 0.9
 adam_beta2: 0.999
 adam_weight_decay: 0.01
 adam_epsilon: 1.0e-08
 max_grad_norm: 1.0
+#
+#
 learning_rate: 1.0e-06
 learning_rate_text: 1.0e-07
 scale_lr: false
 lr_scheduler: cosine
 lr_warmup_steps: 50
 lr_cosine_num_cycles: 5.0
+#
+#
 use_ema: false
 ema_inv_gamma: 1.0
 ema_power: 0.75
 ema_min_value: 0.0
 ema_max_value: 0.9999
+#
+#
 output_dir: /content/models/
+#
+#
 save_sample_prompt: a photo of a person // a photo of Keanu Reeves // a photo of {}
   person // an painting of {} person by Picasso
 save_sample_negative_prompt: hands, border
@@ -65,6 +81,8 @@ save_interval: 200
 save_min_steps: 200
 save_guidance_scale: 7.5
 save_infer_steps: 50
+#
+#
 hub_token: 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
 hub_model_id: null
 push_to_hub: false
