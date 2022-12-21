@@ -5,7 +5,7 @@ revision: null
 #
 #
 train_unet: false
-train_unet_attn_only: crossattn_kv
+train_unet_attn_only: CrossAttention_KV
 train_text_encoder: true
 train_text_embedding_only: false
 use_lora: false
