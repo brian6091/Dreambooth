@@ -249,7 +249,7 @@ def main(args):
         }
     elif not args.train_unet:
         if args.train_unet_attn_only:
-            unet = unet_change_forward(unet)
+            #unet = unet_change_forward(unet)
             
             unet.requires_grad_(False)
             for name, params in unet.named_parameters():
