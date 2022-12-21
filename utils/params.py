@@ -2,12 +2,12 @@ import configargparse
 import yaml
 
 def none_or_str(val):
-    if not val:
+    if not val or (val=='None'):
         return None
     return val
 
 def none_or_int(val):
-    if not val:
+    if not val or (val=='None'):
         return None
     return int(val)
 
