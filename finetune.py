@@ -251,12 +251,12 @@ def main(args):
         if args.train_unet_attn_only:            
             unet.requires_grad_(False)
             for name, params in unet.named_parameters():
-                if args.train_unet_attn_only=='crossattn':
+                if args.train_unet_attn_only=='CrossAttention':
                     if 'attn2' in name:
                         params.requires_grad = True
                         if args.debug:
                             print(name)
-                else:
+                elif args.train_unet_attn_only=='CrossAttention_KV':
                     if 'attn2.to_k' in name or 'attn2.to_v' in name:
                         params.requires_grad = True
                         if args.debug:
