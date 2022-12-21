@@ -35,6 +35,8 @@
 # COMMERCIAL LOSS, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THE LICENSED MATERIALS, 
 # EVEN IF ADOBE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 
+from diffusers.models.attention import CrossAttention
+
 def unet_change_forward(unet):
 
     def new_forward(self, hidden_states, context=None, mask=None):
