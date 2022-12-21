@@ -40,17 +40,17 @@ def parse_args(input_args=None):
         help="Path to pretrained vae or vae identifier from huggingface.co/models.",
     )
     parser.add_argument(
+        "--pretrained_tokenizer_name_or_path",
+        type=none_or_str,
+        default=None,
+        help="Pretrained tokenizer name or path if not the same as model_name",
+    )
+    parser.add_argument(
         "--revision",
         type=none_or_str,
         default=None,
         required=False,
         help="Revision of pretrained model identifier from huggingface.co/models.",
-    )
-    parser.add_argument(
-        "--tokenizer_name",
-        type=none_or_str,
-        default=None,
-        help="Pretrained tokenizer name or path if not the same as model_name",
     )
 
     parser.add_argument(
@@ -71,7 +71,7 @@ def parse_args(input_args=None):
         help="Whether to train all modules of the text encoder",
     )
     parser.add_argument(
-        "--train_text_embedding",
+        "--train_text_embedding_only",
         action="store_true",
         help="Whether to train only the text embedding module of text encoder",
     )
