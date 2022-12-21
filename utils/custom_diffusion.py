@@ -39,7 +39,7 @@ from diffusers.models.attention import CrossAttention
 
 def unet_change_forward(unet):
 
-    def new_forward(self, hidden_states, context=None, mask=None):
+    def new_forward(self, hidden_states, context=None, attention_mask=None):
         batch_size, sequence_length, _ = hidden_states.shape
         crossattn = False
         if context is not None:
