@@ -511,10 +511,9 @@ def main(args):
     # Afterwards we recalculate our number of training epochs
     args.num_train_epochs = math.ceil(args.max_train_steps / num_update_steps_per_epoch)
 
-    # We need to initialize the trackers we use, and also store our configuration.
+    # We need to initialize the trackers
     # The trackers initializes automatically on the main process.
     if accelerator.is_main_process:
-        #accelerator.init_trackers("dreambooth", config=vars(args))
         accelerator.init_trackers("dreambooth")
 
     # Train!
@@ -709,6 +708,7 @@ def main(args):
 
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:
+                    # TODO: this should accept params_to_optimize as first input, no?
                     params_to_clip = (
                         itertools.chain(unet.parameters(), text_encoder.parameters())
                         if args.train_text_encoder
