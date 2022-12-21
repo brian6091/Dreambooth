@@ -60,9 +60,8 @@ def main(args):
             
     logging_dir = Path(args.output_dir, args.logging_dir)
     
-    if args.debug:
-        with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
-            yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
+    with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
+        yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
 
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
@@ -343,15 +342,15 @@ def main(args):
         print(summary(unet, col_names=["num_params", "trainable"], verbose=1))
         print(summary(text_encoder, col_names=["num_params", "trainable"], verbose=1))
 
-        with open(os.path.join(args.output_dir, "vae.txt"), "w") as f:
-            f.write(str(summary(vae, col_names=["num_params", "trainable"], verbose=2)))
-            f.close()
-        with open(os.path.join(args.output_dir, "unet.txt"), "w") as f:
-            f.write(str(summary(unet, col_names=["num_params", "trainable"], verbose=2)))
-            f.close()
-        with open(os.path.join(args.output_dir, "text_encoder.txt"), "w") as f:
-            f.write(str(summary(text_encoder, col_names=["num_params", "trainable"], verbose=2)))
-            f.close()
+    with open(os.path.join(args.output_dir, "vae.txt"), "w") as f:
+        f.write(str(summary(vae, col_names=["num_params", "trainable"], verbose=2)))
+        f.close()
+    with open(os.path.join(args.output_dir, "unet.txt"), "w") as f:
+        f.write(str(summary(unet, col_names=["num_params", "trainable"], verbose=2)))
+        f.close()
+    with open(os.path.join(args.output_dir, "text_encoder.txt"), "w") as f:
+        f.write(str(summary(text_encoder, col_names=["num_params", "trainable"], verbose=2)))
+        f.close()
         
     # May want to add lambda here: 
     # https://discuss.pytorch.org/t/parameters-with-requires-grad-false-are-updated-during-training/90096/9
@@ -527,8 +526,8 @@ def main(args):
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
 
-            with open(os.path.join(save_dir, "args.yaml"), "w") as f:
-                yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
+#             with open(os.path.join(save_dir, "args.yaml"), "w") as f:
+#                 yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
 
             # https://github.com/huggingface/diffusers/issues/1566
             accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
