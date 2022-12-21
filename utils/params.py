@@ -428,6 +428,12 @@ def parse_args(input_args=None):
         help="The negative prompt used to generate sample outputs to save.",
     )
     parser.add_argument(
+        "--save_seed",
+        type=none_or_int,
+        default=None,
+        help="A seed for intermediate samples.",
+    )
+    parser.add_argument(
         "--save_batch_size",
         type=int,
         default=4,
