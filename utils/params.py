@@ -54,6 +54,13 @@ def parse_args(input_args=None):
         help="Whether to train the unet",
     )
     parser.add_argument(
+        "--train_unet_crossattn_only",
+        type=none_or_str,
+        nargs='?',
+        default=None,
+        help="Only train cross attention layers of unet.",
+    )
+    parser.add_argument(
         "--train_text_encoder",
         action="store_true",
         help="Whether to train all modules of the text encoder",
