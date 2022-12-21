@@ -65,7 +65,7 @@ def unet_change_forward(unet):
         # TODO(PVP) - mask is currently never used. Remember to re-implement when used
 
         if self._use_memory_efficient_attention_xformers:
-            hidden_states = self._memory_efficient_attention_xformers(query, key, value)
+            hidden_states = self._memory_efficient_attention_xformers(query, key, value, attention_mask=attention_mask)
             # Some versions of xformers return output in fp32, cast it back to the dtype of the input
             hidden_states = hidden_states.to(query.dtype)
         else:
