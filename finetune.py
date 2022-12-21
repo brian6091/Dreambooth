@@ -365,7 +365,7 @@ def main(args):
 
     noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
-    if args.prompt_templates=="None":
+    if args.prompt_templates==None:
         prompt_templates = None
     elif args.prompt_templates=="object":
         prompt_templates = object_templates
