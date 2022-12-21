@@ -1,10 +1,10 @@
 import configargparse
 import yaml
 
-def none_or_str(value):
-    if value == 'None':
+def none_or_str(val):
+    if not val:
         return None
-    return value
+    return val
 
 def none_or_int(val):
     if not val:
@@ -28,27 +28,27 @@ def parse_args(input_args=None):
     
     parser.add_argument(
         "--pretrained_model_name_or_path",
-        type=str,
+        type=none_or_str,
         default=None,
         required=True,
         help="Path to pretrained model or model identifier from huggingface.co/models.",
     )
     parser.add_argument(
         "--pretrained_vae_name_or_path",
-        type=str,
+        type=none_or_str,
         default=None,
         help="Path to pretrained vae or vae identifier from huggingface.co/models.",
     )
     parser.add_argument(
         "--revision",
-        type=str,
+        type=none_or_str,
         default=None,
         required=False,
         help="Revision of pretrained model identifier from huggingface.co/models.",
     )
     parser.add_argument(
         "--tokenizer_name",
-        type=str,
+        type=none_or_str,
         default=None,
         help="Pretrained tokenizer name or path if not the same as model_name",
     )
