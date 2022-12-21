@@ -1,0 +1,72 @@
+pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
+pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
+revision: null
+tokenizer_name: null
+train_unet: false
+train_unet_attn_only: crossattn
+train_text_encoder: true
+train_text_embedding: false
+use_lora: false
+lora_rank: 4
+add_instance_token: false
+prompt_templates: None
+instance_token: <sks>
+# {} in instance_prompt is automatically replaced by instance_token
+instance_prompt: a photo of {} person
+instance_data_dir: /content/gdrive/MyDrive/InstanceImages/
+class_data_dir: /content/gdrive/MyDrive/RegularizationImages/
+class_token: person
+class_prompt: a photo of a person
+with_prior_preservation: true
+prior_loss_weight: 1.0
+num_class_images: 100
+use_image_captions: false
+conditioning_dropout_prob: 0.0
+unconditional_prompt: ' '
+augment_output_dir: ''
+augment_min_resolution: None
+augment_center_crop: false
+augment_hflip: false
+seed: 1275017
+resolution: 512
+mixed_precision: fp16
+train_batch_size: 1
+num_train_epochs: 7
+max_train_steps: 10000
+gradient_accumulation_steps: 1
+gradient_checkpointing: false
+use_8bit_adam: true
+adam_beta1: 0.9
+adam_beta2: 0.999
+adam_weight_decay: 0.01
+adam_epsilon: 1.0e-08
+max_grad_norm: 1.0
+learning_rate: 2.0e-06
+learning_rate_text: 2.0e-06
+scale_lr: false
+lr_scheduler: cosine
+lr_warmup_steps: 50
+lr_cosine_num_cycles: 5.0
+use_ema: false
+ema_inv_gamma: 1.0
+ema_power: 0.75
+ema_min_value: 0.0
+ema_max_value: 0.9999
+output_dir: /content/models/
+# {} in save_sample_prompt is automatically replaced by instance_token
+save_sample_prompt: a photo of a person // a photo of Keanu Reeves // a photo of {} person
+  // an painting of {} person by Picasso
+save_sample_negative_prompt: hands, border
+n_save_sample: 4
+sample_batch_size: 4
+save_interval: 500
+save_min_steps: 1000
+save_guidance_scale: 7.5
+save_infer_steps: 50
+hub_token: null
+hub_model_id: null
+push_to_hub: false
+logging_dir: /content/logs/
+log_gpu: false
+debug: false
+local_rank: -1
