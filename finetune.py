@@ -6,7 +6,6 @@ import random
 import os
 from pathlib import Path
 from typing import Iterable, Optional
-from typing import Optional
 import inspect
 
 import torch
@@ -23,6 +22,7 @@ from diffusers.optimization import get_scheduler, get_cosine_with_hard_restarts_
 from diffusers.training_utils import EMAModel
 from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import HfFolder, Repository, whoami
+
 from PIL import Image
 from torchvision import transforms
 from tqdm.auto import tqdm
@@ -52,26 +52,9 @@ def main(args):
     if env_local_rank != -1 and env_local_rank != args.local_rank:
         args.local_rank = env_local_rank
 
-    if args.with_prior_preservation:
-        if args.class_data_dir is None:
-            raise ValueError("You must specify a data directory for class images.")
-        if args.class_prompt is None:
-            raise ValueError("You must specify prompt for class images.")
-            
     logging_dir = Path(args.output_dir, args.logging_dir)
-    
-    if args.output_dir is not None:
-        os.makedirs(args.output_dir, exist_ok=True)
-    with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
-        yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
 
-    accelerator = Accelerator(
-        gradient_accumulation_steps=args.gradient_accumulation_steps,
-        mixed_precision=args.mixed_precision,
-        log_with="tensorboard",
-        logging_dir=logging_dir,
-    )
-
+    # TODO: CHECK FATAL ERRORS (e.g., no training, etc)
     # Currently, it's not possible to do gradient accumulation when training two models with accelerate.accumulate
     # This will be enabled soon in accelerate. For now, we don't allow gradient accumulation when training two models.
     # TODO (patil-suraj): Remove this check when gradient accumulation with two models is enabled in accelerate.
@@ -80,6 +63,41 @@ def main(args):
             "Gradient accumulation is not supported when training the text encoder in distributed training. "
             "Please set gradient_accumulation_steps to 1. This feature will be supported in the future."
         )
+        
+    accelerator = Accelerator(
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        mixed_precision=args.mixed_precision,
+        log_with="tensorboard",
+        logging_dir=logging_dir,
+    )
+    
+    if args.with_prior_preservation:
+        if args.class_data_dir is None:
+            raise ValueError("You must specify a data directory for class images.")
+        if args.class_prompt is None:
+            raise ValueError("You must specify prompt for class images.")
+    
+    # TODO: check instance and class (if given) path existence
+    # Check https://huggingface.co/docs/accelerate/main/en/package_reference/accelerator#only-ever-once-across-all-servers
+    if args.output_dir is not None:
+        os.makedirs(args.output_dir, exist_ok=True)
+    with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
+        yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
+
+    # Handle the repository creation
+    if accelerator.is_main_process:
+        if args.push_to_hub:
+            if args.hub_model_id is None:
+                repo_name = get_full_repo_name(Path(args.output_dir).name, token=args.hub_token)
+            else:
+                repo_name = args.hub_model_id
+            repo = Repository(args.output_dir, clone_from=repo_name)
+
+            with open(os.path.join(args.output_dir, ".gitignore"), "w+") as gitignore:
+                if "step_*" not in gitignore:
+                    gitignore.write("step_*\n")
+                if "epoch_*" not in gitignore:
+                    gitignore.write("epoch_*\n")
 
     if args.seed is not None:
         #cudnn.benchmark = False
@@ -133,22 +151,7 @@ def main(args):
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-    # Handle the repository creation
-    if accelerator.is_main_process:
-        if args.push_to_hub:
-            if args.hub_model_id is None:
-                repo_name = get_full_repo_name(Path(args.output_dir).name, token=args.hub_token)
-            else:
-                repo_name = args.hub_model_id
-            repo = Repository(args.output_dir, clone_from=repo_name)
-
-            with open(os.path.join(args.output_dir, ".gitignore"), "w+") as gitignore:
-                if "step_*" not in gitignore:
-                    gitignore.write("step_*\n")
-                if "epoch_*" not in gitignore:
-                    gitignore.write("epoch_*\n")
-
-    # Load the tokenizer
+    # Load diffusion modules
     if args.pretrained_tokenizer_name_or_path is not None:
         tokenizer = CLIPTokenizer.from_pretrained(
             args.pretrained_tokenizer_name_or_path,
@@ -166,7 +169,7 @@ def main(args):
     )
     
     if args.add_instance_token:
-        # Add the instance_token to tokenizer
+        # Add to tokenizer
         num_added_tokens = tokenizer.add_tokens(args.instance_token)
         if num_added_tokens == 0:
             raise ValueError(
@@ -177,7 +180,7 @@ def main(args):
             if args.debug:
                 print(f"{args.instance_token} added to tokenizer.")
 
-        # Resize the token embeddings as we are adding new special tokens to the tokenizer
+        # Resize the token embeddings
         text_encoder.resize_token_embeddings(len(tokenizer))
         
         if args.class_token is not None:
@@ -187,7 +190,7 @@ def main(args):
             if len(token_ids) > 1:
                 raise ValueError("The class token must be a single token.")
 
-            # Initialise the instance token with the embeddings of the class token
+            # Initialise new instance_token embedding with the embedding of the class_token
             token_embeds = text_encoder.get_input_embeddings().weight.data
             instance_token_id = tokenizer.convert_tokens_to_ids(args.instance_token)
             if args.debug:
@@ -261,6 +264,8 @@ def main(args):
                         params.requires_grad = True
                         if args.debug:
                             print(name)
+                else:
+                    # TODO: ERROR or do it in argparse
             
             unet_params_to_optimize = {
                 "params": itertools.chain(unet.parameters()),
@@ -275,6 +280,7 @@ def main(args):
         }
     
     if args.train_text_encoder and args.use_lora:
+        # TODO: This should add "and not args.train_text_embedding_only? or train_text_encoder should be train_text_encoder_all
         text_encoder.requires_grad_(False)
         text_encoder_lora_params, text_encoder_names = inject_trainable_lora(
             text_encoder,
@@ -511,13 +517,11 @@ def main(args):
     # Afterwards we recalculate our number of training epochs
     args.num_train_epochs = math.ceil(args.max_train_steps / num_update_steps_per_epoch)
 
-    # We need to initialize the trackers
-    # The trackers initializes automatically on the main process.
+    total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
+
+    # Initialize the trackers (automatically on the main process)
     if accelerator.is_main_process:
         accelerator.init_trackers("dreambooth")
-
-    # Train!
-    total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
     print("***** Running training *****")
     print(f"  Num examples = {len(train_dataset)}")
@@ -568,6 +572,8 @@ def main(args):
                 torch_dtype=torch.float16,
                 revision=args.revision,
             )
+            
+            # TODO: for custom diffusion, or generally distinct module training
             
             if args.use_lora:
                 # TODO: if add_instance_token, I assume we have to save the tokenizer?
@@ -668,6 +674,7 @@ def main(args):
                 # Sample noise that we'll add to the latents
                 noise = torch.randn_like(latents)
                 bsz = latents.shape[0]
+                
                 # Sample a random timestep for each image
                 timesteps = torch.randint(0, noise_scheduler.config.num_train_timesteps, (bsz,), device=latents.device)
                 timesteps = timesteps.long()
@@ -750,7 +757,7 @@ def main(args):
             else:
                 logs = {"Loss/pred": loss.detach().item()}
 
-            if (args.train_text_encoder | args.train_text_embedding_only) and args.train_unet:
+            if (args.train_text_encoder or args.train_text_embedding_only) and args.train_unet:
                 logs["lr/unet"] = lr_scheduler.get_last_lr()[0]
                 logs["lr/text"] = lr_scheduler.get_last_lr()[1]
             else:
@@ -764,7 +771,6 @@ def main(args):
                     
             progress_bar.set_postfix(**logs)
             accelerator.log(logs, step=global_step)
-
 
             if global_step >= args.max_train_steps:
                 break
