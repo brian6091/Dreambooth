@@ -650,7 +650,7 @@ def main(args):
     if args.train_text_encoder or args.train_text_embedding_only:
         # keep original embeddings as reference
         orig_embeds_params = text_encoder.get_input_embeddings().weight.data.clone()
-        if args.debug:
+        if args.debug and (args.train_text_encoder or args.train_text_embedding_only) and args.add_instance_token:
             print(instance_token_id)
 
     for epoch in range(args.num_train_epochs):
@@ -721,7 +721,7 @@ def main(args):
                     ema_unet.step(unet)
                 optimizer.zero_grad()
 
-                if args.debug and (args.train_text_encoder or args.train_text_embedding_only):
+                if args.debug and (args.train_text_encoder or args.train_text_embedding_only) and args.add_instance_token:
                     # TODO: eventually move all of this to debug
                     # Let's make sure we don't update any embedding weights besides the newly added token
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
