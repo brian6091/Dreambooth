@@ -1,5 +1,5 @@
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
-pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
+pretrained_vae_name_or_path: null
 pretrained_tokenizer_name_or_path: null
 revision: null
 #
@@ -7,7 +7,7 @@ revision: null
 train_unet: false
 train_unet_attn_only: null
 train_text_encoder: false
-train_text_embedding_only: false
+train_text_embedding_only: true
 use_lora: false
 lora_unet_modules: [CrossAttention, Attention, GEGLU]
 lora_text_modules: [CLIPAttention]
@@ -20,14 +20,14 @@ lora_text_alpha: 4.0
 add_instance_token: true
 #
 #
-instance_token: <sks>
-instance_prompt: a photo of {} person
-instance_data_dir: /content/gdrive/MyDrive/InstanceImages/
+instance_token: <cat-toy>
+instance_prompt: a photo of {}
+instance_data_dir: /content/gdrive/MyDrive/cat_statue
 prompt_templates: object
-class_data_dir: /content/gdrive/MyDrive/RegularizationImages/
-class_token: person
-class_prompt: a photo of a person
-with_prior_preservation: true
+class_data_dir: null
+class_token: toy
+class_prompt: a photo of a toy
+with_prior_preservation: false
 prior_loss_weight: 1.0
 num_class_images: 1500
 use_image_captions: false
@@ -61,8 +61,8 @@ adam_epsilon: 1.0e-08
 max_grad_norm: 1.0
 #
 #
-learning_rate: 1.0e-07
-learning_rate_text: 1.0e-07
+learning_rate: null
+learning_rate_text: 5.0e-04
 scale_lr: false
 lr_scheduler: cosine
 lr_warmup_steps: 50
@@ -81,8 +81,7 @@ logging_dir: /content/logs/
 #
 #
 save_n_sample: 4
-save_sample_prompt: a photo of a person // a photo of Keanu Reeves // a photo of {}
-  person // an painting of {} person by Picasso
+save_sample_prompt: a photo of {} // a photo of {} holding a mug // an painting of {} by Picasso
 save_sample_negative_prompt: hands, border
 save_seed: null
 save_batch_size: 4
