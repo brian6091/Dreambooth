@@ -31,6 +31,7 @@ Some unique features:
 * More parameters for experimentation ([modify LoRA rank approximation](https://github.com/cloneofsimo/lora/discussions/37), ADAM optimizer parameters, [cosine_with_restarts](https://huggingface.co/transformers/v2.9.1/main_classes/optimizer_schedules.html#transformers.get_cosine_with_hard_restarts_schedule_with_warmup) learning rate scheduler, etc), all of which are dumped to a yaml file so you can remember what you did
 * Drop some text-conditioning to improve classifier-free guidance sampling (e.g., how [SD V1-5 was fine-tuned](https://huggingface.co/runwayml/stable-diffusion-v1-5))
 * Image captioning using filenames or associated textfiles
+* Multiple tokens for jointly training multiple concepts
 * Training loss and prior class loss are tracked separately (can be visualized using tensorboard)
 * Option to generate exponentially-weighted moving average (EMA) weights for the unet
 * Inference with trained models uses [Diffusers🧨](https://github.com/huggingface/diffusers) pipelines, does not rely on any web-apps
