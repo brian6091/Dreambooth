@@ -339,7 +339,7 @@ def main(args):
         )
 
     # Use 8-bit Adam for lower memory usage or to fine-tune the model in 16GB GPUs
-    if args.use_8bit_adam:
+    if args.optimizer=="AdamW8bit":
         try:
             import bitsandbytes as bnb
         except ImportError:
@@ -348,8 +348,12 @@ def main(args):
             )
 
         optimizer_class = bnb.optim.AdamW8bit
-    else:
+    elif args.optimizer=="AdamW":
         optimizer_class = torch.optim.AdamW
+    else:
+        raise ValueError(
+            f"Optimizer {args.optimizer} not supported yet."
+        )        
 
     if args.debug:
         print(summary(vae, col_names=["num_params", "trainable"], verbose=1))
