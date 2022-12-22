@@ -19,7 +19,7 @@ Notebook that exposes all parameters:
 
 $~$
 
-Tested with Tesla T4 and A100 GPUs on Google Colab (some settings will not work on T4 due to limited memory)
+Tested with Tesla T4 and A100 GPUs on Google Colab (some configurations will not work on T4 due to limited memory)
 
 Tested with [Stable Diffusion v1-5](https://huggingface.co/runwayml/stable-diffusion-v1-5) and [Stable Diffusion v2-base](https://huggingface.co/stabilityai/stable-diffusion-2-base).
 
