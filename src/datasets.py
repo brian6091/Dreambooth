@@ -12,23 +12,6 @@ class FineTuningDataset(Dataset):
     """
     A dataset to prepare the instance and class images with the prompts for fine-tuning the model.
     It pre-processes the images and the tokenizes prompts.
-    
-    Textual inversion:
-    add_instance_token=True
-    prompt_templates!="None"
-    train_text_embedding=True (in main script)
-    train_text_encoder=False
-    no prior preservation
-    
-    Dreambooth:
-    add_instance_token=False
-    prompt_templates=ignored?
-    train_text_embedding=True (in main script)
-    train_text_encoder=True
-    
-    train_text_embedding and train_text_encoder should be exclusive?
-    otherwise
-    train_text_embedding_only and train_text_encoder
     """
 
     def __init__(
