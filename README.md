@@ -1,4 +1,4 @@
-# Fine-tuning of Stable Diffusion models
+# One script to rule them all
 
 
 Fine-tune Stable diffusion models using [Dreambooth](https://arxiv.org/abs/2208.12242), [Textual inversion](https://arxiv.org/abs/2208.01618), [Custom diffusion](https://arxiv.org/abs/2212.04488), and/or [Low-rank Adaptation (LoRA)](https://arxiv.org/abs/2106.09685), all in one place.
