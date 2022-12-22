@@ -1,4 +1,4 @@
-ADD descriptiom
+description: textual inversion base configuration
 #
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: null
@@ -56,9 +56,9 @@ gradient_accumulation_steps: 1
 gradient_checkpointing: false
 #
 #
-ADD loss
-ADD optimizer = AdamW or AdamW8bit
-use_8bit_adam: true
+loss: MSE
+optimizer: AdamW8bit
+#use_8bit_adam: true
 adam_beta1: 0.9
 adam_beta2: 0.999
 adam_weight_decay: 0.01
