@@ -1,7 +1,7 @@
 # Fine-tuning of Stable Diffusion models
 
 
-Run [Dreambooth](https://arxiv.org/abs/2208.12242), [Textual inversion](https://arxiv.org/abs/2208.01618), and/or [Low-rank Adaptation (LoRA)](https://arxiv.org/abs/2106.09685)-based fine-tuning from the same notebook:
+Run [Dreambooth](https://arxiv.org/abs/2208.12242), [Textual inversion](https://arxiv.org/abs/2208.01618), [Custom diffusion](https://arxiv.org/abs/2212.04488), and/or [Low-rank Adaptation (LoRA)](https://arxiv.org/abs/2106.09685)-based fine-tuning from the same notebook:
 
 <a target="_blank" href="https://colab.research.google.com/github/brian6091/Dreambooth/blob/main/FineTuning_colab.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" height="28px" width="162px" alt="Open In Colab"/>
@@ -13,7 +13,7 @@ Tested with Tesla T4 and A100 GPUs on Google Colab (some settings will not work 
 
 Tested with [Stable Diffusion v1-5](https://huggingface.co/runwayml/stable-diffusion-v1-5) and [Stable Diffusion v2-base](https://huggingface.co/stabilityai/stable-diffusion-2-base).
 
-This notebook was initially inspired by [ShivamShrirao's](https://github.com/ShivamShrirao/diffusers) implementation, but has since evolved to include some unique features:
+Some unique features:
 * Based on main [Hugging Face](https://huggingface.co/) [Diffusers🧨](https://github.com/huggingface/diffusers) so it's easy to stay up-to-date
 * Mix-and-match different fine-tuning methods (LoRA X Dreambooth, Dreambooth X Textual inversion, etc)
 * Low-rank Adaptation (LoRA) for faster and more efficient fine-tuning (using [cloneofsimo's implementation](https://github.com/cloneofsimo/lora))
@@ -33,3 +33,6 @@ Image comparing Dreambooth and LoRA ([more information here](https://github.com/
 [full-size image here for the pixel-peepers](https://drive.google.com/file/d/16aQcDOg-DJ_1PB6ypzQAauaJEcbn0Vkx/view?usp=share_link "Comparison full-size")
 
 [<a href="https://www.buymeacoffee.com/jvsurfsqv" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" height="45px" width="162px" alt="Buy Me A Coffee"></a>](https://www.buymeacoffee.com/jvsurfsqv)
+
+## Credits
+This notebook was initially based on the Diffusers🧨 [example](https://github.com/huggingface/diffusers/blob/main/examples/dreambooth/train_dreambooth.py), with elements from [ShivamShrirao's fork](https://github.com/ShivamShrirao/diffusers).
