@@ -55,7 +55,8 @@ gradient_accumulation_steps: 1
 gradient_checkpointing: false
 #
 #
-ADD LOSS
+ADD loss
+ADD optimizer = AdamW or AdamW8bit
 use_8bit_adam: true
 adam_beta1: 0.9
 adam_beta2: 0.999
@@ -70,6 +71,20 @@ scale_lr: false
 lr_scheduler: cosine
 lr_warmup_steps: 50
 lr_cosine_num_cycles: 5.0
+####
+lr_unet_scheduler: cosine
+lr_text_scheduler: cosine
+lr_unet: null
+lr_text: 5.0e-04
+lr_scale: false
+lr_unet_warmup_steps: 50
+lr_text_warmup_steps: 50
+lr_unet_cosine_num_cycles: 5.0
+lr_text_cosine_num_cycles: 5.0
+ADD lr_unet_scheduler_start_iter? for pivotal tuning
+ADD lr_unet_scheduler_end_iter?
+
+####
 #
 #
 use_ema: false
