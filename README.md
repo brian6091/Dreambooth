@@ -1,9 +1,19 @@
 # Fine-tuning of Stable Diffusion models
 
 
-Run [Dreambooth](https://arxiv.org/abs/2208.12242), [Textual inversion](https://arxiv.org/abs/2208.01618), [Custom diffusion](https://arxiv.org/abs/2212.04488), and/or [Low-rank Adaptation (LoRA)](https://arxiv.org/abs/2106.09685)-based fine-tuning from the same notebook:
+Fine-tune Stable diffusion models using [Dreambooth](https://arxiv.org/abs/2208.12242), [Textual inversion](https://arxiv.org/abs/2208.01618), [Custom diffusion](https://arxiv.org/abs/2212.04488), and/or [Low-rank Adaptation (LoRA)](https://arxiv.org/abs/2106.09685), all in one place.
+
+Notebook that is less flexible, but contains more explanations:
 
 <a target="_blank" href="https://colab.research.google.com/github/brian6091/Dreambooth/blob/main/FineTuning_colab.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" height="28px" width="162px" alt="Open In Colab"/>
+</a>
+
+$~$
+
+Notebook that exposes all parameters:
+
+<a target="_blank" href="https://colab.research.google.com/github/brian6091/Dreambooth/blob/main/FineTuning_config_colab.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" height="28px" width="162px" alt="Open In Colab"/>
 </a>
 
@@ -18,7 +28,7 @@ Some unique features:
 * Mix-and-match different fine-tuning methods (LoRA X Dreambooth, Dreambooth X Textual inversion, etc)
 * Low-rank Adaptation (LoRA) for faster and more efficient fine-tuning (using [cloneofsimo's implementation](https://github.com/cloneofsimo/lora))
 * Data augmentation such as random cropping, flipping and resizing, which can minimize manually prepping and cropping images in certain cases (e.g., training a style)
-* More parameters for experimentation ([modify LoRA rank approximation](https://github.com/cloneofsimo/lora/discussions/37), ADAM optimizer parameters, [cosine_with_restarts](https://huggingface.co/transformers/v2.9.1/main_classes/optimizer_schedules.html#transformers.get_cosine_with_hard_restarts_schedule_with_warmup) learning rate scheduler, etc), all of which are dumped to a json file so you can remember what you did
+* More parameters for experimentation ([modify LoRA rank approximation](https://github.com/cloneofsimo/lora/discussions/37), ADAM optimizer parameters, [cosine_with_restarts](https://huggingface.co/transformers/v2.9.1/main_classes/optimizer_schedules.html#transformers.get_cosine_with_hard_restarts_schedule_with_warmup) learning rate scheduler, etc), all of which are dumped to a yaml file so you can remember what you did
 * Drop some text-conditioning to improve classifier-free guidance sampling (e.g., how [SD V1-5 was fine-tuned](https://huggingface.co/runwayml/stable-diffusion-v1-5))
 * Image captioning using filenames or associated textfiles
 * Training loss and prior class loss are tracked separately (can be visualized using tensorboard)
