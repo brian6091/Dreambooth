@@ -12,6 +12,8 @@ train_text_encoder: false -> train_text_encoder_modules: [All] or [CLIPAttention
 train_text_embedding_only: true -> remove
 use_lora: false -> remove
 lora_unet_modules: [CrossAttention, Attention, GEGLU] or [] or null? OR use in conjunction with train_unet_modules, and actually specify Linear, Embedding?
+ADD lora_unet_only bool, will disable anything else in parent module?
+ADD lora_text_only bool, will disable anything else in parent module?
 lora_text_modules: [CLIPAttention]
 lora_unet_rank: 4
 lora_text_rank: 4
