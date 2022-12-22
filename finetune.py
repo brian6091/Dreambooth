@@ -19,7 +19,7 @@ from accelerate.logging import get_logger
 from accelerate.utils import set_seed
 from diffusers import AutoencoderKL, DDPMScheduler, DDIMScheduler, StableDiffusionPipeline, UNet2DConditionModel
 from diffusers.optimization import get_scheduler, get_cosine_with_hard_restarts_schedule_with_warmup
-from diffusers.training_utils import EMAModel
+from diffusers.training_utils import EMAModel, enable_full_determinism
 from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import HfFolder, Repository, whoami
 
@@ -100,8 +100,7 @@ def main(args):
                     gitignore.write("epoch_*\n")
 
     if args.seed is not None:
-        #cudnn.benchmark = False
-        #cudnn.deterministic = True
+        #enable_full_determinism(args.seed)
         set_seed(args.seed)
 
     if args.with_prior_preservation:
