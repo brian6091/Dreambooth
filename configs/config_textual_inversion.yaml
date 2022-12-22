@@ -1,3 +1,5 @@
+ADD descriptiom
+#
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: null
 pretrained_tokenizer_name_or_path: null
