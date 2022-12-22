@@ -32,6 +32,13 @@ def parse_args(input_args=None):
     )
     
     parser.add_argument(
+        "--description",
+        type=none_or_str,
+        default=None,
+        help="Description",
+    )
+    
+    parser.add_argument(
         "--pretrained_model_name_or_path",
         type=none_or_str,
         default=None,
@@ -296,7 +303,16 @@ def parse_args(input_args=None):
     )
 
     parser.add_argument(
-        "--use_8bit_adam", action="store_true", help="Whether or not to use 8-bit Adam from bitsandbytes."
+        "--loss",
+        type=str,
+        default="mse",
+        help="Loss",
+    )
+    parser.add_argument(
+        "--optimizer",
+        type=str,
+        default="AdamW8bit",
+        help="Optimizer",
     )
     parser.add_argument(
         "--adam_beta1",
