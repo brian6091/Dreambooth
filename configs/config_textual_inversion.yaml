@@ -6,17 +6,11 @@ pretrained_tokenizer_name_or_path: null
 revision: null
 #
 #
-train_unet_module_or_class: [ALL] or [attn2, up_blocks, down_blocks]
-#train_unet_class: [ALL] or [up_blocks, down_blocks]
-# use class name here
-#lora_unet_class: [CrossAttention, Attention, GEGLU] or [] or null? 
+# can we parse sets?
+train_unet_module_or_class: [_ALL_] or [attn2, up_blocks, down_blocks]
 lora_unet_layer: [Linear]
 
-train_text_module: [ALL] or  or [embedding]
-train_text_class: [CLIPAttention]
-lora_text_layer: [Linear]
-
-train_text_module_or_class: [ALL] or  or [embedding]
+train_text_module_or_class: [ALL] or [CLIPAttention] or [embedding]
 lora_text_layer: [Linear]
 
 lora_unet_rank: 4
