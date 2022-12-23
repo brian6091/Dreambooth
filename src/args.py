@@ -65,53 +65,78 @@ def parse_args(input_args=None):
         help="Revision of pretrained model identifier from huggingface.co/models.",
     )
 
-    parser.add_argument(
-        "--train_unet",
-        action="store_true",
-        help="Whether to train the unet",
-    )
-    parser.add_argument(
-        "--train_unet_attn_only",
-        type=none_or_str,
-        nargs='?',
-        default=None,
-        help="Only train attention layers of unet.",
-    )
-    parser.add_argument(
-        "--train_text_encoder",
-        action="store_true",
-        help="Whether to train all modules of the text encoder",
-    )
-    parser.add_argument(
-        "--train_text_embedding_only",
-        action="store_true",
-        help="Whether to train only the text embedding module of text encoder",
-    )
     
     parser.add_argument(
-        "--use_lora",
-        action="store_true",
-        help="Whether or not to use lora."
-    )
-    #https://stackoverflow.com/a/15753721
-    parser.add_argument(
-        "--lora_unet_modules",
+        "--train_unet_module_or_class",
         nargs='+',
-        help="Modules of the Unet to apply LoRA to.",
+        help="Modules or classes of the Unet to train.",
     )
     parser.add_argument(
-        "--lora_text_modules",
+        "--train_unet_param",
         nargs='+',
-        help="Modules of the text encoder to apply LoRA to.",
+        default=None,
+        help="Parameters of the Unet to train.",
     )
+    parser.add_argument(
+        "--train_text_module_or_class",
+        nargs='+',
+        help="Modules or classes of the text encoder to train.",
+    )
+    parser.add_argument(
+        "--train_text_param",
+        nargs='+',
+        default=None,
+        help="Parameters of the text encoder to train.",
+    )
+    
+#     parser.add_argument(
+#         "--train_unet",
+#         action="store_true",
+#         help="Whether to train the unet",
+#     )
+#     parser.add_argument(
+#         "--train_unet_attn_only",
+#         type=none_or_str,
+#         nargs='?',
+#         default=None,
+#         help="Only train attention layers of unet.",
+#     )
+#     parser.add_argument(
+#         "--train_text_encoder",
+#         action="store_true",
+#         help="Whether to train all modules of the text encoder",
+#     )
+#     parser.add_argument(
+#         "--train_text_embedding_only",
+#         action="store_true",
+#         help="Whether to train only the text embedding module of text encoder",
+#     )
+    
+    parser.add_argument(
+        "--lora_unet_layer,
+        nargs='+',
+        default=None,
+        help="Layer to apply LoRA to.",
+    )
+    
+#     parser.add_argument(
+#         "--use_lora",
+#         action="store_true",
+#         help="Whether or not to use lora."
+#     )
+#     # list inputs https://stackoverflow.com/a/15753721
+#     parser.add_argument(
+#         "--lora_unet_modules",
+#         nargs='+',
+#         help="Modules of the Unet to apply LoRA to.",
+#     )
+#     parser.add_argument(
+#         "--lora_text_modules",
+#         nargs='+',
+#         help="Modules of the text encoder to apply LoRA to.",
+#     )
     parser.add_argument(
         "--lora_unet_rank",
-        type=none_or_int,
-        default=4,
-        help="Rank reduction for LoRA.",
-    )
-    parser.add_argument(
-        "--lora_text_rank",
         type=none_or_int,
         default=4,
         help="Rank reduction for LoRA.",
@@ -121,6 +146,19 @@ def parse_args(input_args=None):
         type=none_or_float,
         default=4.0,
         help="Alpha for LoRA in Unet.",
+    )
+    
+    parser.add_argument(
+        "--lora_text_layer,
+        nargs='+',
+        default=None,
+        help="Layer to apply LoRA to.",
+    )
+    parser.add_argument(
+        "--lora_text_rank",
+        type=none_or_int,
+        default=4,
+        help="Rank reduction for LoRA.",
     )
     parser.add_argument(
         "--lora_text_alpha",
