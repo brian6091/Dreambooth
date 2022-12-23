@@ -72,7 +72,7 @@ def parse_args(input_args=None):
         help="Modules or classes of the Unet to train.",
     )
     parser.add_argument(
-        "--train_unet_param",
+        "--train_unet_submodule",
         nargs='+',
         default=None,
         help="Parameters of the Unet to train.",
@@ -83,7 +83,7 @@ def parse_args(input_args=None):
         help="Modules or classes of the text encoder to train.",
     )
     parser.add_argument(
-        "--train_text_param",
+        "--train_text_submodule",
         nargs='+',
         default=None,
         help="Parameters of the text encoder to train.",
