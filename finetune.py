@@ -46,7 +46,8 @@ logger = get_logger(__name__)
 
 
 def main(args):
-    torch.set_printoptions(precision=10)
+    if args.debug
+        torch.set_printoptions(precision=10)
     
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
     if env_local_rank != -1 and env_local_rank != args.local_rank:
@@ -55,6 +56,12 @@ def main(args):
     logging_dir = Path(args.output_dir, args.logging_dir)
 
     # TODO: CHECK FATAL ERRORS (e.g., no training, etc)
+    if args.with_prior_preservation:
+        if args.class_data_dir is None:
+            raise ValueError("You must specify a data directory for class images.")
+        if args.class_prompt is None:
+            raise ValueError("You must specify prompt for class images.")
+
     # Currently, it's not possible to do gradient accumulation when training two models with accelerate.accumulate
     # This will be enabled soon in accelerate. For now, we don't allow gradient accumulation when training two models.
     # TODO (patil-suraj): Remove this check when gradient accumulation with two models is enabled in accelerate.
@@ -71,16 +78,11 @@ def main(args):
         logging_dir=logging_dir,
     )
     
-    if args.with_prior_preservation:
-        if args.class_data_dir is None:
-            raise ValueError("You must specify a data directory for class images.")
-        if args.class_prompt is None:
-            raise ValueError("You must specify prompt for class images.")
-    
     # TODO: check instance and class (if given) path existence
     # Check https://huggingface.co/docs/accelerate/main/en/package_reference/accelerator#only-ever-once-across-all-servers
     if args.output_dir is not None:
         os.makedirs(args.output_dir, exist_ok=True)
+    
     with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
         yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
 
@@ -103,7 +105,7 @@ def main(args):
         if args.enable_full_determinism:
             enable_full_determinism(args.seed)
         else:
-        set_seed(args.seed)
+            set_seed(args.seed)
 
     if args.with_prior_preservation:
         pipeline = None
@@ -112,6 +114,7 @@ def main(args):
             class_images_dir.mkdir(parents=True)
         cur_class_images = len(list(class_images_dir.iterdir()))
 
+        # Generate class images if necessary
         if cur_class_images < args.num_class_images:
             torch_dtype = torch.float16 if accelerator.device.type == "cuda" else torch.float32
             if pipeline is None:
@@ -230,6 +233,20 @@ def main(args):
     )
     
     vae.requires_grad_(False)
+    
+    unet.requires_grad_(False)
+    if args.train_unet_module_or_class is not None:
+        for _f, _n, _m in find_modules(unet, target_name_or_class=set(args.train_unet_module_or_class)):
+            if args.train_unet_submodule is None:
+                if NOT INJECT:
+                    _m.requires_grad_(True)
+                else:
+                    INJECT
+                print(_f, _n, _m)
+            else:
+                for __f, __n, __m in find_modules(_m, target_name_or_class=args.train_unet_submodule):
+                    __m.requires_grad_(True)
+                    print(__f, __n, __m)
 
     if args.train_unet and args.use_lora:
         unet.requires_grad_(False)
