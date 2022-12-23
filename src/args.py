@@ -242,6 +242,13 @@ def parse_args(input_args=None):
         ),
     )
     parser.add_argument(
+        "--sample_batch_size",
+        type=int,
+        default=4,
+        help="Batch size (per device) for sampling class images.",
+    )
+    
+    parser.add_argument(
         "--use_image_captions",
         action="store_true",
         help="Get captions from textfile, otherwise filename",
@@ -295,6 +302,11 @@ def parse_args(input_args=None):
         type=int,
         default=None,
         help="A seed for reproducible training.",
+    )
+    parser.add_argument(
+        "--enable_full_determinism",
+        action="store_true",
+        help="Enable fullly deterministic runs by disabling some cuda features. May lower performance.",
     )
     parser.add_argument(
         "--resolution",
@@ -382,6 +394,22 @@ def parse_args(input_args=None):
         type=float,
         help="Max gradient norm.",
     )
+    
+    parser.add_argument(
+        "--lr_scale",
+        action="store_true",
+        default=False,
+        help="Scale the learning rate by the number of GPUs, gradient accumulation steps, and batch size.",
+    )
+#     parser.add_argument(
+#         "--lr_unet_scheduler",
+#         type=str,
+#         default="constant",
+#         help=(
+#             'The scheduler type to use. Choose between ["linear", "cosine", "cosine_with_restarts", "polynomial",'
+#             ' "constant", "constant_with_warmup"]'
+#         ),
+#     )
 
     parser.add_argument(
         "--learning_rate",
@@ -394,12 +422,6 @@ def parse_args(input_args=None):
         type=none_or_float,
         default=5e-6,
         help="Initial learning rate for text encoder (after the potential warmup period) to use.",
-    )
-    parser.add_argument(
-        "--scale_lr",
-        action="store_true",
-        default=False,
-        help="Scale the learning rate by the number of GPUs, gradient accumulation steps, and batch size.",
     )
     parser.add_argument(
         "--lr_scheduler",
@@ -422,6 +444,7 @@ def parse_args(input_args=None):
         help="Number of cycles when using cosine_with_restarts lr scheduler.",
     )
 
+    
     parser.add_argument(
         "--use_ema",
         action="store_true",
@@ -487,12 +510,6 @@ def parse_args(input_args=None):
         type=none_or_int,
         default=None,
         help="A seed for intermediate samples.",
-    )
-    parser.add_argument(
-        "--save_batch_size",
-        type=int,
-        default=4,
-        help="Batch size (per device) for sampling images.",
     )
     parser.add_argument(
         "--save_interval",
