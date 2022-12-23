@@ -113,7 +113,7 @@ def parse_args(input_args=None):
 #     )
     
     parser.add_argument(
-        "--lora_unet_layer,
+        "--lora_unet_layer",
         nargs='+',
         default=None,
         help="Layer to apply LoRA to.",
@@ -149,7 +149,7 @@ def parse_args(input_args=None):
     )
     
     parser.add_argument(
-        "--lora_text_layer,
+        "--lora_text_layer",
         nargs='+',
         default=None,
         help="Layer to apply LoRA to.",
