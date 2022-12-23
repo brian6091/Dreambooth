@@ -11,7 +11,7 @@ train_unet_module_or_class: null
 #null or [ALL] or [to_v,  to_k]
 train_unet_submodule: null
 #[ALL] or [CLIPAttention] or [embedding]
-train_text_module_or_class: [Embedding]
+train_text_module_or_class: [embeddings]
 # null or [ALL] or [to_v,  to_k]
 train_text_submodule: [token_embedding]
 #
