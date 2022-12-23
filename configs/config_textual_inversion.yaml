@@ -9,18 +9,19 @@ revision: null
 #[ALL] or [attn2, up_blocks, down_blocks]
 train_unet_module_or_class: null
 #null or [ALL] or [to_v,  to_k]
-train_unet_param: null
+train_unet_submodule: null
 #[ALL] or [CLIPAttention] or [embedding]
 train_text_module_or_class: [Embedding]
-train_text_param: null or [ALL] or [to_v,  to_k]
+# null or [ALL] or [to_v,  to_k]
+train_text_submodule: [token_embedding]
 #
-#
-lora_unet_layer: [Linear] [] or null
+#[Linear] [] or null
+lora_unet_layer: null
 lora_unet_rank: 4
 lora_unet_alpha: 4.0
 #
 #
-lora_text_layer: [Linear]
+lora_text_layer: null
 lora_text_rank: 4
 lora_text_alpha: 4.0
 #
@@ -64,7 +65,6 @@ gradient_checkpointing: false
 #
 loss: mse
 optimizer: AdamW8bit
-#use_8bit_adam: true
 adam_beta1: 0.9
 adam_beta2: 0.999
 adam_weight_decay: 0.01
@@ -72,24 +72,28 @@ adam_epsilon: 1.0e-08
 max_grad_norm: 1.0
 #
 #
-learning_rate: null
-learning_rate_text: 5.0e-04
-scale_lr: false
-lr_scheduler: cosine
-lr_warmup_steps: 50
-lr_cosine_num_cycles: 5.0
+# learning_rate: null
+# learning_rate_text: 5.0e-04
+# scale_lr: false
+# lr_scheduler: cosine
+# lr_warmup_steps: 50
+# lr_cosine_num_cycles: 5.0
 ####
-lr_unet_scheduler: cosine
-lr_text_scheduler: cosine
-lr_unet: null
-lr_text: 5.0e-04
 lr_scale: false
+
+lr_unet_scheduler: cosine
+lr_unet: null
 lr_unet_warmup_steps: 50
-lr_text_warmup_steps: 50
 lr_unet_cosine_num_cycles: 5.0
+lr_unet_scheduler_start_iter: null
+lr_unet_scheduler_stop_iter: null
+
+lr_text_scheduler: cosine
+lr_text: 5.0e-04
+lr_text_warmup_steps: 50
 lr_text_cosine_num_cycles: 5.0
-ADD lr_unet_scheduler_start_iter? for pivotal tuning
-ADD lr_unet_scheduler_end_iter?
+lr_text_scheduler_start_iter: null
+lr_text_scheduler_stop_iter: null
 
 ####
 #
