@@ -6,21 +6,23 @@ pretrained_tokenizer_name_or_path: null
 revision: null
 #
 #
-# can we parse sets?
-train_unet_module_or_class: [_ALL_] or [attn2, up_blocks, down_blocks]
-train_unet_param: null or [_ALL_] or [to_v,  to_k]
-
-train_text_module_or_class: [ALL] or [CLIPAttention] or [embedding]
-train_text_param: null or [_ALL_] or [to_v,  to_k]
-
+#[ALL] or [attn2, up_blocks, down_blocks]
+train_unet_module_or_class: null
+#null or [ALL] or [to_v,  to_k]
+train_unet_param: null
+#[ALL] or [CLIPAttention] or [embedding]
+train_text_module_or_class: [Embedding]
+train_text_param: null or [ALL] or [to_v,  to_k]
+#
+#
 lora_unet_layer: [Linear] [] or null
 lora_unet_rank: 4
 lora_unet_alpha: 4.0
-
+#
+#
 lora_text_layer: [Linear]
 lora_text_rank: 4
 lora_text_alpha: 4.0
-
 #
 #
 add_instance_token: true
