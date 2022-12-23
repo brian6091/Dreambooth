@@ -100,7 +100,9 @@ def main(args):
                     gitignore.write("epoch_*\n")
 
     if args.seed is not None:
-        #enable_full_determinism(args.seed)
+        if args.enable_full_determinism:
+            enable_full_determinism(args.seed)
+        else:
         set_seed(args.seed)
 
     if args.with_prior_preservation:
