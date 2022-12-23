@@ -1,3 +1,4 @@
+from typing import Callable, Dict, List, Optional, Tuple, Set
 
 def freeze_params(params):
     for param in params:
@@ -7,7 +8,16 @@ def unfreeze_params(params):
     for param in params:
         param.requires_grad = True
         
+def _find_modules(
+    model,
+    target_name_or_class: Set[str],
+):
+    for fullname, module in model.named_modules():
+        *path, name = fullname.split(".")
+        if (module.__class__.__name__ in target_name_or_class) or (name in target_name_or_class):
+            yield fullname, name, module
 
+            
 # Functions below here
 # MIT License
 
