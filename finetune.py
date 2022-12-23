@@ -39,7 +39,7 @@ from lora_diffusion import (
 from src.datasets import FineTuningDataset, PromptDataset
 from src.textual_inversion_templates import object_templates, style_templates
 from src.args import parse_args
-from src.models import freeze_params, unfreeze_params
+from src.model_utils import freeze_params, unfreeze_params
 from src.utils import image_grid, get_full_repo_name, get_gpu_memory_map
 
 logger = get_logger(__name__)
