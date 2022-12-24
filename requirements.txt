@@ -8,6 +8,8 @@ modelcards
 bitsandbytes
 huggingface_hub
 
+# adobe-research/custom-diffusion deps
+clip-retrieval
 albumentations==0.4.3
 opencv-python==4.1.2.30
 pudb==2019.2
