@@ -6,20 +6,15 @@ pretrained_tokenizer_name_or_path: null
 revision: null
 #
 #
-#[ALL] or [attn2, up_blocks, down_blocks]
 train_unet_module_or_class: null
-#null or [ALL] or [to_v,  to_k]
 train_unet_submodule: null
-#[ALL] or [CLIPAttention] or [embedding]
+#
 train_text_module_or_class: [embeddings]
-# null or [ALL] or [to_v,  to_k]
 train_text_submodule: [token_embedding]
 #
-#[Linear] [] or null
 lora_unet_layer: null
 lora_unet_rank: 4
 lora_unet_alpha: 4.0
-#
 #
 lora_text_layer: null
 lora_text_rank: 4
