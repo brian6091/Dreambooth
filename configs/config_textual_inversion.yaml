@@ -1,4 +1,4 @@
-description: textual inversion base configuration
+description: textual inversion example configuration
 #
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: null
