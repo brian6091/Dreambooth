@@ -13,12 +13,12 @@ train_text_module_or_class: [embeddings]
 train_text_submodule: [token_embedding]
 #
 lora_unet_layer: null
-lora_unet_train_off_target = null
+lora_unet_train_off_target: null
 lora_unet_rank: 4
 lora_unet_alpha: 4.0
 #
 lora_text_layer: null
-lora_text_train_off_target = {"Embedding"}
+lora_text_train_off_target: {"Embedding"}
 lora_text_rank: 4
 lora_text_alpha: 4.0
 #
