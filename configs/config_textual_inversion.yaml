@@ -62,6 +62,7 @@ train_batch_size: 4
 max_train_steps: 10000
 gradient_accumulation_steps: 1
 gradient_checkpointing: false
+#ADD enable_xformers: true
 #
 #
 loss: mse
