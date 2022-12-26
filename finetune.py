@@ -712,7 +712,7 @@ def main(args):
             text_encoder.train()
         for step, batch in enumerate(train_dataloader):
             # TODO: how to handle context setting when unet is not training?
-            with accelerator.accumulate(unet), accelerator.accumulate(text_encoder):
+            with accelerator.accumulate(text_encoder):
                 # Convert images to latent space
                 latents = vae.encode(batch["pixel_values"].to(dtype=weight_dtype)).latent_dist.sample()
                 latents = latents * 0.18215
