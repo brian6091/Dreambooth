@@ -16,6 +16,11 @@ def none_or_float(val):
         return None
     return float(val)
 
+def none_or_set(val):
+    if not val or (val=='None'):
+        return None
+    return set(val)
+
 def parse_args(input_args=None):
     parser = configargparse.ArgParser(
         description='finetune.py',
@@ -68,22 +73,26 @@ def parse_args(input_args=None):
     
     parser.add_argument(
         "--train_unet_module_or_class",
+        type=none_or_set,
         nargs='+',
         help="Modules or classes of the Unet to train.",
     )
     parser.add_argument(
         "--train_unet_submodule",
+        type=none_or_set,
         nargs='+',
         default=None,
         help="Parameters of the Unet to train.",
     )
     parser.add_argument(
         "--train_text_module_or_class",
+        type=none_or_set,
         nargs='+',
         help="Modules or classes of the text encoder to train.",
     )
     parser.add_argument(
         "--train_text_submodule",
+        type=none_or_set,
         nargs='+',
         default=None,
         help="Parameters of the text encoder to train.",
@@ -91,12 +100,14 @@ def parse_args(input_args=None):
     
     parser.add_argument(
         "--lora_unet_layer",
+        type=none_or_set,
         nargs='+',
         default=None,
         help="Layer to apply LoRA to.",
     )
     parser.add_argument(
         "--lora_unet_train_off_target",
+        type=none_or_set,
         nargs='+',
         default=None,
         help="Set defining classes to enable when LoRA cannot be injected while traversing Unet model.",
@@ -116,12 +127,14 @@ def parse_args(input_args=None):
     
     parser.add_argument(
         "--lora_text_layer",
+        type=none_or_set,
         nargs='+',
         default=None,
         help="Layer to apply LoRA to.",
     )
     parser.add_argument(
         "--lora_text_train_off_target",
+        type=none_or_set,
         nargs='+',
         default=None,
         help="Set defining classes to enable when LoRA cannot be injected while traversing text encoder model.",
