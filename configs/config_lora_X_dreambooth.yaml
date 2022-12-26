@@ -1,4 +1,4 @@
-description: 'Dreambooth example configuration, training both Unet and text encoder, with prior preservation'
+description: 'LoRA (CrossAttention) X Dreambooth example configuration, training both Unet and text encoder, with prior preservation'
 #
 # A100
 # train_batch_size: 1, gradient_checkpointing: false
@@ -12,7 +12,7 @@ pretrained_tokenizer_name_or_path: null
 revision: null
 #
 #
-train_unet_module_or_class: [CrossAttention, GEGLU]
+train_unet_module_or_class: [CrossAttention]
 train_unet_submodule: null
 #
 train_text_module_or_class: [CLIPAttention]
