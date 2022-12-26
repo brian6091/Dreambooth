@@ -1,0 +1,136 @@
+description: 'LoRA (ffn) X Dreambooth example configuration, training both Unet and text encoder, with prior preservation'
+#
+# A100
+# train_batch_size: 1, gradient_checkpointing: false
+# Steps:   0% 21/10000 [00:17<1:26:52,  1.91it/s, GPU=10378, Loss/pred=0.319, Loss/prior=0.0811, Loss/total=0.4, lr/text=8.4e-7, lr/unet=8.4e-5]
+# train_batch_size: 4, gradient_checkpointing: false
+# Steps:   1% 69/10000 [00:53<1:57:07,  1.41it/s, GPU=17526, Loss/pred=0.0702, Loss/prior=0.242, Loss/total=0.312, lr/text=2e-6, lr/unet=0.0002] 
+#
+pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
+pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
+pretrained_tokenizer_name_or_path: null
+revision: null
+#
+#
+train_unet_module_or_class: [ff]
+train_unet_submodule: null
+#
+train_text_module_or_class: [CLIPAttention]
+train_text_submodule: null
+#
+lora_unet_layer: [Linear]
+lora_unet_train_off_target: null
+lora_unet_rank: 4
+lora_unet_alpha: 4.0
+#
+lora_text_layer: [Linear]
+lora_text_train_off_target: null
+lora_text_rank: 4
+lora_text_alpha: 4.0
+#
+#
+add_instance_token: false
+#
+#
+instance_token: raretoken
+instance_prompt: a photo of {} person
+instance_data_dir: /content/gdrive/MyDrive/InstanceImages/
+prompt_templates: null
+class_data_dir: /content/gdrive/MyDrive/RegularizationImages/
+class_token: person
+class_prompt: a photo of a person
+with_prior_preservation: true
+prior_loss_weight: 1.0
+num_class_images: 1500
+sample_batch_size: 4
+use_image_captions: false
+#
+#
+conditioning_dropout_prob: 0.0
+unconditional_prompt: ' '
+clip_skip: null
+#
+#
+augment_output_dir: null
+augment_min_resolution: null
+augment_center_crop: false
+augment_hflip: false
+#
+#
+seed: 1275017
+enable_full_determinism: false
+resolution: 512
+mixed_precision: fp16
+train_batch_size: 4
+max_train_steps: 10000
+gradient_accumulation_steps: 1
+gradient_checkpointing: false
+enable_xformers: true
+#
+#
+loss: mse
+optimizer: AdamW8bit
+adam_beta1: 0.9
+adam_beta2: 0.999
+adam_weight_decay: 0.01
+adam_epsilon: 1.0e-08
+max_grad_norm: 1.0
+#
+#
+lr_scale: false
+learning_rate: 1e-4
+learning_rate_text: 1.0e-06
+lr_scheduler: cosine
+lr_warmup_steps: 50
+lr_cosine_num_cycles: 5.0
+####
+#lr_scale: false
+# lr_unet_scheduler: cosine
+#lr_unet: null
+# lr_unet_warmup_steps: 50
+# lr_unet_cosine_num_cycles: 5.0
+# lr_unet_scheduler_start_iter: null
+# lr_unet_scheduler_stop_iter: null
+
+# lr_text_scheduler: cosine
+#lr_text: 5.0e-04
+# lr_text_warmup_steps: 50
+# lr_text_cosine_num_cycles: 5.0
+# lr_text_scheduler_start_iter: null
+# lr_text_scheduler_stop_iter: null
+
+####
+#
+#
+use_ema: false
+ema_inv_gamma: 1.0
+ema_power: 0.75
+ema_min_value: 0.0
+ema_max_value: 0.9999
+#
+#
+output_dir: /content/models/
+logging_dir: /content/logs/
+#
+#
+save_n_sample: 4
+save_sample_prompt: a photo of a person // a photo of Keanu Reeves // a photo of {}
+  person // an painting of {} person by Picasso
+save_sample_negative_prompt: hands, border
+save_seed: null
+save_interval: 200
+save_min_steps: 200
+save_guidance_scale: 7.5
+save_infer_steps: 50
+#
+#
+hub_token: null
+hub_model_id: null
+push_to_hub: false
+#
+#
+local_rank: -1
+#
+#
+log_gpu: true
+debug: false
