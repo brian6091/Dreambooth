@@ -267,7 +267,7 @@ def main(args):
                              lora_rank=args.lora_text_rank,
                              lora_train_off_target=args.lora_text_train_off_target)
 
-    if True:#args.debug: # TODO: accept file handles and add save_parameter_summary
+    if True:#args.debug: # TODO: add parameter save_parameter_summary
         f = open(os.path.join(args.output_dir, "unet_trainable_parameters.txt"), "w")
         count_parameters(unet, file=f)
         print_trainable_parameters(unet, file=f)
@@ -277,7 +277,7 @@ def main(args):
         print_trainable_parameters(text_encoder, file=f)
         f.close()
     
-    if args.debug:
+    if args.debug:# TODO: add parameter save_model_summary
         print(summary(unet, col_names=["num_params", "trainable"], verbose=1))
         print(summary(text_encoder, col_names=["num_params", "trainable"], verbose=1))
 
@@ -343,6 +343,7 @@ def main(args):
             f"Optimizer {args.optimizer} not supported yet."
         )        
 
+        # TODO make optimizer parameters a dict
     optimizer = optimizer_class(
         params_to_optimize,
         lr=args.learning_rate,
@@ -365,53 +366,65 @@ def main(args):
         use_image_captions=args.use_image_captions,
         unconditional_prompt=" ",
         size=args.resolution,
-        augment_output_dir=None if args.augment_output_dir=="" else args.augment_output_dir,
+        augment_output_dir=None if args.augment_output_dir=="" else args.augment_output_dir, #TODO this should check None?
         augment_min_resolution=args.augment_min_resolution,
         augment_center_crop=args.augment_center_crop,
         augment_hflip=args.augment_hflip,
         debug=args.debug,
     )
     
-    # TODO: make non-nested?
-    def collate_fn(examples):
-        input_ids = [example["instance_prompt_ids"] for example in examples]
-        pixel_values = [example["instance_images"] for example in examples]
+#     # TODO: make non-nested?
+#     def collate_fn(examples):
+#         input_ids = [example["instance_prompt_ids"] for example in examples]
+#         pixel_values = [example["instance_images"] for example in examples]
 
-        # Concat class and instance examples for prior preservation.
-        # We do this to avoid doing two forward passes.
-        if args.with_prior_preservation:
-            input_ids += [example["class_prompt_ids"] for example in examples]
-            pixel_values += [example["class_images"] for example in examples]
+#         # Concat class and instance examples for prior preservation.
+#         # We do this to avoid doing two forward passes.
+#         if args.with_prior_preservation:
+#             input_ids += [example["class_prompt_ids"] for example in examples]
+#             pixel_values += [example["class_images"] for example in examples]
         
-        # Apply text-conditioning dropout by inserting uninformative prompt
-        if args.conditioning_dropout_prob > 0:
-            unconditional_ids = [example["unconditional_prompt_ids"] for example in examples]*2
-            for i, input_id in enumerate(input_ids):
-                if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
-                    input_ids[i] = unconditional_ids[i]
+#         # Apply text-conditioning dropout by inserting uninformative prompt
+#         if args.conditioning_dropout_prob > 0:
+#             unconditional_ids = [example["unconditional_prompt_ids"] for example in examples]*2
+#             for i, input_id in enumerate(input_ids):
+#                 if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
+#                     input_ids[i] = unconditional_ids[i]
 
-        pixel_values = torch.stack(pixel_values)
-        pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
+#         pixel_values = torch.stack(pixel_values)
+#         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
 
-        input_ids = tokenizer.pad(
-            {"input_ids": input_ids},
-            padding="max_length",
-            max_length=tokenizer.model_max_length,
-            return_tensors="pt",
-        ).input_ids
+#         input_ids = tokenizer.pad(
+#             {"input_ids": input_ids},
+#             padding="max_length",
+#             max_length=tokenizer.model_max_length,
+#             return_tensors="pt",
+#         ).input_ids
         
-        if args.debug:
-            print("in collate_fn")
-            print(input_ids)
+#         if args.debug:
+#             print("in collate_fn")
+#             print(input_ids)
 
-        batch = {
-            "input_ids": input_ids,
-            "pixel_values": pixel_values,
-        }
-        return batch
+#         batch = {
+#             "input_ids": input_ids,
+#             "pixel_values": pixel_values,
+#         }
+#         return batch
 
+#     train_dataloader = torch.utils.data.DataLoader(
+#         train_dataset, batch_size=args.train_batch_size, shuffle=True, collate_fn=collate_fn, num_workers=1
+#     )
+    
     train_dataloader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.train_batch_size, shuffle=True, collate_fn=collate_fn, num_workers=1
+        train_dataset,
+        batch_size=args.train_batch_size,
+        shuffle=True,
+        collate_fn=lambda examples: collate_fn(
+            examples,
+            args.with_prior_preservation,
+            args.conditioning_dropout_prob,
+        ),
+        num_workers=1
     )
 
     # Scheduler and math around the number of training steps.
