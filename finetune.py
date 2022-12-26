@@ -423,6 +423,7 @@ def main(args):
             examples,
             args.with_prior_preservation,
             args.conditioning_dropout_prob,
+            args.debug,
         ),
         num_workers=1
     )
