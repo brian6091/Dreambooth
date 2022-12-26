@@ -6,7 +6,7 @@ pretrained_tokenizer_name_or_path: null
 revision: null
 #
 #
-train_unet_module_or_class: [All]
+train_unet_module_or_class: [ALL]
 train_unet_submodule: null
 #
 train_text_module_or_class: [ALL]
