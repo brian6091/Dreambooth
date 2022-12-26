@@ -1,5 +1,13 @@
 description: 'Dreambooth X Textual inversion example configuration, training both Unet and text encoder (embedding only), with prior preservation'
 #
+# A100
+# train_batch_size: 4, gradient_checkpointing: true
+# Steps:   0% 32/10000 [00:31<2:15:10,  1.23it/s, GPU=15804, Loss/pred=0.249, Loss/prior=0.262, Loss/total=0.511, lr/text=6.4e-7, lr/unet=1.28e-6]   
+# train_batch_size: 4, gradient_checkpointing: false
+# Steps:   1% 100/10000 [01:38<1:58:43,  1.39it/s, GPU=23846, Loss/pred=0.0758, Loss/prior=0.181, Loss/total=0.257, lr/text=1e-6, lr/unet=2e-6]
+# train_batch_size: 8, gradient_checkpointing: false
+# Steps:   0% 48/10000 [00:56<2:56:13,  1.06s/it, GPU=34132, Loss/pred=0.109, Loss/prior=0.152, Loss/total=0.262, lr/text=1.92e-6, lr/unet=4.8e-6]
+#
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
 pretrained_tokenizer_name_or_path: null
@@ -55,7 +63,7 @@ seed: 1275017
 enable_full_determinism: false
 resolution: 512
 mixed_precision: fp16
-train_batch_size: 4
+train_batch_size: 8
 max_train_steps: 10000
 gradient_accumulation_steps: 1
 gradient_checkpointing: false
@@ -72,8 +80,8 @@ max_grad_norm: 1.0
 #
 #
 lr_scale: false
-learning_rate: 2e-6
-learning_rate_text: 1.0e-06
+learning_rate: 5e-6
+learning_rate_text: 2.0e-06
 lr_scheduler: cosine
 lr_warmup_steps: 50
 lr_cosine_num_cycles: 5.0
