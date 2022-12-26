@@ -1,26 +1,32 @@
+description: 'Custom diffusion example configuration, training both Unet and text encoder, with prior preservation'
+#
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
 pretrained_tokenizer_name_or_path: null
 revision: null
 #
 #
-train_unet: false
-train_unet_attn_only: CrossAttention_KV
-train_text_encoder: true
-train_text_embedding_only: false
-use_lora: false
-lora_unet_modules: [CrossAttention, Attention, GEGLU]
-lora_text_modules: [CLIPAttention]
+train_unet_module_or_class: [attn2]
+train_unet_submodule: [to_k, to_v]
+#
+train_text_module_or_class: [embeddings]
+train_text_submodule: [token_embedding]
+#
+lora_unet_layer: null
+lora_unet_train_off_target: null
 lora_unet_rank: 4
-lora_text_rank: 4
 lora_unet_alpha: 4.0
+#
+lora_text_layer: null
+lora_text_train_off_target: null
+lora_text_rank: 4
 lora_text_alpha: 4.0
 #
 #
 add_instance_token: true
 #
 #
-instance_token: <sks>
+instance_token: raretoken
 instance_prompt: a photo of {} person
 instance_data_dir: /content/gdrive/MyDrive/InstanceImages/
 prompt_templates: null
@@ -29,7 +35,8 @@ class_token: person
 class_prompt: a photo of a person
 with_prior_preservation: true
 prior_loss_weight: 1.0
-num_class_images: 500
+num_class_images: 1500
+sample_batch_size: 4
 use_image_captions: false
 #
 #
@@ -45,15 +52,18 @@ augment_hflip: false
 #
 #
 seed: 1275017
+enable_full_determinism: false
 resolution: 512
 mixed_precision: fp16
-train_batch_size: 4
+train_batch_size: 1
 max_train_steps: 10000
 gradient_accumulation_steps: 1
-gradient_checkpointing: false
+gradient_checkpointing: true
+enable_xformers: true
 #
 #
-use_8bit_adam: true
+loss: mse
+optimizer: AdamW8bit
 adam_beta1: 0.9
 adam_beta2: 0.999
 adam_weight_decay: 0.01
@@ -61,12 +71,29 @@ adam_epsilon: 1.0e-08
 max_grad_norm: 1.0
 #
 #
-learning_rate: 2.0e-06
-learning_rate_text: 2.0e-07
-scale_lr: false
+lr_scale: false
+learning_rate: 2e-6
+learning_rate_text: 1.0e-06
 lr_scheduler: cosine
 lr_warmup_steps: 50
 lr_cosine_num_cycles: 5.0
+####
+#lr_scale: false
+# lr_unet_scheduler: cosine
+#lr_unet: null
+# lr_unet_warmup_steps: 50
+# lr_unet_cosine_num_cycles: 5.0
+# lr_unet_scheduler_start_iter: null
+# lr_unet_scheduler_stop_iter: null
+
+# lr_text_scheduler: cosine
+#lr_text: 5.0e-04
+# lr_text_warmup_steps: 50
+# lr_text_cosine_num_cycles: 5.0
+# lr_text_scheduler_start_iter: null
+# lr_text_scheduler_stop_iter: null
+
+####
 #
 #
 use_ema: false
@@ -85,7 +112,6 @@ save_sample_prompt: a photo of a person // a photo of Keanu Reeves // a photo of
   person // an painting of {} person by Picasso
 save_sample_negative_prompt: hands, border
 save_seed: null
-save_batch_size: 4
 save_interval: 200
 save_min_steps: 200
 save_guidance_scale: 7.5
