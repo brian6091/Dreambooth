@@ -597,7 +597,7 @@ def main(args):
                 {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
             )
                     
-            if args.train_text_encoder or args.train_text_embedding_only:
+            if len(text_params_to_optimize["params"])>0:
                 text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
             else:
                 text_enc_model = CLIPTextModel.from_pretrained(
@@ -699,10 +699,10 @@ def main(args):
     global_step = 0
 
     # TODO: eventually move to debug
-    if args.train_text_encoder or args.train_text_embedding_only:
+    if len(text_params_to_optimize["params"])>0:
         # keep original embeddings as reference
         orig_embeds_params = text_encoder.get_input_embeddings().weight.data.clone()
-        if args.debug and (args.train_text_encoder or args.train_text_embedding_only) and args.add_instance_token:
+        if args.debug and (len(text_params_to_optimize["params"])>0) and args.add_instance_token:
             print(instance_token_id)
 
     for epoch in range(args.num_train_epochs):
@@ -775,7 +775,7 @@ def main(args):
                     ema_unet.step(unet)
                 optimizer.zero_grad()
 
-                if args.debug and (args.train_text_encoder or args.train_text_embedding_only) and args.add_instance_token:
+                if args.debug and (len(text_params_to_optimize["params"])>0) and args.add_instance_token:
                     # TODO: eventually move all of this to debug
                     # Let's make sure we don't update any embedding weights besides the newly added token
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
@@ -804,7 +804,7 @@ def main(args):
             else:
                 logs = {"Loss/pred": loss.detach().item()}
 
-            if (args.train_text_encoder or args.train_text_embedding_only) and args.train_unet:
+            if (len(text_params_to_optimize["params"])>0) and args.train_unet:
                 logs["lr/unet"] = lr_scheduler.get_last_lr()[0]
                 logs["lr/text"] = lr_scheduler.get_last_lr()[1]
             else:
