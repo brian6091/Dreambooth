@@ -72,8 +72,8 @@ max_grad_norm: 1.0
 #
 #
 lr_scale: false
-learning_rate: null
-learning_rate_text: 5.0e-04
+learning_rate: 2e-6
+learning_rate_text: 1.0e-06
 lr_scheduler: cosine
 lr_warmup_steps: 50
 lr_cosine_num_cycles: 5.0
