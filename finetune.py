@@ -40,8 +40,6 @@ from src.datasets import FineTuningDataset, PromptDataset
 from src.textual_inversion_templates import object_templates, style_templates
 from src.args import parse_args
 from src.model_utils import (
-    #freeze_params,
-    #unfreeze_params,
     find_modules_by_name_or_class,
     set_trainable_parameters,
     _find_children,
