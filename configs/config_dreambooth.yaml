@@ -1,4 +1,4 @@
-description: Dreambooth example configuration
+description: 'Dreambooth example configuration, training both Unet and text encoder, with prior preservation'
 #
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
