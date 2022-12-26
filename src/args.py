@@ -327,6 +327,11 @@ def parse_args(input_args=None):
         action="store_true",
         help="Whether or not to use gradient checkpointing to save memory at the expense of slower backward pass.",
     )
+    parser.add_argument(
+        "--enable_xformers",
+        action="store_true",
+        help="Whether or not to enable xformers.",
+    )
 
     parser.add_argument(
         "--loss",
