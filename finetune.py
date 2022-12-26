@@ -56,7 +56,7 @@ logger = get_logger(__name__)
 
 
 def main(args):
-    if args.debug
+    if args.debug:
         torch.set_printoptions(precision=10)
     
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
@@ -254,7 +254,7 @@ def main(args):
                              lora_rank=args.lora_text_rank,
                              lora_train_off_target=args.lora_text_off_target)
 
-    if args.debug # TODO: accept file handles and add save_parameter_summary
+    if True:#args.debug: # TODO: accept file handles and add save_parameter_summary
         print_trainable_parameters(unet)
         count_parameters(unet)
         print_trainable_parameters(text_encoder)
