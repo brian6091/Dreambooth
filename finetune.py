@@ -110,8 +110,6 @@ def main(args):
     with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
         yaml.dump(format_args(args), f, indent=2, sort_keys=False)
         
-    print(args)
-
     # Handle the repository creation
     if accelerator.is_main_process:
         if args.push_to_hub:
@@ -272,10 +270,12 @@ def main(args):
                              lora_train_off_target=args.lora_text_train_off_target)
 
     if True:#args.debug: # TODO: accept file handles and add save_parameter_summary
-        #print_trainable_parameters(unet)
-        count_parameters(unet)
-        #print_trainable_parameters(text_encoder)
-        count_parameters(text_encoder)
+        f = open(os.path.join(args.output_dir, "unet_trainable_parameters.txt"), "w")
+        print_trainable_parameters(unet, file=f)
+        count_parameters(unet, file=f)
+        print_trainable_parameters(text_encoder, file=f)
+        count_parameters(text_encoder, file=f)
+        f.close()
     
     if args.debug:
         print(summary(unet, col_names=["num_params", "trainable"], verbose=1))
