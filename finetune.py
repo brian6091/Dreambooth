@@ -273,6 +273,8 @@ def main(args):
         f = open(os.path.join(args.output_dir, "unet_trainable_parameters.txt"), "w")
         print_trainable_parameters(unet, file=f)
         count_parameters(unet, file=f)
+        f.close()
+        f = open(os.path.join(args.output_dir, "text_encoder_trainable_parameters.txt"), "w")
         print_trainable_parameters(text_encoder, file=f)
         count_parameters(text_encoder, file=f)
         f.close()
