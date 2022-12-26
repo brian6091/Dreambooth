@@ -1,5 +1,6 @@
 description: 'Dreambooth example configuration, training both Unet and text encoder, with prior preservation'
 #Steps:   1% 98/10000 [02:28<3:56:51,  1.44s/it, GPU=13216, Loss/pred=0.107, Loss/prior=0.049, Loss/total=0.156, lr/text=1e-6, lr/unet=2e-6] 
+# Throws OOM when generating sample images
 #
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
