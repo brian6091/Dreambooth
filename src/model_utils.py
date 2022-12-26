@@ -181,8 +181,8 @@ def count_parameters(model, verbose=True, file=sys.stdout):
             fixed_params += n_params
     if verbose:
         print("--> this network has {} parameters (~{} million)"
-              .format(total_params, round(total_params / 1000000, 1)), file=sys.stdout)
+              .format(total_params, round(total_params / 1000000, 1)), file=file)
         print("      of which: - trainable: {} (~{} million)".format(trainable_params,
-                                                                     round(trainable_params / 1000000, 1)), file=sys.stdout)
-        print("                - frozen: {} (~{} million)".format(fixed_params, round(fixed_params / 1000000, 1)), file=sys.stdout)
+                                                                     round(trainable_params / 1000000, 1)), file=file)
+        print("                - frozen: {} (~{} million)".format(fixed_params, round(fixed_params / 1000000, 1)), file=file)
     return total_params, trainable_params, fixed_params
