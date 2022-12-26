@@ -52,7 +52,7 @@ augment_hflip: false
 #
 #
 seed: 1275017
-enable_full_determinism: False
+enable_full_determinism: false
 resolution: 512
 mixed_precision: fp16
 train_batch_size: 4
