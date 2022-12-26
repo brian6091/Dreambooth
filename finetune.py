@@ -467,18 +467,16 @@ def main(args):
         weight_dtype = torch.bfloat16
 
     # Move text_encode and vae to gpu.
-    # For mixed precision training we cast the vae weights to half-precision as it 
-    # is only used for inference, keeping weights in full precision is not required.
+    # For mixed precision training we cast the weights to half-precision as it they are 
+    # only used for inference, and keeping weights in full precision is not required.
     vae.to(accelerator.device, dtype=weight_dtype)
     vae.eval()
     if not train_unet:
         unet.to(accelerator.device, dtype=weight_dtype)
         unet.eval()
-#    text_encoder.to(accelerator.device, dtype=weight_dtype)
-#     if not train_text_encoder:
-#         text_encoder.eval()
-
-    print(f"**************************** DTYPE {weight_dtype}")
+    if not train_text_encoder:
+        text_encoder.to(accelerator.device, dtype=weight_dtype)
+        text_encoder.eval()
 
     # Create EMA for the unet.
     if args.use_ema and train_unet:
@@ -621,15 +619,14 @@ def main(args):
             print(instance_token_id)
 
     for epoch in range(args.num_train_epochs):
-#         unet.train()
-        text_encoder.train()
         if train_unet:
             unet.train()
-#         if train_text_encoder:
-#             text_encoder.train()
+        if train_text_encoder:
+            text_encoder.train()
+            
         for step, batch in enumerate(train_dataloader):
             # TODO: how to handle context setting when unet is not training?
-            with accelerator.accumulate(text_encoder):
+            with accelerator.accumulate(unet):
                 # Convert images to latent space
                 latents = vae.encode(batch["pixel_values"].to(dtype=weight_dtype)).latent_dist.sample()
                 latents = latents * 0.18215
