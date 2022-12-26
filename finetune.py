@@ -545,9 +545,9 @@ def main(args):
     #if len(unet_params_to_optimize["params"])==0:
         #unet.to(accelerator.device, dtype=weight_dtype)
         #unet.eval()
-    if len(text_params_to_optimize["params"])==0:
-        text_encoder.to(accelerator.device, dtype=weight_dtype)
-        text_encoder.eval()
+#     if len(text_params_to_optimize["params"])==0:
+#         text_encoder.to(accelerator.device, dtype=weight_dtype)
+#         text_encoder.eval()
 
     # Create EMA for the unet.
     if args.use_ema and len(unet_params_to_optimize["params"])>0:
