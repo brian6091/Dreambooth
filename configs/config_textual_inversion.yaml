@@ -109,7 +109,7 @@ logging_dir: /content/logs/
 #
 save_n_sample: 4
 save_sample_prompt: a photo of {} // a photo of {} holding a mug // an painting of {} by Picasso
-save_sample_negative_prompt: hands, border
+save_sample_negative_prompt: border
 save_seed: null
 save_interval: 200
 save_min_steps: 200
