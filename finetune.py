@@ -110,6 +110,8 @@ def main(args):
     # TODO: remove config file line, and convert sets back to lists
     with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
         yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
+        
+    print(args)
 
     # Handle the repository creation
     if accelerator.is_main_process:
