@@ -1,7 +1,7 @@
+import sys
 from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union
 import torch.nn as nn
 from lora_diffusion import LoraInjectedLinear
-
 
 def freeze_params(params):
     for param in params:
@@ -13,10 +13,10 @@ def unfreeze_params(params):
         param.requires_grad = True
 
 
-def print_trainable_parameters(model: nn.Module):
+def print_trainable_parameters(model: nn.Module, file=sys.stdout):
     for name, param in model.named_parameters():
         if param.requires_grad:
-            print(name, param.shape)
+            print(name, param.shape, file=file)
 
 
 def find_modules_by_name_or_class(
@@ -143,7 +143,7 @@ def set_trainable_parameters(
                                 )
 
                             
-# Functions below here modified from
+# Function below is modified from
 # MIT License
 
 # Copyright (c) 2021 Gido M. van de Ven
@@ -166,7 +166,7 @@ def set_trainable_parameters(
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-def count_parameters(model, verbose=True):
+def count_parameters(model, verbose=True, file=sys.stdout):
     '''Count number of parameters, print to screen.'''
     total_params = trainable_params = fixed_params = 0
     for param in model.parameters():
@@ -181,17 +181,8 @@ def count_parameters(model, verbose=True):
             fixed_params += n_params
     if verbose:
         print("--> this network has {} parameters (~{} million)"
-              .format(total_params, round(total_params / 1000000, 1)))
+              .format(total_params, round(total_params / 1000000, 1)), file=sys.stdout)
         print("      of which: - trainable: {} (~{} million)".format(trainable_params,
-                                                                     round(trainable_params / 1000000, 1)))
-        print("                - frozen: {} (~{} million)".format(fixed_params, round(fixed_params / 1000000, 1)))
+                                                                     round(trainable_params / 1000000, 1)), file=sys.stdout)
+        print("                - frozen: {} (~{} million)".format(fixed_params, round(fixed_params / 1000000, 1)), file=sys.stdout)
     return total_params, trainable_params, fixed_params
-
-
-def print_model_info(model, title="MODEL"):
-    '''Print information on [model] onto the screen.'''
-    print("\n" + 40*"-" + title + 40*"-")
-    print(model)
-    print(90*"-")
-    _ = count_parameters(model)
-    print(90*"-")
