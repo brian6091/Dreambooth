@@ -147,7 +147,7 @@ class FineTuningDataset(Dataset):
 
         example["instance_prompt_ids"] = self.tokenizer(
             self.instance_prompt,
-            padding="max_length",#"do_not_pad",
+            padding="max_length",
             truncation=True,
             max_length=self.tokenizer.model_max_length,
             return_tensors="pt",
@@ -185,7 +185,7 @@ class FineTuningDataset(Dataset):
             
             example["class_prompt_ids"] = self.tokenizer(
                 self.class_prompt,
-                padding="max_length",#"do_not_pad",
+                padding="max_length",
                 truncation=True,
                 max_length=self.tokenizer.model_max_length,
                 return_tensors="pt",
@@ -197,7 +197,7 @@ class FineTuningDataset(Dataset):
 
         example["unconditional_prompt_ids"] = self.tokenizer(
                 self.unconditional_prompt,
-                padding="max_length",#"do_not_pad",
+                padding="max_length",
                 truncation=True,
                 max_length=self.tokenizer.model_max_length,
                 return_tensors="pt",
@@ -223,24 +223,14 @@ def collate_fn(examples,
 
     # Apply text-conditioning dropout by inserting uninformative prompt
     if conditioning_dropout_prob > 0:
-        # TODO: I think this is a bug to double the size, assumes that prior preservation is true?
-        #unconditional_ids = [example["unconditional_prompt_ids"] for example in examples]*2
         for i, input_id in enumerate(input_ids):
             if random.uniform(0.0, 1.0) <= conditioning_dropout_prob:
                 input_ids[i] = example["unconditional_prompt_ids"]
-                #input_ids[i] = unconditional_ids[i]
 
     pixel_values = torch.stack(pixel_values)
     pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
     
     input_ids = torch.cat(input_ids, dim=0)
-    
-#     input_ids = tokenizer.pad(
-#         {"input_ids": input_ids},
-#         padding="max_length",
-#         max_length=tokenizer.model_max_length,
-#         return_tensors="pt",
-#     ).input_ids
 
     if debug:
         print("in collate_fn")
