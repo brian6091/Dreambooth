@@ -240,7 +240,7 @@ def main(args):
     set_trainable_parameters(unet,
                              target_module_or_class=args.train_unet_module_or_class,
                              target_submodule=args.train_unet_submodule,
-                             lora_target=args.lora_unet_layer,
+                             lora_layer=args.lora_unet_layer,
                              lora_rank=args.lora_unet_rank,
                              lora_train_off_target=args.lora_unet_train_off_target)
         
@@ -248,7 +248,7 @@ def main(args):
     set_trainable_parameters(text_encoder,
                              target_module_or_class=args.train_text_module_or_class,
                              target_submodule=args.train_text_submodule,
-                             lora_target=args.lora_text_layer,
+                             lora_layer=args.lora_text_layer,
                              lora_rank=args.lora_text_rank,
                              lora_train_off_target=args.lora_text_train_off_target)
 
