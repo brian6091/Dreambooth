@@ -209,6 +209,7 @@ class FineTuningDataset(Dataset):
 def collate_fn(examples,
                with_prior_preservation=False,
                conditioning_dropout_prob=0.0,
+               debug=False,
                
 ):
     input_ids = [example["instance_prompt_ids"] for example in examples]
@@ -240,7 +241,7 @@ def collate_fn(examples,
 #         return_tensors="pt",
 #     ).input_ids
 
-    if args.debug:
+    if debug:
         print("in collate_fn")
         print(input_ids)
 
