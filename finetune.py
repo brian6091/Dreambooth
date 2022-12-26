@@ -366,7 +366,7 @@ def main(args):
             args.learning_rate * args.gradient_accumulation_steps * args.train_batch_size * accelerator.num_processes
         )
         
-    learning_rate_text = (
+    args.learning_rate_text = (
         args.learning_rate
         if args.learning_rate_text is None
         else args.learning_rate_text
@@ -374,12 +374,12 @@ def main(args):
     
     unet_params_to_optimize = {
         "params": [p for p in unet.parameters() if p.requires_grad],
-        "lr": learning_rate,
+        "lr": args.learning_rate,
     }
     
     text_params_to_optimize = {
         "params": [p for p in text_encoder.parameters() if p.requires_grad],
-        "lr": learning_rate_text,
+        "lr": args.learning_rate_text,
     }
     
     params_to_optimize = []
