@@ -19,15 +19,15 @@ def print_trainable_parameters(model: nn.Module):
             print(name, param.shape)
 
 
-def _find_modules(
-    model,
-    target_name_or_class: Set[str],
+def find_modules_by_name_or_class(
+    model: nn.Module,
+    target: Set[str],
 ):
     for fullname, module in model.named_modules():
         *path, name = fullname.split(".")
-        if (module.__class__.__name__ in target_name_or_class) or (name in target_name_or_class):
-            yield fullname, name, module
-
+        if (module.__class__.__name__ in target) or (name in target):
+            yield module.__class__.__name__, fullname, name, module
+            
 
 # From lora_diffusion, TODO: import
 def _find_children(
