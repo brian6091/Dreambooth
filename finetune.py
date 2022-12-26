@@ -27,7 +27,7 @@ import inspect
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
-from torch.utils.data import Dataset
+#from torch.utils.data import Dataset
 from torchinfo import summary
 
 from accelerate import Accelerator
@@ -53,7 +53,7 @@ from lora_diffusion import (
 )
 
 from src.datasets import FineTuningDataset, PromptDataset
-from src.textual_inversion_templates import object_templates, style_templates
+#from src.textual_inversion_templates import object_templates, style_templates
 from src.args import parse_args, format_args
 from src.model_utils import (
     find_modules_by_name_or_class,
@@ -355,17 +355,17 @@ def main(args):
 
     noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
-    # TODO: move to dataloader class
-    if args.prompt_templates==None:
-        prompt_templates = None
-    elif args.prompt_templates=="object":
-        prompt_templates = object_templates
-    elif args.prompt_templates=="style":
-        prompt_templates = style_templates
-    else:
-        raise ValueError(
-            f"{args.prompt_templates} is not a known set of prompt templates."
-        )
+#     # TODO: move to dataloader class
+#     if args.prompt_templates==None:
+#         prompt_templates = None
+#     elif args.prompt_templates=="object":
+#         prompt_templates = object_templates
+#     elif args.prompt_templates=="style":
+#         prompt_templates = style_templates
+#     else:
+#         raise ValueError(
+#             f"{args.prompt_templates} is not a known set of prompt templates."
+#         )
         
     train_dataset = FineTuningDataset(
         tokenizer=tokenizer,
@@ -373,7 +373,7 @@ def main(args):
         instance_data_root=args.instance_data_dir,
         instance_token=args.instance_token,
         instance_prompt=args.instance_prompt,
-        prompt_templates=prompt_templates,
+        prompt_templates=args.prompt_templates,
         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
         class_prompt=args.class_prompt,
         use_image_captions=args.use_image_captions,
