@@ -1,6 +1,8 @@
 description: 'Dreambooth example configuration, training both Unet and text encoder, with prior preservation'
 #
 # A100
+# train_batch_size: 1, gradient_checkpointing: false
+# Steps:   0% 21/10000 [00:17<1:26:52,  1.91it/s, GPU=10378, Loss/pred=0.319, Loss/prior=0.0811, Loss/total=0.4, lr/text=8.4e-7, lr/unet=8.4e-5]
 # train_batch_size: 4, gradient_checkpointing: false
 # Steps:   1% 69/10000 [00:53<1:57:07,  1.41it/s, GPU=17526, Loss/pred=0.0702, Loss/prior=0.242, Loss/total=0.312, lr/text=2e-6, lr/unet=0.0002] 
 #
@@ -76,8 +78,8 @@ max_grad_norm: 1.0
 #
 #
 lr_scale: false
-learning_rate: 2e-4
-learning_rate_text: 2.0e-06
+learning_rate: 1e-4
+learning_rate_text: 1.0e-06
 lr_scheduler: cosine
 lr_warmup_steps: 50
 lr_cosine_num_cycles: 5.0
