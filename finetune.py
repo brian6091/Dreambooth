@@ -478,6 +478,8 @@ def main(args):
 #     if not train_text_encoder:
 #         text_encoder.eval()
 
+    print(f"**************************** DTYPE {weight_dtype}")
+
     # Create EMA for the unet.
     if args.use_ema and train_unet:
         ema_unet = EMAModel(
