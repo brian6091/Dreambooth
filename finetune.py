@@ -528,7 +528,7 @@ def main(args):
         unet, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
             unet, optimizer, train_dataloader, lr_scheduler
         )
-    else len(text_params_to_optimize["params"])>0:
+    else:
         text_encoder, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
             text_encoder, optimizer, train_dataloader, lr_scheduler
         )
