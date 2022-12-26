@@ -107,7 +107,6 @@ def main(args):
     if args.output_dir is not None:
         os.makedirs(args.output_dir, exist_ok=True)
     
-    # TODO: remove config file line, and convert sets back to lists
     with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
         yaml.dump(format_args(args), f, indent=2, sort_keys=False)
         
@@ -245,7 +244,7 @@ def main(args):
         revision=args.revision,
     )
 
-    if is_xformers_available():
+    if args.enable_xformers and is_xformers_available():
         try:
             unet.enable_xformers_memory_efficient_attention()
         except Exception as e:
