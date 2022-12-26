@@ -269,12 +269,12 @@ def main(args):
 
     if True:#args.debug: # TODO: accept file handles and add save_parameter_summary
         f = open(os.path.join(args.output_dir, "unet_trainable_parameters.txt"), "w")
-        print_trainable_parameters(unet, file=f)
         count_parameters(unet, file=f)
+        print_trainable_parameters(unet, file=f)
         f.close()
         f = open(os.path.join(args.output_dir, "text_encoder_trainable_parameters.txt"), "w")
-        print_trainable_parameters(text_encoder, file=f)
         count_parameters(text_encoder, file=f)
+        print_trainable_parameters(text_encoder, file=f)
         f.close()
     
     if args.debug:
