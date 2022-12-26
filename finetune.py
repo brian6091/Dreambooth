@@ -621,10 +621,10 @@ def main(args):
             print(instance_token_id)
 
     for epoch in range(args.num_train_epochs):
-        unet.train()
+#         unet.train()
         text_encoder.train()
-#         if train_unet:
-#             unet.train()
+        if train_unet:
+            unet.train()
 #         if train_text_encoder:
 #             text_encoder.train()
         for step, batch in enumerate(train_dataloader):
