@@ -4,6 +4,7 @@ import random
 import os
 from pathlib import Path
 
+import torch
 from torch.utils.data import Dataset
 from PIL import Image
 from torchvision import transforms
@@ -49,7 +50,6 @@ class FineTuningDataset(Dataset):
         self.instance_token = instance_token
         self.instance_prompt = instance_prompt.replace("{}", instance_token)
 
-        # TODO: move to dataloader class
         if prompt_templates==None:
             self.prompt_templates = None
         elif prompt_templates=="object":
@@ -60,7 +60,6 @@ class FineTuningDataset(Dataset):
             raise ValueError(
                 f"{args.prompt_templates} is not a known set of prompt templates."
             )        
-#         self.prompt_templates = prompt_templates
         
         if class_data_root is not None:
             self.class_data_root = Path(class_data_root)
@@ -148,9 +147,10 @@ class FineTuningDataset(Dataset):
 
         example["instance_prompt_ids"] = self.tokenizer(
             self.instance_prompt,
-            padding="do_not_pad",
+            padding="max_length",#"do_not_pad",
             truncation=True,
             max_length=self.tokenizer.model_max_length,
+            return_tensors="pt",
         ).input_ids
         
         if self.debug:
@@ -185,9 +185,10 @@ class FineTuningDataset(Dataset):
             
             example["class_prompt_ids"] = self.tokenizer(
                 self.class_prompt,
-                padding="do_not_pad",
+                padding="max_length",#"do_not_pad",
                 truncation=True,
                 max_length=self.tokenizer.model_max_length,
+                return_tensors="pt",
             ).input_ids
             
             if self.debug:
@@ -196,14 +197,59 @@ class FineTuningDataset(Dataset):
 
         example["unconditional_prompt_ids"] = self.tokenizer(
                 self.unconditional_prompt,
-                padding="do_not_pad",
+                padding="max_length",#"do_not_pad",
                 truncation=True,
                 max_length=self.tokenizer.model_max_length,
+                return_tensors="pt",
             ).input_ids
 
         return example
 
-      
+    
+def collate_fn(examples,
+               with_prior_preservation=False,
+               conditioning_dropout_prob=0.0,
+               
+):
+    input_ids = [example["instance_prompt_ids"] for example in examples]
+    pixel_values = [example["instance_images"] for example in examples]
+
+    # Concat class and instance examples for prior preservation.
+    # We do this to avoid doing two forward passes.
+    if with_prior_preservation:
+        input_ids += [example["class_prompt_ids"] for example in examples]
+        pixel_values += [example["class_images"] for example in examples]
+
+    # Apply text-conditioning dropout by inserting uninformative prompt
+    if conditioning_dropout_prob > 0:
+        unconditional_ids = [example["unconditional_prompt_ids"] for example in examples]*2
+        for i, input_id in enumerate(input_ids):
+            if random.uniform(0.0, 1.0) <= conditioning_dropout_prob:
+                input_ids[i] = unconditional_ids[i]
+
+    pixel_values = torch.stack(pixel_values)
+    pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
+    
+    input_ids = torch.cat(input_ids, dim=0)
+    
+#     input_ids = tokenizer.pad(
+#         {"input_ids": input_ids},
+#         padding="max_length",
+#         max_length=tokenizer.model_max_length,
+#         return_tensors="pt",
+#     ).input_ids
+
+    if args.debug:
+        print("in collate_fn")
+        print(input_ids)
+
+    batch = {
+        "input_ids": input_ids,
+        "pixel_values": pixel_values,
+    }
+    return batch
+
+
 class PromptDataset(Dataset):
     "A simple dataset to prepare the prompts to generate class images on multiple GPUs."
 
