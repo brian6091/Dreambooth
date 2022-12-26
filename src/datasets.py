@@ -222,6 +222,7 @@ def collate_fn(examples,
 
     # Apply text-conditioning dropout by inserting uninformative prompt
     if conditioning_dropout_prob > 0:
+        # TODO: I think this is a bug to double the size, assumes that prior preservation is true?
         unconditional_ids = [example["unconditional_prompt_ids"] for example in examples]*2
         for i, input_id in enumerate(input_ids):
             if random.uniform(0.0, 1.0) <= conditioning_dropout_prob:
