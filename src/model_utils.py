@@ -11,7 +11,13 @@ def freeze_params(params):
 def unfreeze_params(params):
     for param in params:
         param.requires_grad = True
-       
+
+
+def print_trainable_parameters(model: nn.Module):
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(name, param.shape)
+
 
 def _find_modules(
     model,
