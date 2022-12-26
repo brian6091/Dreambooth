@@ -766,12 +766,12 @@ def main(args):
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:
                     # TODO: this should accept params_to_optimize as first input, no?
-#                     params_to_clip = (
-#                         itertools.chain(unet.parameters(), text_encoder.parameters())
-#                         if args.train_text_encoder
-#                         else unet.parameters()
-#                     )
-                    params_to_clip = params_to_optimize
+                    params_to_clip = (
+                        itertools.chain(unet.parameters(), text_encoder.parameters())
+                        if args.train_text_encoder
+                        else unet.parameters()
+                    )
+                    #params_to_clip = params_to_optimize
                     accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
                 optimizer.step()
                 lr_scheduler.step()
