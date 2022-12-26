@@ -681,7 +681,7 @@ def main(args):
                     # TODO: this should accept params_to_optimize as first input, no?
                     params_to_clip = (
                         itertools.chain(unet.parameters(), text_encoder.parameters())
-                        if len(text_params_to_optimize["params"])>0
+                        if train_text_encoder
                         else unet.parameters()
                     )
                     #params_to_clip = params_to_optimize
