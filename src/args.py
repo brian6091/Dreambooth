@@ -562,3 +562,13 @@ def parse_args(input_args=None):
     args.lora_text_train_off_target = none_or_set(args.lora_text_train_off_target)
 
     return args
+
+def format_args(args):
+    d = args.__dict__.copy()
+    
+    for keys in d:
+      if isinstance(d[keys], set):
+          d[keys] = list(d[keys])
+
+    del d['config']
+    return d
