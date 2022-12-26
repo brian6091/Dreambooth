@@ -471,8 +471,8 @@ def main(args):
     # is only used for inference, keeping weights in full precision is not required.
     vae.to(accelerator.device, dtype=weight_dtype)
     vae.eval()
-    unet.to(accelerator.device, dtype=weight_dtype)
     if not train_unet:
+        unet.to(accelerator.device, dtype=weight_dtype)
         unet.eval()
 #    text_encoder.to(accelerator.device, dtype=weight_dtype)
 #     if not train_text_encoder:
@@ -647,7 +647,7 @@ def main(args):
                 noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
                 # Get the text embedding for conditioning
-                encoder_hidden_states = text_encoder(batch["input_ids"])[0]
+                encoder_hidden_states = text_encoder(batch["input_ids"])[0].to(dtype=weight_dtype)
 
                 # Predict the noise residual
                 model_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
