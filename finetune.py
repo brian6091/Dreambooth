@@ -242,7 +242,7 @@ def main(args):
                              target_submodule=args.train_unet_submodule,
                              lora_target=args.lora_unet_layer,
                              lora_rank=args.lora_unet_rank,
-                             lora_train_off_target=args.lora_train_off_target)
+                             lora_train_off_target=args.lora_unet_train_off_target)
         
     text_encoder.requires_grad_(False)
     set_trainable_parameters(text_encoder,
@@ -250,7 +250,7 @@ def main(args):
                              target_submodule=args.train_text_submodule,
                              lora_target=args.lora_text_layer,
                              lora_rank=args.lora_text_rank,
-                             lora_train_off_target=args.lora_text_off_target)
+                             lora_train_off_target=args.lora_text_train_off_target)
 
     if True:#args.debug: # TODO: accept file handles and add save_parameter_summary
         print_trainable_parameters(unet)
