@@ -708,10 +708,12 @@ def main(args):
             print(instance_token_id)
 
     for epoch in range(args.num_train_epochs):
-        if len(unet_params_to_optimize["params"])>0:
-            unet.train()
-        if len(text_params_to_optimize["params"])>0:
-            text_encoder.train()
+        unet.train()
+        text_encoder.train()
+#         if len(unet_params_to_optimize["params"])>0:
+#             unet.train()
+#         if len(text_params_to_optimize["params"])>0:
+#             text_encoder.train()
         for step, batch in enumerate(train_dataloader):
             # TODO: how to handle context setting when unet is not training?
             with accelerator.accumulate(text_encoder):
