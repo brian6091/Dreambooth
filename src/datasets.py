@@ -8,6 +8,8 @@ from torch.utils.data import Dataset
 from PIL import Image
 from torchvision import transforms
 
+from textual_inversion_templates import object_templates, style_templates
+
 class FineTuningDataset(Dataset):
     """
     A dataset to prepare the instance and class images with the prompts for fine-tuning the model.
@@ -46,7 +48,19 @@ class FineTuningDataset(Dataset):
 
         self.instance_token = instance_token
         self.instance_prompt = instance_prompt.replace("{}", instance_token)
-        self.prompt_templates = prompt_templates
+
+        # TODO: move to dataloader class
+        if prompt_templates==None:
+            self.prompt_templates = None
+        elif prompt_templates=="object":
+            self.prompt_templates = object_templates
+        elif prompt_templates=="style":
+            self.prompt_templates = style_templates
+        else:
+            raise ValueError(
+                f"{args.prompt_templates} is not a known set of prompt templates."
+            )        
+#         self.prompt_templates = prompt_templates
         
         if class_data_root is not None:
             self.class_data_root = Path(class_data_root)
