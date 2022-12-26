@@ -91,6 +91,7 @@ def main(args):
     if args.output_dir is not None:
         os.makedirs(args.output_dir, exist_ok=True)
     
+    # TODO: remove config file line, and convert sets back to lists
     with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
         yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
 
