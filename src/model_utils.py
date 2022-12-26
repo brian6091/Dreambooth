@@ -182,9 +182,9 @@ def count_parameters(model, verbose=True):
     if verbose:
         print("--> this network has {} parameters (~{} million)"
               .format(total_params, round(total_params / 1000000, 1)))
-        print("      of which: - learnable: {} (~{} million)".format(trainable_params,
+        print("      of which: - trainable: {} (~{} million)".format(trainable_params,
                                                                      round(trainable_params / 1000000, 1)))
-        print("                - fixed: {} (~{} million)".format(fixed_params, round(fixed_params / 1000000, 1)))
+        print("                - frozen: {} (~{} million)".format(fixed_params, round(fixed_params / 1000000, 1)))
     return total_params, trainable_params, fixed_params
 
 
