@@ -51,7 +51,7 @@ from lora_diffusion import (
     tune_lora_scale,
 )
 
-from src.datasets import FineTuningDataset, PromptDataset
+from src.datasets import FineTuningDataset, PromptDataset, collate_fn
 from src.args import parse_args, format_args
 from src.model_utils import (
     find_modules_by_name_or_class,
