@@ -54,7 +54,7 @@ from lora_diffusion import (
 
 from src.datasets import FineTuningDataset, PromptDataset
 from src.textual_inversion_templates import object_templates, style_templates
-from src.args import parse_args
+from src.args import parse_args, format_args
 from src.model_utils import (
     find_modules_by_name_or_class,
     set_trainable_parameters,
@@ -109,7 +109,7 @@ def main(args):
     
     # TODO: remove config file line, and convert sets back to lists
     with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
-        yaml.dump(args.__dict__, f, indent=2, sort_keys=False)
+        yaml.dump(format_args(args), f, indent=2, sort_keys=False)
         
     print(args)
 
