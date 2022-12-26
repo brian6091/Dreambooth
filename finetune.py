@@ -180,7 +180,7 @@ def main(args):
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-    # Load diffusion modules
+    # Load diffusion components
     if args.pretrained_tokenizer_name_or_path is not None:
         tokenizer = CLIPTokenizer.from_pretrained(
             args.pretrained_tokenizer_name_or_path,
@@ -189,6 +189,7 @@ def main(args):
         tokenizer = CLIPTokenizer.from_pretrained(
             args.pretrained_model_name_or_path,
             subfolder="tokenizer",
+            revision=args.revision,
         )
 
     text_encoder = CLIPTextModel.from_pretrained(
@@ -270,9 +271,9 @@ def main(args):
                              lora_train_off_target=args.lora_text_train_off_target)
 
     if True:#args.debug: # TODO: accept file handles and add save_parameter_summary
-        print_trainable_parameters(unet)
+        #print_trainable_parameters(unet)
         count_parameters(unet)
-        print_trainable_parameters(text_encoder)
+        #print_trainable_parameters(text_encoder)
         count_parameters(text_encoder)
     
     if args.debug:
@@ -285,98 +286,6 @@ def main(args):
         with open(os.path.join(args.output_dir, "text_encoder_layout.txt"), "w") as f:
             f.write(str(summary(text_encoder, col_names=["num_params", "trainable"], verbose=2)))
             f.close()
-                
-#     if args.train_unet and args.use_lora:
-#         unet.requires_grad_(False)
-#         unet_lora_params, unet_names = inject_trainable_lora(
-#             unet,
-#             target_replace_module=args.lora_unet_modules,
-#             r=args.lora_unet_rank,
-#         )
-#         if args.debug:
-#             for _up, _down in extract_lora_ups_down(
-#                 unet,
-#                 target_replace_module=args.lora_unet_modules,
-#             ):
-#                 print("Before training: Unet First Layer lora up", _up.weight.data)
-#                 print("Before training: Unet First Layer lora down", _down.weight.data)
-#                 break
-                
-#         unet_params_to_optimize = {
-#             "params": itertools.chain(*unet_lora_params),
-#             "lr": args.learning_rate,
-#         }
-#     elif not args.train_unet:
-#         if args.train_unet_attn_only:            
-#             unet.requires_grad_(False)
-#             for name, params in unet.named_parameters():
-#                 if args.train_unet_attn_only=='CrossAttention':
-#                     if 'attn2' in name:
-#                         params.requires_grad = True
-#                         if args.debug:
-#                             print(name)
-#                 elif args.train_unet_attn_only=='CrossAttention_KV':
-#                     if 'attn2.to_k' in name or 'attn2.to_v' in name:
-#                         params.requires_grad = True
-#                         if args.debug:
-#                             print(name)
-#                 else:
-#                     # TODO: ERROR or do it in argparse
-            
-#             unet_params_to_optimize = {
-#                 "params": itertools.chain(unet.parameters()),
-#                 "lr": args.learning_rate,
-#             }
-#         else:
-#             unet.requires_grad_(False)
-#     else:
-#         unet_params_to_optimize = {
-#             "params": itertools.chain(unet.parameters()),
-#             "lr": args.learning_rate,
-#         }
-    
-#     if args.train_text_encoder and args.use_lora:
-#         # TODO: This should add "and not args.train_text_embedding_only? or train_text_encoder should be train_text_encoder_all
-#         text_encoder.requires_grad_(False)
-#         text_encoder_lora_params, text_encoder_names = inject_trainable_lora(
-#             text_encoder,
-#             target_replace_module=args.lora_text_modules,
-#             r=args.lora_text_rank,
-#         )
-#         if args.debug:
-#             for _up, _down in extract_lora_ups_down(
-#                 text_encoder, 
-#                 target_replace_module=args.lora_text_modules,
-#             ):
-#                 print("Before training: text encoder First Layer lora up", _up.weight.data)
-#                 print("Before training: text encoder First Layer lora down", _down.weight.data)
-#                 break
-                
-#         text_params_to_optimize = {
-#             "params": itertools.chain(*text_encoder_lora_params),
-#             "lr": learning_rate_text,
-#         }
-#     elif not args.train_text_encoder:
-#         if args.train_text_embedding_only:
-#             text_encoder.requires_grad_(False)
-#             unfreeze_params(text_encoder.get_input_embeddings().parameters())
-#             text_params_to_optimize = {
-#                 "params": itertools.chain(text_encoder.get_input_embeddings().parameters()),
-#                 "lr": learning_rate_text,
-#             }
-#         else:
-#             text_encoder.requires_grad_(False)
-#     else:
-#         text_params_to_optimize = {
-#             "params": itertools.chain(text_encoder.parameters()),
-#             "lr": learning_rate_text,
-#         }
-        
-#     params_to_optimize = []
-#     if args.train_unet or args.train_unet_attn_only:
-#         params_to_optimize.append(unet_params_to_optimize)
-#     if args.train_text_encoder or args.train_text_embedding_only:
-#         params_to_optimize.append(text_params_to_optimize)    
     
     if args.lr_scale:
         args.learning_rate = (
@@ -393,25 +302,27 @@ def main(args):
         "params": [p for p in unet.parameters() if p.requires_grad],
         "lr": args.learning_rate,
     }
+    train_unet = len(unet_params_to_optimize["params"])>0
     
     text_params_to_optimize = {
         "params": [p for p in text_encoder.parameters() if p.requires_grad],
         "lr": args.learning_rate_text,
     }
+    train_text_encoder = len(text_params_to_optimize["params"])>0
     
     params_to_optimize = []
-    if len(unet_params_to_optimize["params"])>0:
+    if train_unet:
         params_to_optimize.append(unet_params_to_optimize)
-    if len(text_params_to_optimize["params"])>0:
+    if train_text_encoder:
         params_to_optimize.append(text_params_to_optimize)    
         
     if len(params_to_optimize)==0:
         raise ValueError("This configuration does not train anything.")
             
     if args.gradient_checkpointing:
-        if len(unet_params_to_optimize["params"])>0:
+        if train_unet:
             unet.enable_gradient_checkpointing()
-        if len(text_params_to_optimize["params"])>0:
+        if train_text_encoder:
             text_encoder.gradient_checkpointing_enable()
     
     # Use 8-bit Adam for lower memory usage or to fine-tune the model in 16GB GPUs
@@ -441,6 +352,7 @@ def main(args):
 
     noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
+    # TODO: move to dataloader class
     if args.prompt_templates==None:
         prompt_templates = None
     elif args.prompt_templates=="object":
@@ -535,11 +447,11 @@ def main(args):
             num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
         )
 
-    if len(unet_params_to_optimize["params"])>0 and len(text_params_to_optimize["params"])>0:
+    if train_unet and train_text_encoder:
         unet, text_encoder, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
             unet, text_encoder, optimizer, train_dataloader, lr_scheduler
         )
-    elif len(unet_params_to_optimize["params"])>0:
+    elif train_unet:
         unet, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
             unet, optimizer, train_dataloader, lr_scheduler
         )
@@ -555,12 +467,12 @@ def main(args):
         weight_dtype = torch.bfloat16
 
     # Move text_encode and vae to gpu.
-    # For mixed precision training we cast the text_encoder and vae weights to half-precision
-    # as these models are only used for inference, keeping weights in full precision is not required.
+    # For mixed precision training we cast the vae weights to half-precision as it 
+    # is only used for inference, keeping weights in full precision is not required.
     vae.to(accelerator.device, dtype=weight_dtype)
     vae.eval()
-    unet.to(accelerator.device, dtype=weight_dtype)
-    text_encoder.to(accelerator.device, dtype=weight_dtype)
+    #unet.to(accelerator.device, dtype=weight_dtype)
+    #text_encoder.to(accelerator.device, dtype=weight_dtype)
     #if len(unet_params_to_optimize["params"])==0:
         #unet.to(accelerator.device, dtype=weight_dtype)
         #unet.eval()
