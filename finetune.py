@@ -481,7 +481,7 @@ def main(args):
 #         text_encoder.eval()
 
     # Create EMA for the unet.
-    if args.use_ema and len(unet_params_to_optimize["params"])>0:
+    if args.use_ema and train_unet:
         ema_unet = EMAModel(
             accelerator.unwrap_model(unet), 
             inv_gamma=args.ema_inv_gamma, 
@@ -528,7 +528,7 @@ def main(args):
                 {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
             )
                     
-            if len(text_params_to_optimize["params"])>0:
+            if train_text_encoder:
                 text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
             else:
                 text_enc_model = CLIPTextModel.from_pretrained(
@@ -563,30 +563,14 @@ def main(args):
 #                     os.path.join(save_dir, "lora_unet.pt"),
 #                     target_replace_module=args.lora_unet_modules,
 #                 )
-#                 if args.debug:
-#                     for _up, _down in extract_lora_ups_down(
-#                         pipeline.unet,
-#                         target_replace_module=args.lora_unet_modules,
-#                     ):
-#                         print("First Unet Layer's Up Weight is now : ", _up.weight.data)
-#                         print("First Unet Layer's Down Weight is now : ", _down.weight.data)
-#                         break
-                    
+
 #                 if args.train_text_encoder or args.train_text_embedding_only:
 #                     save_lora_weight(
 #                         pipeline.text_encoder,
 #                         os.path.join(save_dir, "lora_text_encoder.pt"),
 #                         target_replace_module=args.lora_text_modules,
 #                     )
-#                     if args.debug:
-#                         for _up, _down in extract_lora_ups_down(
-#                             pipeline.text_encoder,
-#                             target_replace_module=args.lora_text_modules,
-#                         ):
-#                             print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
-#                             print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
-#                             break
-                            
+
                 # already monkeypatched, but could change alpha? TODO: add save_lora_alpha
                 tune_lora_scale(pipeline.unet, 1.00)
                 tune_lora_scale(pipeline.text_encoder, 1.00)
@@ -630,7 +614,7 @@ def main(args):
     global_step = 0
 
     # TODO: eventually move to debug
-    if len(text_params_to_optimize["params"])>0:
+    if train_text_encoder:
         # keep original embeddings as reference
         orig_embeds_params = text_encoder.get_input_embeddings().weight.data.clone()
         if args.debug and (len(text_params_to_optimize["params"])>0) and args.add_instance_token:
@@ -639,9 +623,9 @@ def main(args):
     for epoch in range(args.num_train_epochs):
         unet.train()
         text_encoder.train()
-#         if len(unet_params_to_optimize["params"])>0:
+#         if train_unet:
 #             unet.train()
-#         if len(text_params_to_optimize["params"])>0:
+#         if train_text_encoder:
 #             text_encoder.train()
         for step, batch in enumerate(train_dataloader):
             # TODO: how to handle context setting when unet is not training?
@@ -708,7 +692,7 @@ def main(args):
                     ema_unet.step(unet)
                 optimizer.zero_grad()
 
-                if args.debug and (len(text_params_to_optimize["params"])>0) and args.add_instance_token:
+                if args.debug and train_text_encoder and args.add_instance_token:
                     # TODO: eventually move all of this to debug
                     # Let's make sure we don't update any embedding weights besides the newly added token
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
@@ -737,7 +721,7 @@ def main(args):
             else:
                 logs = {"Loss/pred": loss.detach().item()}
 
-            if (len(unet_params_to_optimize["params"])>0) and (len(text_params_to_optimize["params"])>0):
+            if train_unet and train_text_encoder:
                 logs["lr/unet"] = lr_scheduler.get_last_lr()[0]
                 logs["lr/text"] = lr_scheduler.get_last_lr()[1]
             else:
