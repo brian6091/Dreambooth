@@ -1,4 +1,5 @@
 description: 'Dreambooth example configuration, training both Unet and text encoder, with prior preservation'
+#Steps:   1% 98/10000 [02:28<3:56:51,  1.44s/it, GPU=13216, Loss/pred=0.107, Loss/prior=0.049, Loss/total=0.156, lr/text=1e-6, lr/unet=2e-6] 
 #
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
@@ -55,10 +56,10 @@ seed: 1275017
 enable_full_determinism: false
 resolution: 512
 mixed_precision: fp16
-train_batch_size: 4
+train_batch_size: 1
 max_train_steps: 10000
 gradient_accumulation_steps: 1
-gradient_checkpointing: false
+gradient_checkpointing: true
 enable_xformers: true
 #
 #
