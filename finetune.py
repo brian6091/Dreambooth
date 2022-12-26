@@ -373,48 +373,6 @@ def main(args):
         debug=args.debug,
     )
     
-#     # TODO: make non-nested?
-#     def collate_fn(examples):
-#         input_ids = [example["instance_prompt_ids"] for example in examples]
-#         pixel_values = [example["instance_images"] for example in examples]
-
-#         # Concat class and instance examples for prior preservation.
-#         # We do this to avoid doing two forward passes.
-#         if args.with_prior_preservation:
-#             input_ids += [example["class_prompt_ids"] for example in examples]
-#             pixel_values += [example["class_images"] for example in examples]
-        
-#         # Apply text-conditioning dropout by inserting uninformative prompt
-#         if args.conditioning_dropout_prob > 0:
-#             unconditional_ids = [example["unconditional_prompt_ids"] for example in examples]*2
-#             for i, input_id in enumerate(input_ids):
-#                 if random.uniform(0.0, 1.0) <= args.conditioning_dropout_prob:
-#                     input_ids[i] = unconditional_ids[i]
-
-#         pixel_values = torch.stack(pixel_values)
-#         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
-
-#         input_ids = tokenizer.pad(
-#             {"input_ids": input_ids},
-#             padding="max_length",
-#             max_length=tokenizer.model_max_length,
-#             return_tensors="pt",
-#         ).input_ids
-        
-#         if args.debug:
-#             print("in collate_fn")
-#             print(input_ids)
-
-#         batch = {
-#             "input_ids": input_ids,
-#             "pixel_values": pixel_values,
-#         }
-#         return batch
-
-#     train_dataloader = torch.utils.data.DataLoader(
-#         train_dataset, batch_size=args.train_batch_size, shuffle=True, collate_fn=collate_fn, num_workers=1
-#     )
-    
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=args.train_batch_size,
