@@ -542,6 +542,8 @@ def main(args):
     # as these models are only used for inference, keeping weights in full precision is not required.
     vae.to(accelerator.device, dtype=weight_dtype)
     vae.eval()
+    unet.to(accelerator.device, dtype=weight_dtype)
+    text_encoder.to(accelerator.device, dtype=weight_dtype)
     #if len(unet_params_to_optimize["params"])==0:
         #unet.to(accelerator.device, dtype=weight_dtype)
         #unet.eval()
