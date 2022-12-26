@@ -808,7 +808,7 @@ def main(args):
             else:
                 logs = {"Loss/pred": loss.detach().item()}
 
-            if (len(text_params_to_optimize["params"])>0) and args.train_unet:
+            if (len(unet_params_to_optimize["params"])>0) and (len(text_params_to_optimize["params"])>0):
                 logs["lr/unet"] = lr_scheduler.get_last_lr()[0]
                 logs["lr/text"] = lr_scheduler.get_last_lr()[1]
             else:
