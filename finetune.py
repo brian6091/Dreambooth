@@ -336,7 +336,15 @@ def main(args):
             unet.enable_gradient_checkpointing()
         if train_text_encoder:
             text_encoder.gradient_checkpointing_enable()
-     
+    
+# use try import to add AdamW8bit and other optimizers, avoid requirement?
+#     try:
+#         import bitsandbytes as bnb
+#     except ImportError:
+#         raise ImportError(
+#             "To use 8-bit Adam, please install the bitsandbytes library: `pip install bitsandbytes`."
+#         )
+
     opts = {'Adagrad': torch.optim.Adagrad, 'Adam': torch.optim.Adam, 'AdamW': torch.optim.AdamW,
         'AdamW8bit': bnb.optim.AdamW8bit, 'RAdam': torch.optim.RAdam, 'SGD': torch.optim.SGD}
     if args.optimizer in opts:
