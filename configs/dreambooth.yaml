@@ -1,14 +1,15 @@
 description: 'Dreambooth example configuration, training both Unet and text encoder, with prior preservation'
+#
 # T4
 # train_batch_size: 1, gradient_checkpointing: true
-# Steps:   1% 98/10000 [02:28<3:56:51,  1.44s/it, GPU=13216, Loss/pred=0.107, Loss/prior=0.049, Loss/total=0.156, lr/text=1e-6, lr/unet=2e-6] 
+# Steps:   1% 98/10000 [02:28<3:56:51,  1.44s/it, GPU=13216] 
 # Throws OOM when generating sample images
 #
 # A100
 # train_batch_size: 1, gradient_checkpointing: true
-# Steps:   0% 40/10000 [00:39<1:32:27,  1.80it/s, GPU=13942, Loss/pred=0.0573, Loss/prior=0.0548, Loss/total=0.112, lr/text=8e-7, lr/unet=1.6e-6]
+# Steps:   0% 40/10000 [00:39<1:32:27,  1.80it/s, GPU=13942]
 # train_batch_size: 8, gradient_checkpointing: false
-# Steps:   0% 35/10000 [00:43<2:57:49,  1.07s/it, GPU=35118, Loss/pred=0.176, Loss/prior=0.2, Loss/total=0.376, lr/text=7e-7, lr/unet=1.4e-6]      
+# Steps:   0% 35/10000 [00:43<2:57:49,  1.07s/it, GPU=35118]      
 #
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
