@@ -2,10 +2,10 @@ description: 'Custom diffusion example configuration, training Unet (K, V attn) 
 #
 # A100
 # train_batch_size: 1, gradient_checkpointing: true
-# Steps:   0% 35/10000 [00:20<1:13:37,  2.26it/s, GPU=7632, Loss/pred=0.156, Loss/prior=0.479, Loss/total=0.636, lr/text=7e-7, lr/unet=7e-5]     
+# Steps:   0% 35/10000 [00:20<1:13:37,  2.26it/s, GPU=7632]     
 # train_batch_size: 4, gradient_checkpointing: false
-# Steps:   2% 177/10000 [01:48<1:36:14,  1.70it/s, GPU=18184, Loss/pred=0.199, Loss/prior=0.263, Loss/total=0.462, lr/text=1e-6, lr/unet=5e-6] 
-# Steps:  12% 1200/10000 [15:06<1:26:19,  1.70it/s, GPU=16392, Loss/pred=0.141, Loss/prior=0.107, Loss/total=0.248, lr/text=9.67e-7, lr/unet=4.84e-6]a
+# Steps:   2% 177/10000 [01:48<1:36:14,  1.70it/s, GPU=18184] 
+# Steps:  12% 1200/10000 [15:06<1:26:19,  1.70it/s, GPU=16392]
 #
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
