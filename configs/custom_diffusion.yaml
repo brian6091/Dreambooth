@@ -68,7 +68,7 @@ seed: 1275017
 enable_full_determinism: false
 resolution: 512
 mixed_precision: fp16
-train_batch_size: 1
+train_batch_size: 4
 max_train_steps: 10000
 gradient_accumulation_steps: 1
 gradient_checkpointing: true
@@ -85,8 +85,8 @@ max_grad_norm: 1.0
 #
 #
 lr_scale: false
-learning_rate: 2e-6
-learning_rate_text: 1.0e-06
+learning_rate: 5e-6
+learning_rate_text: 2.0e-06
 lr_scheduler: cosine
 lr_warmup_steps: 50
 lr_cosine_num_cycles: 5.0
