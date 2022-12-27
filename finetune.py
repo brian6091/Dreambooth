@@ -21,10 +21,10 @@ import yaml
 import hashlib
 import itertools
 import math
-import random
+#import random
 import os
 from pathlib import Path
-from typing import Iterable, Optional
+#from typing import Iterable, Optional
 import inspect
 
 import torch
@@ -41,7 +41,7 @@ from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import HfFolder, Repository, whoami
 
 from PIL import Image
-from torchvision import transforms
+#from torchvision import transforms
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, AutoTokenizer
 
