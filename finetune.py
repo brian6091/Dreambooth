@@ -341,7 +341,7 @@ def main(args):
     optimizer_params["params"] = params_to_optimize
     optimizer_params["lr"] = args.learning_rate
     optimizer = optimizer_class(**optimizer_params)
-    if args.debug
+    if args.debug:
         print(optimizer)
     
     noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
