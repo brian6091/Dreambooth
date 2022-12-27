@@ -6,5 +6,6 @@ ftfy
 tensorboard
 modelcards
 bitsandbytes
+torch_optimizer
 huggingface_hub
 configargparse
