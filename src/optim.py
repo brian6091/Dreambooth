@@ -13,7 +13,6 @@ def load_optimizer(optname):
         import torch_optimizer as optim
         
         opts['AdaBound'] = optim.AdaBound
-        opts['Adahessian'] = optim.Adahessian
         opts['AdamP'] = optim.AdamP
         opts['DiffGrad'] = optim.DiffGrad
         opts['MADGRAD'] = optim.MADGRAD
