@@ -24,10 +24,9 @@ Tested with [Stable Diffusion v1-5](https://huggingface.co/runwayml/stable-diffu
 
 Some unique features:
 * Based on main [Hugging Face](https://huggingface.co/) [Diffusers🧨](https://github.com/huggingface/diffusers) so it's easy to stay up-to-date
-* Mix-and-match different fine-tuning methods (LoRA X Dreambooth, Dreambooth X Textual inversion, etc)
+* **Advanced configuration:** Mix-and-match different fine-tuning methods (LoRA X Dreambooth, Dreambooth X Textual inversion, etc)
 * Low-rank Adaptation (LoRA) for faster and more efficient fine-tuning (using [cloneofsimo's implementation](https://github.com/cloneofsimo/lora))
-* Data augmentation such as random cropping, flipping and resizing, which can minimize manually prepping and cropping images in certain cases (e.g., training a style)
-* More parameters for experimentation ([modify LoRA rank approximation](https://github.com/cloneofsimo/lora/discussions/37), optimizer parameters, [cosine_with_restarts](https://huggingface.co/transformers/v2.9.1/main_classes/optimizer_schedules.html#transformers.get_cosine_with_hard_restarts_schedule_with_warmup) learning rate scheduler, etc), all of which are dumped to a yaml file so you can remember what you did
+* **Data augmentation:** such as random cropping, flipping and resizing, which can minimize manually prepping and cropping images in certain cases (e.g., training a style)
 * Drop some text-conditioning to improve classifier-free guidance sampling (e.g., how [SD V1-5 was fine-tuned](https://huggingface.co/runwayml/stable-diffusion-v1-5))
 * Image captioning using filenames or associated textfiles
 * Multiple tokens for jointly training multiple concepts
