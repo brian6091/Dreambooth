@@ -2,9 +2,9 @@ description: 'LoRA (ffn) X Dreambooth example configuration, training both Unet 
 #
 # A100
 # rank: 4, train_batch_size: 4, gradient_checkpointing: false
-# Steps:   0% 39/10000 [00:29<1:42:56,  1.61it/s, GPU=16920, Loss/pred=0.13, Loss/prior=0.105, Loss/total=0.235, lr/text=7.8e-7, lr/unet=7.8e-5]
+# Steps:   0% 39/10000 [00:29<1:42:56,  1.61it/s, GPU=16920]
 # rank: 1, train_batch_size: 4, gradient_checkpointing: false
-# Steps:   1% 100/10000 [01:06<1:42:52,  1.60it/s, GPU=16910, Loss/pred=0.0822, Loss/prior=0.182, Loss/total=0.265, lr/text=1e-6, lr/unet=0.0001]
+# Steps:   1% 100/10000 [01:06<1:42:52,  1.60it/s, GPU=16910]
 #
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
