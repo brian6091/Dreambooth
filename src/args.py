@@ -1,5 +1,6 @@
 import configargparse
 import yaml
+import ast
 
 def none_or_str(val):
     if not val or (val=='None'):
@@ -19,6 +20,14 @@ def none_or_float(val):
 def none_or_set(val):
     if val!=None:
         return set(val)
+
+class StoreDictKeyPair(configargparse.Action):
+     def __call__(self, parser, namespace, values, option_string=None):
+         my_dict = {}
+         for kv in values.split(";"):
+             k,v = kv.split("=")
+             my_dict[k] = ast.literal_eval(v)
+         setattr(namespace, self.dest, my_dict)
 
 def parse_args(input_args=None):
     parser = configargparse.ArgParser(
@@ -346,29 +355,36 @@ def parse_args(input_args=None):
         help="Optimizer",
     )
     parser.add_argument(
-        "--adam_beta1",
-        type=float,
-        default=0.9,
-        help="The beta1 parameter for the Adam optimizer.",
-    )
-    parser.add_argument(
-        "--adam_beta2",
-        type=float,
-        default=0.999,
-        help="The beta2 parameter for the Adam optimizer.",
-    )
-    parser.add_argument(
-        "--adam_weight_decay",
-        type=float,
-        default=1e-2,
-        help="Weight decay to use.",
-    )
-    parser.add_argument(
-        "--adam_epsilon",
-        type=float,
-        default=1e-08,
-        help="Epsilon value for the Adam optimizer",
-    )
+        "--optimizer_params",
+        dest="optimizer_params",
+        action=StoreDictKeyPair,
+        metavar="KEY1=VAL1;KEY2=VAL2...",
+        help="Optimizer parameters as semi-colon separated string",
+        )
+#     parser.add_argument(
+#         "--adam_beta1",
+#         type=float,
+#         default=0.9,
+#         help="The beta1 parameter for the Adam optimizer.",
+#     )
+#     parser.add_argument(
+#         "--adam_beta2",
+#         type=float,
+#         default=0.999,
+#         help="The beta2 parameter for the Adam optimizer.",
+#     )
+#     parser.add_argument(
+#         "--adam_weight_decay",
+#         type=float,
+#         default=1e-2,
+#         help="Weight decay to use.",
+#     )
+#     parser.add_argument(
+#         "--adam_epsilon",
+#         type=float,
+#         default=1e-08,
+#         help="Epsilon value for the Adam optimizer",
+#     )
     parser.add_argument(
         "--max_grad_norm",
         default=1.0,
