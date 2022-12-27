@@ -33,6 +33,8 @@ import torch.nn.functional as F
 import torch.utils.checkpoint
 from torchinfo import summary
 
+import bitsandbytes as bnb
+
 from accelerate import Accelerator
 from accelerate.logging import get_logger
 from accelerate.utils import set_seed
