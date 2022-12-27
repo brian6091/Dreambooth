@@ -386,14 +386,6 @@ def main(args):
         args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
         overrode_max_train_steps = True
 
-#     if args.lr_scheduler=="cosine_with_restarts":
-#         lr_scheduler = get_cosine_with_hard_restarts_schedule_with_warmup(
-#             optimizer=optimizer,
-#             num_warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
-#             num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
-#             num_cycles=args.lr_cosine_num_cycles,
-#         )        
-#     else:
     lr_scheduler = get_scheduler(
         args.lr_scheduler,
         optimizer=optimizer,
