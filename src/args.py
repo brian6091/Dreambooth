@@ -21,6 +21,7 @@ def none_or_set(val):
     if val!=None:
         return set(val)
 
+# https://stackoverflow.com/a/42355279
 class StoreDictKeyPair(configargparse.Action):
      def __call__(self, parser, namespace, values, option_string=None):
          my_dict = {}
