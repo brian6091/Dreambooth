@@ -40,9 +40,6 @@ from diffusers.training_utils import EMAModel, enable_full_determinism
 from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import HfFolder, Repository, whoami
 
-import bitsandbytes as bnb
-import torch_optimizer as optim
-
 from PIL import Image
 from torchvision import transforms
 from tqdm.auto import tqdm
@@ -66,6 +63,7 @@ from src.model_utils import (
     count_parameters,
     print_trainable_parameters,
 )
+from src.optim import load_optimizer
 from src.utils import image_grid, get_full_repo_name, get_gpu_memory_map
 
 
@@ -345,14 +343,16 @@ def main(args):
 #             "To use 8-bit Adam, please install the bitsandbytes library: `pip install bitsandbytes`."
 #         )
 
-    opts = {'Adagrad': torch.optim.Adagrad, 'Adam': torch.optim.Adam, 'AdamW': torch.optim.AdamW,
-        'AdamW8bit': bnb.optim.AdamW8bit, 'RAdam': torch.optim.RAdam, 'SGD': torch.optim.SGD}
-    if args.optimizer in opts:
-        optimizer_class = opts[args.optimizer]
-    else:
-        raise ValueError(
-            f"Optimizer {args.optimizer} not supported yet."
-        )
+#     opts = {'Adagrad': torch.optim.Adagrad, 'Adam': torch.optim.Adam, 'AdamW': torch.optim.AdamW,
+#         'AdamW8bit': bnb.optim.AdamW8bit, 'RAdam': torch.optim.RAdam, 'SGD': torch.optim.SGD}
+#     if args.optimizer in opts:
+#         optimizer_class = opts[args.optimizer]
+#     else:
+#         raise ValueError(
+#             f"Optimizer {args.optimizer} not supported yet."
+#         )
+
+    optimizer_class = load_optimizer(args.optimizer)
         
     optimizer_params = args.optimizer_params
     optimizer_params["params"] = params_to_optimize
