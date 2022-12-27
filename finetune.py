@@ -45,7 +45,6 @@ from huggingface_hub import HfFolder, Repository, whoami
 from PIL import Image
 from torchvision import transforms
 from tqdm.auto import tqdm
-#from transformers import CLIPTextModel, CLIPTokenizer
 from transformers import CLIPTextModel, AutoTokenizer
 
 from lora_diffusion import (
@@ -174,16 +173,6 @@ def main(args):
                 torch.cuda.empty_cache()
 
     # Load diffusion components
-#     if args.pretrained_tokenizer_name_or_path is not None:
-#         tokenizer = CLIPTokenizer.from_pretrained(
-#             args.pretrained_tokenizer_name_or_path,
-#         )
-#     elif args.pretrained_model_name_or_path:
-#         tokenizer = CLIPTokenizer.from_pretrained(
-#             args.pretrained_model_name_or_path,
-#             subfolder="tokenizer",
-#             revision=args.revision,
-#         )
     if args.pretrained_tokenizer_name_or_path:
         tokenizer = AutoTokenizer.from_pretrained(
             args.pretrained_tokenizer_name_or_path,
@@ -363,14 +352,18 @@ def main(args):
         )        
 
     # TODO make optimizer parameters a dict
-    optimizer = optimizer_class(
-        params_to_optimize,
-        lr=args.learning_rate,
-        betas=(args.adam_beta1, args.adam_beta2),
-        weight_decay=args.adam_weight_decay,
-        eps=args.adam_epsilon,
-    )
-
+#     optimizer = optimizer_class(
+#         params_to_optimize,
+#         lr=args.learning_rate,
+#         betas=(args.adam_beta1, args.adam_beta2),
+#         weight_decay=args.adam_weight_decay,
+#         eps=args.adam_epsilon,
+#     )
+    optimizer_params = args.optimizer_params
+    optimizer_params["params"] = params_to_optimize
+    optimizer_params["lr"] = args.learning_rate
+    optimizer = optimizer_class(**optimizer_params)
+    
     noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
     train_dataset = FineTuningDataset(
