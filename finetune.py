@@ -336,24 +336,7 @@ def main(args):
             unet.enable_gradient_checkpointing()
         if train_text_encoder:
             text_encoder.gradient_checkpointing_enable()
-    
-    # Use 8-bit Adam for lower memory usage or to fine-tune the model in 16GB GPUs
-#     if args.optimizer=="AdamW8bit":
-#         try:
-#             import bitsandbytes as bnb
-#         except ImportError:
-#             raise ImportError(
-#                 "To use 8-bit Adam, please install the bitsandbytes library: `pip install bitsandbytes`."
-#             )
-
-#         optimizer_class = bnb.optim.AdamW8bit
-#     elif args.optimizer=="AdamW":
-#         optimizer_class = torch.optim.AdamW
-#     else:
-#         raise ValueError(
-#             f"Optimizer {args.optimizer} not supported yet."
-#         )        
-
+     
     opts = {'Adagrad': torch.optim.Adagrad, 'Adam': torch.optim.Adam, 'AdamW': torch.optim.AdamW,
         'AdamW8bit': bnb.optim.AdamW8bit, 'RAdam': torch.optim.RAdam, 'SGD': torch.optim.SGD}
     if args.optimizer in opts:
