@@ -14,7 +14,7 @@
 #
 #    Based on https://github.com/huggingface/diffusers/blob/v0.8.0/examples/dreambooth/train_dreambooth.py
 #    SPDX short identifier: Apache-2.0
-#    save_weights originall from https://github.com/ShivamShrirao/diffusers/blob/main/examples/dreambooth/train_dreambooth.py
+#    save_weights modified from https://github.com/ShivamShrirao/diffusers/blob/main/examples/dreambooth/train_dreambooth.py
 #    SPDX short identifier: Apache-2.0
 
 import yaml
