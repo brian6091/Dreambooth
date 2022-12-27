@@ -334,23 +334,6 @@ def main(args):
             unet.enable_gradient_checkpointing()
         if train_text_encoder:
             text_encoder.gradient_checkpointing_enable()
-    
-# use try import to add AdamW8bit and other optimizers, avoid requirement?
-#     try:
-#         import bitsandbytes as bnb
-#     except ImportError:
-#         raise ImportError(
-#             "To use 8-bit Adam, please install the bitsandbytes library: `pip install bitsandbytes`."
-#         )
-
-#     opts = {'Adagrad': torch.optim.Adagrad, 'Adam': torch.optim.Adam, 'AdamW': torch.optim.AdamW,
-#         'AdamW8bit': bnb.optim.AdamW8bit, 'RAdam': torch.optim.RAdam, 'SGD': torch.optim.SGD}
-#     if args.optimizer in opts:
-#         optimizer_class = opts[args.optimizer]
-#     else:
-#         raise ValueError(
-#             f"Optimizer {args.optimizer} not supported yet."
-#         )
 
     optimizer_class = load_optimizer(args.optimizer)
         
@@ -358,6 +341,7 @@ def main(args):
     optimizer_params["params"] = params_to_optimize
     optimizer_params["lr"] = args.learning_rate
     optimizer = optimizer_class(**optimizer_params)
+    print(optimizer)
     
     noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
