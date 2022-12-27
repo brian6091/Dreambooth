@@ -3,6 +3,8 @@ description: 'Custom diffusion example configuration, training Unet (K, V attn) 
 # T4
 # train_batch_size: 1, gradient_checkpointing: true
 # Steps:   0% 37/10000 [00:51<2:35:17,  1.07it/s, GPU=6910]
+# train_batch_size: 4, gradient_checkpointing: true
+# Steps:   1% 97/10000 [04:51<8:13:51,  2.99s/it, GPU=9838]
 #
 # A100
 # train_batch_size: 1, gradient_checkpointing: true
