@@ -335,30 +335,31 @@ def main(args):
             text_encoder.gradient_checkpointing_enable()
     
     # Use 8-bit Adam for lower memory usage or to fine-tune the model in 16GB GPUs
-    if args.optimizer=="AdamW8bit":
-        try:
-            import bitsandbytes as bnb
-        except ImportError:
-            raise ImportError(
-                "To use 8-bit Adam, please install the bitsandbytes library: `pip install bitsandbytes`."
-            )
+#     if args.optimizer=="AdamW8bit":
+#         try:
+#             import bitsandbytes as bnb
+#         except ImportError:
+#             raise ImportError(
+#                 "To use 8-bit Adam, please install the bitsandbytes library: `pip install bitsandbytes`."
+#             )
 
-        optimizer_class = bnb.optim.AdamW8bit
-    elif args.optimizer=="AdamW":
-        optimizer_class = torch.optim.AdamW
+#         optimizer_class = bnb.optim.AdamW8bit
+#     elif args.optimizer=="AdamW":
+#         optimizer_class = torch.optim.AdamW
+#     else:
+#         raise ValueError(
+#             f"Optimizer {args.optimizer} not supported yet."
+#         )        
+
+    opts = {'Adagrad': torch.optim.Adagrad, 'Adam': torch.optim.Adam, 'AdamW': torch.optim.AdamW,
+        'AdamW8bit': bnb.optim.AdamW8bit, 'RAdam': torch.optim.RAdam, 'SGD': torch.optim.SGD}
+    if args.optimizer in opts:
+        optimizer_class = opts[args.optimizer]
     else:
         raise ValueError(
             f"Optimizer {args.optimizer} not supported yet."
-        )        
-
-    # TODO make optimizer parameters a dict
-#     optimizer = optimizer_class(
-#         params_to_optimize,
-#         lr=args.learning_rate,
-#         betas=(args.adam_beta1, args.adam_beta2),
-#         weight_decay=args.adam_weight_decay,
-#         eps=args.adam_epsilon,
-#     )
+        )
+        
     optimizer_params = args.optimizer_params
     optimizer_params["params"] = params_to_optimize
     optimizer_params["lr"] = args.learning_rate
