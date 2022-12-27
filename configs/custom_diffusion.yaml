@@ -1,5 +1,9 @@
 description: 'Custom diffusion example configuration, training Unet (K, V attn) and text encoder (embedding), with prior preservation'
 #
+# T4
+# train_batch_size: 1, gradient_checkpointing: true
+# Steps:   0% 37/10000 [00:51<2:35:17,  1.07it/s, GPU=6910]
+#
 # A100
 # train_batch_size: 1, gradient_checkpointing: true
 # Steps:   0% 35/10000 [00:20<1:13:37,  2.26it/s, GPU=7632]     
