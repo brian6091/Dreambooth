@@ -1,13 +1,14 @@
 description: textual inversion example configuration
+#
 # T4
 # train_batch_size: 4, gradient_checkpointing: false
-# Steps:   3% 279/10000 [08:40<5:02:02,  1.86s/it, GPU=7276, Loss/pred=0.146, lr=0.000499]
+# Steps:   3% 279/10000 [08:40<5:02:02,  1.86s/it, GPU=7276]
 #
 # A100
 # train_batch_size: 4, gradient_checkpointing: false
-# Steps:   0% 48/10000 [00:35<1:40:25,  1.65it/s, GPU=8020, Loss/pred=0.0417, lr=0.00048]
+# Steps:   0% 48/10000 [00:35<1:40:25,  1.65it/s, GPU=8020]
 # train_batch_size: 16, gradient_checkpointing: false
-# Steps:   0% 22/10000 [00:22<2:30:25,  1.11it/s, GPU=9592, Loss/pred=0.0979, lr=0.00022]
+# Steps:   0% 22/10000 [00:22<2:30:25,  1.11it/s, GPU=9592]
 #
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: null
