@@ -591,6 +591,12 @@ def format_args(args):
     for keys in d:
       if isinstance(d[keys], set):
           d[keys] = list(d[keys])
+      elif isinstance(d[keys], dict):
+          tmp = []
+          d2 = d[keys]
+          for k in d2:
+              tmp.append(k+"="+str(d2[k]))
+          d[keys] = ';'.join(tmp)
 
     del d['config']
     return d
