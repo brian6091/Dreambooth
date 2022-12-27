@@ -26,14 +26,11 @@ import os
 from pathlib import Path
 from typing import Iterable, Optional
 import inspect
-import warnings
 
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
 from torchinfo import summary
-
-import bitsandbytes as bnb
 
 from accelerate import Accelerator
 from accelerate.logging import get_logger
@@ -43,6 +40,9 @@ from diffusers.optimization import get_scheduler, get_cosine_with_hard_restarts_
 from diffusers.training_utils import EMAModel, enable_full_determinism
 from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import HfFolder, Repository, whoami
+
+import bitsandbytes as bnb
+import torch_optimizer as optim
 
 from PIL import Image
 from torchvision import transforms
@@ -325,7 +325,7 @@ def main(args):
     # This will be enabled soon in accelerate. For now, we don't allow gradient accumulation when training two models.
     # TODO (patil-suraj): Remove this check when gradient accumulation with two models is enabled in accelerate.
     if (train_unet and train_text_encoder) and args.gradient_accumulation_steps > 1 and accelerator.num_processes > 1:
-        warnings.warn(
+        logger.warning(
             "Gradient accumulation is not supported when training both unet and the text encoder in distributed training. "
             "Please set gradient_accumulation_steps to 1. This feature will be supported in the future."
         )
