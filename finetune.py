@@ -30,7 +30,6 @@ import inspect
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
-from torchinfo import summary
 
 from accelerate import Accelerator
 from accelerate.logging import get_logger
@@ -268,7 +267,9 @@ def main(args):
         print_trainable_parameters(text_encoder, file=f)
         f.close()
     
-    if args.debug:# TODO: add parameter save_model_layout
+    if False:#args.debug:# TODO: add parameter save_model_layout
+        from torchinfo import summary # Make this try/catch
+        
         print(summary(unet, col_names=["num_params", "trainable"], verbose=1))
         print(summary(text_encoder, col_names=["num_params", "trainable"], verbose=1))
 
