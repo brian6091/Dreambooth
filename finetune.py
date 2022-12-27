@@ -13,6 +13,9 @@
 #    limitations under the License.
 #
 #    Based on https://github.com/huggingface/diffusers/blob/v0.8.0/examples/dreambooth/train_dreambooth.py
+#    SPDX short identifier: Apache-2.0
+#    save_weights originall from https://github.com/ShivamShrirao/diffusers/blob/main/examples/dreambooth/train_dreambooth.py
+#    SPDX short identifier: Apache-2.0
 
 import yaml
 import hashlib
@@ -23,6 +26,7 @@ import os
 from pathlib import Path
 from typing import Iterable, Optional
 import inspect
+import warnings
 
 import torch
 import torch.nn.functional as F
@@ -41,7 +45,8 @@ from huggingface_hub import HfFolder, Repository, whoami
 from PIL import Image
 from torchvision import transforms
 from tqdm.auto import tqdm
-from transformers import CLIPTextModel, CLIPTokenizer
+#from transformers import CLIPTextModel, CLIPTokenizer
+from transformers import CLIPTextModel, AutoTokenizer
 
 from lora_diffusion import (
     inject_trainable_lora,
@@ -83,15 +88,6 @@ def main(args):
             raise ValueError("You must specify a data directory for class images.")
         if args.class_prompt is None:
             raise ValueError("You must specify prompt for class images.")
-
-    # Currently, it's not possible to do gradient accumulation when training two models with accelerate.accumulate
-    # This will be enabled soon in accelerate. For now, we don't allow gradient accumulation when training two models.
-    # TODO (patil-suraj): Remove this check when gradient accumulation with two models is enabled in accelerate.
-#     if args.train_text_encoder and args.gradient_accumulation_steps > 1 and accelerator.num_processes > 1:
-#         raise ValueError(
-#             "Gradient accumulation is not supported when training the text encoder in distributed training. "
-#             "Please set gradient_accumulation_steps to 1. This feature will be supported in the future."
-#         )
         
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
@@ -178,17 +174,30 @@ def main(args):
                 torch.cuda.empty_cache()
 
     # Load diffusion components
-    if args.pretrained_tokenizer_name_or_path is not None:
-        tokenizer = CLIPTokenizer.from_pretrained(
+#     if args.pretrained_tokenizer_name_or_path is not None:
+#         tokenizer = CLIPTokenizer.from_pretrained(
+#             args.pretrained_tokenizer_name_or_path,
+#         )
+#     elif args.pretrained_model_name_or_path:
+#         tokenizer = CLIPTokenizer.from_pretrained(
+#             args.pretrained_model_name_or_path,
+#             subfolder="tokenizer",
+#             revision=args.revision,
+#         )
+    if args.pretrained_tokenizer_name_or_path:
+        tokenizer = AutoTokenizer.from_pretrained(
             args.pretrained_tokenizer_name_or_path,
+            revision=args.revision,
+            use_fast=False,
         )
     elif args.pretrained_model_name_or_path:
-        tokenizer = CLIPTokenizer.from_pretrained(
+        tokenizer = AutoTokenizer.from_pretrained(
             args.pretrained_model_name_or_path,
             subfolder="tokenizer",
             revision=args.revision,
+            use_fast=False,
         )
-
+        
     text_encoder = CLIPTextModel.from_pretrained(
         args.pretrained_model_name_or_path,
         subfolder="text_encoder",
@@ -240,15 +249,6 @@ def main(args):
         revision=args.revision,
     )
 
-    if args.enable_xformers and is_xformers_available():
-        try:
-            unet.enable_xformers_memory_efficient_attention()
-        except Exception as e:
-            logger.warning(
-                "Could not enable memory efficient attention. Make sure xformers is installed"
-                f" correctly and a GPU is available: {e}"
-            )
-    
     vae.requires_grad_(False)
     
     unet.requires_grad_(False)
@@ -277,7 +277,7 @@ def main(args):
         print_trainable_parameters(text_encoder, file=f)
         f.close()
     
-    if args.debug:# TODO: add parameter save_model_summary
+    if args.debug:# TODO: add parameter save_model_layout
         print(summary(unet, col_names=["num_params", "trainable"], verbose=1))
         print(summary(text_encoder, col_names=["num_params", "trainable"], verbose=1))
 
@@ -319,7 +319,26 @@ def main(args):
         
     if len(params_to_optimize)==0:
         raise ValueError("This configuration does not train anything.")
-            
+
+        
+    if train_unet and args.enable_xformers and is_xformers_available():
+        try:
+            unet.enable_xformers_memory_efficient_attention()
+        except Exception as e:
+            logger.warning(
+                "Could not enable memory efficient attention. Make sure xformers is installed"
+                f" correctly and a GPU is available: {e}"
+            )
+    
+    # Currently, it's not possible to do gradient accumulation when training two models with accelerate.accumulate
+    # This will be enabled soon in accelerate. For now, we don't allow gradient accumulation when training two models.
+    # TODO (patil-suraj): Remove this check when gradient accumulation with two models is enabled in accelerate.
+    if (train_unet and train_text_encoder) and args.gradient_accumulation_steps > 1 and accelerator.num_processes > 1:
+        warnings.warn(
+            "Gradient accumulation is not supported when training both unet and the text encoder in distributed training. "
+            "Please set gradient_accumulation_steps to 1. This feature will be supported in the future."
+        )
+
     if args.gradient_checkpointing:
         if train_unet:
             unet.enable_gradient_checkpointing()
@@ -343,7 +362,7 @@ def main(args):
             f"Optimizer {args.optimizer} not supported yet."
         )        
 
-        # TODO make optimizer parameters a dict
+    # TODO make optimizer parameters a dict
     optimizer = optimizer_class(
         params_to_optimize,
         lr=args.learning_rate,
@@ -364,9 +383,10 @@ def main(args):
         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
         class_prompt=args.class_prompt,
         use_image_captions=args.use_image_captions,
-        unconditional_prompt=" ",
+        unconditional_prompt=args.unconditional_prompt,
         size=args.resolution,
-        augment_output_dir=None if args.augment_output_dir=="" else args.augment_output_dir, #TODO this should check None?
+        augment_output_dir=args.augment_output_dir if args.augment_output_dir!=None else None,
+#        augment_output_dir=None if args.augment_output_dir=="" else args.augment_output_dir, #TODO this should check None?
         augment_min_resolution=args.augment_min_resolution,
         augment_center_crop=args.augment_center_crop,
         augment_hflip=args.augment_hflip,
@@ -427,7 +447,7 @@ def main(args):
     elif accelerator.mixed_precision == "bf16":
         weight_dtype = torch.bfloat16
 
-    # Move text_encode and vae to gpu.
+    # Move untrained components to GPU.
     # For mixed precision training we cast the weights to half-precision as it they are 
     # only used for inference, and keeping weights in full precision is not required.
     vae.to(accelerator.device, dtype=weight_dtype)
@@ -514,6 +534,7 @@ def main(args):
             )
             
             # TODO: for custom diffusion, or generally distinct module training
+            # dump entire checkpoint with all trainable
             
             if args.lora_unet_layer!=None or args.lora_unet_layer!=None:
                 # TODO: if add_instance_token, I assume we have to save the tokenizer?
@@ -587,6 +608,9 @@ def main(args):
             
         for step, batch in enumerate(train_dataloader):
             # TODO: how to handle context setting when unet is not training?
+            # https://stackoverflow.com/a/14029481
+            #train_all = train_unet and train_text_encoder
+            #with (accelerator.accumulate(unet), accelerator.accumulate(text_encoder)) if train_all else (accelerator.accumulate(unet) if train_unet else accelerator.accumulate(text_encoder))
             with accelerator.accumulate(unet):
                 # Convert images to latent space
                 latents = vae.encode(batch["pixel_values"].to(dtype=weight_dtype)).latent_dist.sample()
@@ -643,6 +667,7 @@ def main(args):
                         else unet.parameters()
                     )
                     #params_to_clip = params_to_optimize
+                    # TODO avoid upscale error? GradScaler
 #                     accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
                 optimizer.step()
                 lr_scheduler.step()
