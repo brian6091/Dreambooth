@@ -2,9 +2,9 @@ description: 'LoRA (CrossAttention) X Dreambooth example configuration, training
 #
 # A100
 # train_batch_size: 1, gradient_checkpointing: false
-# Steps:   0% 21/10000 [00:17<1:26:52,  1.91it/s, GPU=10378, Loss/pred=0.319, Loss/prior=0.0811, Loss/total=0.4, lr/text=8.4e-7, lr/unet=8.4e-5]
+# Steps:   0% 21/10000 [00:17<1:26:52,  1.91it/s, GPU=10378]
 # train_batch_size: 4, gradient_checkpointing: false
-# Steps:   1% 69/10000 [00:53<1:57:07,  1.41it/s, GPU=17526, Loss/pred=0.0702, Loss/prior=0.242, Loss/total=0.312, lr/text=2e-6, lr/unet=0.0002] 
+# Steps:   1% 69/10000 [00:53<1:57:07,  1.41it/s, GPU=17526] 
 #
 pretrained_model_name_or_path: runwayml/stable-diffusion-v1-5
 pretrained_vae_name_or_path: stabilityai/sd-vae-ft-mse
