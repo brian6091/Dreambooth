@@ -140,7 +140,7 @@ def main(args):
                         revision=None if args.pretrained_vae_name_or_path else args.revision,
                         torch_dtype=torch_dtype,
                     ),
-                    torch_dtype=torch_dtype,
+                    torch_dtype=torch_dtype, # TODO allow selection?
                     safety_checker=None,
                     revision=args.revision
                 )
@@ -555,9 +555,16 @@ def main(args):
                 pipeline.save_pretrained(save_dir)
 
             if args.save_n_sample>0:
+                
                 save_sample_prompt = args.save_sample_prompt.replace("{}", args.instance_token)
                 save_sample_prompt = list(map(str.strip, save_sample_prompt.split('//')))
+                
                 pipeline = pipeline.to(accelerator.device)
+                pipeline.enable_attention_slicing()
+                pipeline.enable_vae_slicing()
+                if args.enable_xformers and is_xformers_available():
+                    pipeline.enable_xformers_memory_efficient_attention()
+                
                 g_cuda = torch.Generator(device=accelerator.device).manual_seed(
                     args.save_seed if args.save_seed!=None else args.seed,
                 )
