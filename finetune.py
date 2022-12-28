@@ -572,7 +572,7 @@ def main(args):
                 pipeline = pipeline.to(accelerator.device)
                 # TODO, one of these slows inference a lot... make params sample_enable_attention_slicing, sample_enable_vae_slicing, sample_enable_xformers
                 pipeline.enable_attention_slicing()
-                #pipeline.enable_vae_slicing()
+                pipeline.enable_vae_slicing()
                 if args.enable_xformers and is_xformers_available():
                     pipeline.enable_xformers_memory_efficient_attention()
                 
