@@ -32,13 +32,14 @@ import torch.utils.checkpoint
 from accelerate import Accelerator
 from accelerate.logging import get_logger
 from accelerate.utils import set_seed
-from diffusers import AutoencoderKL, DDPMScheduler, DDIMScheduler, StableDiffusionPipeline, UNet2DConditionModel
+from diffusers import AutoencoderKL, DDPMScheduler, DiffusionPipeline, UNet2DConditionModel
+#from diffusers import AutoencoderKL, DDPMScheduler, DDIMScheduler, StableDiffusionPipeline, UNet2DConditionModel
 from diffusers.optimization import get_scheduler
 from diffusers.training_utils import EMAModel, enable_full_determinism
 from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import HfFolder, Repository, whoami
 
-from PIL import Image
+#from PIL import Image
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, AutoTokenizer
 
@@ -131,7 +132,7 @@ def main(args):
         if cur_class_images < args.num_class_images:
             torch_dtype = torch.float16 if accelerator.device.type == "cuda" else torch.float32
             if pipeline is None:
-                pipeline = StableDiffusionPipeline.from_pretrained(
+                pipeline = DiffusionPipeline.from_pretrained(
                     args.pretrained_model_name_or_path,
                     vae=AutoencoderKL.from_pretrained(
                         args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
@@ -509,7 +510,7 @@ def main(args):
                     subfolder="text_encoder",
                     )
 
-            pipeline = StableDiffusionPipeline.from_pretrained(
+            pipeline = DiffusionPipeline.from_pretrained(
                 args.pretrained_model_name_or_path,
                 tokenizer=tokenizer,
                 unet=accelerator.unwrap_model(
@@ -523,7 +524,7 @@ def main(args):
                     revision=None if args.pretrained_vae_name_or_path else args.revision,
                 ),
                 safety_checker=None,
-                torch_dtype=torch.float16,
+                torch_dtype=torch.float16, # TODO option to save in fp32?
                 revision=args.revision,
             )
             
