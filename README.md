@@ -10,7 +10,7 @@ Notebook that is less flexible, but contains more explanations:
 
 $~$
 
-A much leaner notebook that exposes all parameters via config files:
+A quite skeletal notebook that exposes all parameters via config files:
 
 <a target="_blank" href="https://colab.research.google.com/github/brian6091/Dreambooth/blob/main/FineTuning_config_colab.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" height="28px" width="162px" alt="Open In Colab"/>
