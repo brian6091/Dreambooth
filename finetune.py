@@ -538,13 +538,6 @@ def main(args):
     progress_bar.set_description("Steps")
     global_step = 0
 
-    # TODO: eventually move to debug
-    if (train_text_encoder or train_token_embedding):
-        # keep original embeddings as reference
-        orig_embeds_params = text_encoder.get_input_embeddings().weight.data.clone()
-        if args.debug and (len(text_params_to_optimize["params"])>0) and args.add_instance_token:
-            print(instance_token_id)
-
     for epoch in range(args.num_train_epochs):
         if train_unet:
             unet.train()
@@ -610,19 +603,6 @@ def main(args):
                 if args.use_ema:
                     ema_unet.step(unet)
                 optimizer.zero_grad()
-
-                if args.debug and (train_text_encoder or train_token_embedding) and args.add_instance_token:
-                    # TODO: eventually move all of this to debug
-                    # Let's make sure we don't update any embedding weights besides the newly added token
-                    index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
-                    with torch.no_grad():
-                        if args.debug:
-                            print("Are we changing?")
-                            print("original")
-                            print(orig_embeds_params[index_no_updates])
-                            print("After step")
-                            print(text_encoder.get_input_embeddings().weight[index_no_updates])
-                        text_encoder.get_input_embeddings().weight[index_no_updates] = orig_embeds_params[index_no_updates]
                 
             # Checks if the accelerator has performed an optimization step behind the scenes
             if accelerator.sync_gradients:
