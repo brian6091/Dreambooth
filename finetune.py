@@ -382,7 +382,7 @@ def main(args):
     optimizer_class = load_optimizer(args.optimizer)
         
     optimizer_params = args.optimizer_params
-    #optimizer_params["params"] = params_to_optimize
+    optimizer_params["params"] = params_to_optimize
     #optimizer_params["lr"] = args.learning_rate
     optimizer = optimizer_class(**optimizer_params)
     if True:#args.debug:
