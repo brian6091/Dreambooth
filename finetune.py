@@ -263,7 +263,7 @@ def main(args):
     
     if args.save_model_layout:
         try:
-            from torchinfo import summary # Make this try/catch
+            from torchinfo import summary
             
             with open(os.path.join(args.output_dir, "unet_layout.txt"), "w") as f:
                 f.write(str(summary(unet, col_names=["num_params", "trainable"], verbose=2)))
@@ -272,7 +272,7 @@ def main(args):
                 f.write(str(summary(text_encoder, col_names=["num_params", "trainable"], verbose=2)))
                 f.close()
         except:
-            print("pip install torchinfo if you want model layouts.")        
+            print("pip install torchinfo if you want to save model layouts.")        
 
     
     lr_scaling = args.gradient_accumulation_steps * args.train_batch_size * accelerator.num_processes
@@ -369,7 +369,7 @@ def main(args):
     optimizer_params = args.optimizer_params
     optimizer_params["params"] = params_to_optimize
     optimizer = optimizer_class(**optimizer_params)
-    if True:#args.debug:
+    if True:#args.debug: # TODO remove
         print(optimizer)
     
     noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
@@ -554,11 +554,11 @@ def main(args):
                 pipeline.save_pretrained(save_dir)
 
             if args.save_n_sample>0:
-                
                 sample_prompt = args.sample_prompt.replace("{}", args.instance_token)
                 sample_prompt = list(map(str.strip, sample_prompt.split('//')))
                 
                 pipeline = pipeline.to(accelerator.device)
+                # TODO, one of these slows inference a lot... make params sample_enable_attention_slicing, sample_enable_vae_slicing, sample_enable_xformers
                 pipeline.enable_attention_slicing()
                 pipeline.enable_vae_slicing()
                 if args.enable_xformers and is_xformers_available():
@@ -661,15 +661,6 @@ def main(args):
 
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:
-                    # TODO: this should accept params_to_optimize as first input, no?
-#                     params_to_clip = (
-#                         itertools.chain(unet.parameters(), text_encoder.parameters())
-#                         if (train_text_encoder or train_token_embedding)
-#                         else unet.parameters()
-#                     )
-                    #params_to_clip = params_to_optimize
-                    # TODO avoid upscale error? GradScaler
-#                     accelerator.clip_grad_norm_(params_to_optimize, args.max_grad_norm)
                     params_to_clip = itertools.chain(*[g["params"] for g in params_to_optimize])
                     accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
                 optimizer.step()
