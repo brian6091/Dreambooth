@@ -275,12 +275,6 @@ def main(args):
             f.write(str(summary(text_encoder, col_names=["num_params", "trainable"], verbose=2)))
             f.close()
     
-#     args.learning_rate_text = (
-#         args.learning_rate
-#         if args.learning_rate_text is None
-#         else args.learning_rate_text
-#     )
-    
     lr_scaling = args.gradient_accumulation_steps * args.train_batch_size * accelerator.num_processes
     
     unet_params_to_optimize = {
@@ -291,6 +285,7 @@ def main(args):
     train_unet = len(unet_params_to_optimize["params"])>0
 
     if args.separate_token_embedding:
+        # Put token_embedding into it's own parameter group
         text_token_embedding = []
         text_nontoken = []
         count = 0
@@ -302,58 +297,48 @@ def main(args):
                 else:
                     text_nontoken.append(p)
                     
+        count2 = 0
+        for p in text_encoder.parameters():
+            if p.requires.grad:
+                count2 += 1
+                
+        print(f"{count2} parameters set to be trained. Found {count}, with {len(text_token_embedding)} token embeddings, and {len(text_nontoken)} others in text encoder")
+                    
         token_embedding_to_optimize = {
             "name": "token_embedding",
             "params": text_token_embedding,
             "lr": args.lr_token_embedding*lr_scaling if args.lr_scale else args.lr_token_embedding,
         }
-#         train_token_embedding = len(token_embedding_to_optimize["params"])>0>0
+        train_token_embedding = len(text_token_embedding)>0
 
         text_params_to_optimize = {
             "name": "text_encoder",
             "params": text_nontoken,
             "lr": args.lr_text*lr_scaling if args.lr_scale else args.lr_text,
         }
-        train_text_encoder = count>0
+        train_text_encoder = len(text_nontoken)>0
     else:
+        # Group all of text_encoder together
         text_params_to_optimize = {
             "name": "text_encoder",
             "params": [p for p in text_encoder.parameters() if p.requires_grad],
             "lr": args.lr_text*lr_scaling if args.lr_scale else args.lr_text,
         }
+        train_token_embedding = False # May be trained, but not in separate group
         train_text_encoder = len(text_params_to_optimize["params"])>0
 
     
     params_to_optimize = []
-    if args.separate_token_embedding:
+    if train_token_embedding:
         params_to_optimize.append(token_embedding_to_optimize)
     if train_text_encoder:
         params_to_optimize.append(text_params_to_optimize)    
     if train_unet:
         params_to_optimize.append(unet_params_to_optimize)
         
+    if len(params_to_optimize)==0:
+        raise ValueError("This configuration does not train anything.")
     
-#     unet_params_to_optimize = {
-#         "params": [p for p in unet.parameters() if p.requires_grad],
-#         "lr": args.learning_rate,
-#     }
-#     train_unet = len(unet_params_to_optimize["params"])>0
-    
-#     text_params_to_optimize = {
-#         "params": [p for p in text_encoder.parameters() if p.requires_grad],
-#         "lr": args.learning_rate_text,
-#     }
-#     train_text_encoder = len(text_params_to_optimize["params"])>0
-    
-#     params_to_optimize = []
-#     if train_unet:
-#         params_to_optimize.append(unet_params_to_optimize)
-#     if train_text_encoder:
-#         params_to_optimize.append(text_params_to_optimize)    
-        
-#     if len(params_to_optimize)==0:
-#         raise ValueError("This configuration does not train anything.")
-
         
     if train_unet and args.enable_xformers and is_xformers_available():
         try:
@@ -367,7 +352,7 @@ def main(args):
     # Currently, it's not possible to do gradient accumulation when training two models with accelerate.accumulate
     # This will be enabled soon in accelerate. For now, we don't allow gradient accumulation when training two models.
     # TODO (patil-suraj): Remove this check when gradient accumulation with two models is enabled in accelerate.
-    if (train_unet and train_text_encoder) and args.gradient_accumulation_steps > 1 and accelerator.num_processes > 1:
+    if (train_unet and (train_text_encoder or train_token_embedding)) and args.gradient_accumulation_steps > 1 and accelerator.num_processes > 1:
         logger.warning(
             "Gradient accumulation is not supported when training both unet and the text encoder in distributed training. "
             "Please set gradient_accumulation_steps to 1. This feature will be supported in the future."
@@ -383,7 +368,6 @@ def main(args):
         
     optimizer_params = args.optimizer_params
     optimizer_params["params"] = params_to_optimize
-    #optimizer_params["lr"] = args.learning_rate
     optimizer = optimizer_class(**optimizer_params)
     if True:#args.debug:
         print(optimizer)
@@ -438,7 +422,7 @@ def main(args):
         num_cycles=args.lr_cosine_num_cycles,
     )
 
-    if train_unet and train_text_encoder:
+    if train_unet and (train_text_encoder or train_token_embedding):
         unet, text_encoder, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
             unet, text_encoder, optimizer, train_dataloader, lr_scheduler
         )
@@ -465,7 +449,7 @@ def main(args):
     if not train_unet:
         unet.to(accelerator.device, dtype=weight_dtype)
         unet.eval()
-    if not train_text_encoder:
+    if not (train_text_encoder or train_text_embedding):
         text_encoder.to(accelerator.device, dtype=weight_dtype)
         text_encoder.eval()
 
