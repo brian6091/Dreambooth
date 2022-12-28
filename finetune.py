@@ -33,13 +33,11 @@ from accelerate import Accelerator
 from accelerate.logging import get_logger
 from accelerate.utils import set_seed
 from diffusers import AutoencoderKL, DDPMScheduler, DiffusionPipeline, UNet2DConditionModel
-#from diffusers import AutoencoderKL, DDPMScheduler, DDIMScheduler, StableDiffusionPipeline, UNet2DConditionModel
 from diffusers.optimization import get_scheduler
 from diffusers.training_utils import EMAModel, enable_full_determinism
 from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import HfFolder, Repository, whoami
 
-#from PIL import Image
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, AutoTokenizer
 
@@ -340,7 +338,7 @@ def main(args):
     if len(params_to_optimize)==0:
         raise ValueError("This configuration does not train anything.")
     
-        
+    
     if train_unet and args.enable_xformers and is_xformers_available():
         try:
             unet.enable_xformers_memory_efficient_attention()
@@ -374,6 +372,8 @@ def main(args):
         print(optimizer)
     
     noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+    if noise_scheduler.config.prediction_type not in {"epsilon", "v_prediction"}:
+        raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
 
     train_dataset = FineTuningDataset(
         tokenizer=tokenizer,
@@ -639,13 +639,10 @@ def main(args):
                 model_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
 
                 # Get the target for loss depending on the prediction type
-                # TODO move error to instantiation of noise_scheduler
                 if noise_scheduler.config.prediction_type == "epsilon":
                     target = noise
-                elif noise_scheduler.config.prediction_type == "v_prediction":
+                else: # "v_prediction"
                     target = noise_scheduler.get_velocity(latents, noise, timesteps)
-                else:
-                    raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
 
                 if args.with_prior_preservation:
                     # Chunk the noise and model_pred into two parts and compute the loss on each part separately.
@@ -709,14 +706,26 @@ def main(args):
             else:
                 logs = {"Loss/pred": loss.detach().item()}
 
-            if train_unet and train_text_encoder and args.separate_token_embedding:
+            if train_token_embedding and train_text_encoder and train_unet:
                 # TODO fix this to assign proper names https://discuss.pytorch.org/t/solved-use-two-scheduler-lambdalr-cosineannealinglr-but-seems-wierd/75184
                 logs["lr/token"] = lr_scheduler.get_last_lr()[0]
                 logs["lr/text"] = lr_scheduler.get_last_lr()[1]
                 logs["lr/unet"] = lr_scheduler.get_last_lr()[2]
-            elif train_unet and train_text_encoder:
+            elif train_text_encoder and train_unet:
                 logs["lr/text"] = lr_scheduler.get_last_lr()[0]
                 logs["lr/unet"] = lr_scheduler.get_last_lr()[1]
+            elif train_token_embedding and train_unet:
+                logs["lr/token"] = lr_scheduler.get_last_lr()[0]
+                logs["lr/unet"] = lr_scheduler.get_last_lr()[1]
+            elif train_token_embedding and train_text_encoder:
+                logs["lr/token"] = lr_scheduler.get_last_lr()[0]
+                logs["lr/text"] = lr_scheduler.get_last_lr()[1]
+            elif train_token_embedding:
+                logs["lr/token"] = lr_scheduler.get_last_lr()[0]
+            elif train_text_encoder:
+                logs["lr/text"] = lr_scheduler.get_last_lr()[0]
+            elif train_unet:
+                logs["lr/unet"] = lr_scheduler.get_last_lr()[0]
             else:
                 logs["lr"] = lr_scheduler.get_last_lr()[0]
                 
