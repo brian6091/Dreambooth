@@ -362,30 +362,7 @@ def parse_args(input_args=None):
         metavar="KEY1=VAL1;KEY2=VAL2...",
         help="Optimizer parameters as semi-colon separated string",
         )
-#     parser.add_argument(
-#         "--adam_beta1",
-#         type=float,
-#         default=0.9,
-#         help="The beta1 parameter for the Adam optimizer.",
-#     )
-#     parser.add_argument(
-#         "--adam_beta2",
-#         type=float,
-#         default=0.999,
-#         help="The beta2 parameter for the Adam optimizer.",
-#     )
-#     parser.add_argument(
-#         "--adam_weight_decay",
-#         type=float,
-#         default=1e-2,
-#         help="Weight decay to use.",
-#     )
-#     parser.add_argument(
-#         "--adam_epsilon",
-#         type=float,
-#         default=1e-08,
-#         help="Epsilon value for the Adam optimizer",
-#     )
+
     parser.add_argument(
         "--max_grad_norm",
         default=1.0,
@@ -393,34 +370,7 @@ def parse_args(input_args=None):
         help="Max gradient norm.",
     )
     
-    parser.add_argument(
-        "--lr_scale",
-        action="store_true",
-        default=False,
-        help="Scale the learning rate by the number of GPUs, gradient accumulation steps, and batch size.",
-    )
-#     parser.add_argument(
-#         "--lr_unet_scheduler",
-#         type=str,
-#         default="constant",
-#         help=(
-#             'The scheduler type to use. Choose between ["linear", "cosine", "cosine_with_restarts", "polynomial",'
-#             ' "constant", "constant_with_warmup"]'
-#         ),
-#     )
 
-    parser.add_argument(
-        "--learning_rate",
-        type=none_or_float,
-        default=5e-6,
-        help="Initial learning rate (after the potential warmup period) to use.",
-    )
-    parser.add_argument(
-        "--learning_rate_text",
-        type=none_or_float,
-        default=5e-6,
-        help="Initial learning rate for text encoder (after the potential warmup period) to use.",
-    )
     parser.add_argument(
         "--lr_scheduler",
         type=str,
@@ -442,6 +392,35 @@ def parse_args(input_args=None):
         help="Number of cycles when using cosine_with_restarts lr scheduler.",
     )
 
+    parser.add_argument(
+        "--lr_scale",
+        action="store_true",
+        default=False,
+        help="Scale the learning rate by the number of GPUs, gradient accumulation steps, and batch size.",
+    )
+    parser.add_argument(
+        "--lr_unet",
+        type=none_or_float,
+        default=5e-6,
+        help="Initial learning rate (after the potential warmup period) to use for Unet parameters.",
+    )
+    parser.add_argument(
+        "--lr_text",
+        type=none_or_float,
+        default=5e-6,
+        help="Initial learning rate (after the potential warmup period) to use for text encoder.",
+    )
+    parser.add_argument(
+        "--separate_token_embedding",
+        action="store_true",
+        help="If token embedding is trainable, separate into isolated parameter group?",
+    )
+    parser.add_argument(
+        "--lr_token_embedding",
+        type=none_or_float,
+        default=5e-6,
+        help="Initial learning rate (after the potential warmup period) to use for token embedding if separate_token_embedding=True.",
+    )
     
     parser.add_argument(
         "--use_ema",
