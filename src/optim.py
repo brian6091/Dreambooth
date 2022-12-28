@@ -44,7 +44,7 @@ def group_parameters(unet,
                      lr_text,
                      lr_scaling=1.0,
                      separate_token_embedding=False, 
-                     lr_token_embeddings=None,
+                     lr_token_embedding=None,
                      debug=False,
 ):
     unet_params_to_optimize = {
