@@ -715,12 +715,12 @@ def main(args):
                 logs = {"Loss/pred": loss.detach().item()}
 
             if train_unet and train_text_encoder and args.separate_token_embedding:
-                logs["lr/token"] = lr_scheduler.get_last_lr()["token_embedding"]
-                logs["lr/text"] = lr_scheduler.get_last_lr()["text_encoder"]
-                logs["lr/unet"] = lr_scheduler.get_last_lr()["unet"]
+                logs["lr/token"] = lr_scheduler.get_last_lr()[0]
+                logs["lr/text"] = lr_scheduler.get_last_lr()[1]
+                logs["lr/unet"] = lr_scheduler.get_last_lr()[2]
             elif train_unet and train_text_encoder:
-                logs["lr/text"] = lr_scheduler.get_last_lr()["text_encoder"]
-                logs["lr/unet"] = lr_scheduler.get_last_lr()["unet"]
+                logs["lr/text"] = lr_scheduler.get_last_lr()[0]
+                logs["lr/unet"] = lr_scheduler.get_last_lr()[1]
             else:
                 logs["lr"] = lr_scheduler.get_last_lr()[0]
                 
