@@ -21,10 +21,8 @@ import yaml
 import hashlib
 import itertools
 import math
-#import random
 import os
 from pathlib import Path
-#from typing import Iterable, Optional
 import inspect
 
 import torch
@@ -41,7 +39,6 @@ from diffusers.utils.import_utils import is_xformers_available
 from huggingface_hub import HfFolder, Repository, whoami
 
 from PIL import Image
-#from torchvision import transforms
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, AutoTokenizer
 
@@ -278,37 +275,84 @@ def main(args):
             f.write(str(summary(text_encoder, col_names=["num_params", "trainable"], verbose=2)))
             f.close()
     
-    if args.lr_scale:
-        args.learning_rate = (
-            args.learning_rate * args.gradient_accumulation_steps * args.train_batch_size * accelerator.num_processes
-        )
-        
-    args.learning_rate_text = (
-        args.learning_rate
-        if args.learning_rate_text is None
-        else args.learning_rate_text
-    )
+#     args.learning_rate_text = (
+#         args.learning_rate
+#         if args.learning_rate_text is None
+#         else args.learning_rate_text
+#     )
+    
+    lr_scaling = args.gradient_accumulation_steps * args.train_batch_size * accelerator.num_processes
     
     unet_params_to_optimize = {
+        "name": "unet",
         "params": [p for p in unet.parameters() if p.requires_grad],
-        "lr": args.learning_rate,
+        "lr": args.lr_unet*lr_scaling if args.lr_scale else args.lr_unet,
     }
     train_unet = len(unet_params_to_optimize["params"])>0
-    
-    text_params_to_optimize = {
-        "params": [p for p in text_encoder.parameters() if p.requires_grad],
-        "lr": args.learning_rate_text,
-    }
-    train_text_encoder = len(text_params_to_optimize["params"])>0
+
+    if args.separate_token_embedding:
+        text_token_embedding = []
+        text_nontoken = []
+        count = 0
+        for n, p in text_encoder.named_parameters():
+            if p.requires_grad:
+                count += 1
+                if n.find("token_embedding")>0:
+                    text_token_embedding.append(p)
+                else:
+                    text_nontoken.append(p)
+                    
+        token_embedding_to_optimize = {
+            "name": "token_embedding",
+            "params": text_token_embedding,
+            "lr": args.lr_token_embedding*lr_scaling if args.lr_scale else args.lr_token_embedding,
+        }
+#         train_token_embedding = len(token_embedding_to_optimize["params"])>0>0
+
+        text_params_to_optimize = {
+            "name": "text_encoder",
+            "params": text_nontoken,
+            "lr": args.lr_text*lr_scaling if args.lr_scale else args.lr_text,
+        }
+        train_text_encoder = count>0
+    else:
+        text_params_to_optimize = {
+            "name": "text_encoder",
+            "params": [p for p in text_encoder.parameters() if p.requires_grad],
+            "lr": args.lr_text*lr_scaling if args.lr_scale else args.lr_text,
+        }
+        train_text_encoder = len(text_params_to_optimize["params"])>0
+
     
     params_to_optimize = []
-    if train_unet:
-        params_to_optimize.append(unet_params_to_optimize)
+    if args.separate_token_embedding:
+        params_to_optimize.append(token_embedding_to_optimize)
     if train_text_encoder:
         params_to_optimize.append(text_params_to_optimize)    
+    if train_unet:
+        params_to_optimize.append(unet_params_to_optimize)
         
-    if len(params_to_optimize)==0:
-        raise ValueError("This configuration does not train anything.")
+    
+#     unet_params_to_optimize = {
+#         "params": [p for p in unet.parameters() if p.requires_grad],
+#         "lr": args.learning_rate,
+#     }
+#     train_unet = len(unet_params_to_optimize["params"])>0
+    
+#     text_params_to_optimize = {
+#         "params": [p for p in text_encoder.parameters() if p.requires_grad],
+#         "lr": args.learning_rate_text,
+#     }
+#     train_text_encoder = len(text_params_to_optimize["params"])>0
+    
+#     params_to_optimize = []
+#     if train_unet:
+#         params_to_optimize.append(unet_params_to_optimize)
+#     if train_text_encoder:
+#         params_to_optimize.append(text_params_to_optimize)    
+        
+#     if len(params_to_optimize)==0:
+#         raise ValueError("This configuration does not train anything.")
 
         
     if train_unet and args.enable_xformers and is_xformers_available():
@@ -338,8 +382,8 @@ def main(args):
     optimizer_class = load_optimizer(args.optimizer)
         
     optimizer_params = args.optimizer_params
-    optimizer_params["params"] = params_to_optimize
-    optimizer_params["lr"] = args.learning_rate
+    #optimizer_params["params"] = params_to_optimize
+    #optimizer_params["lr"] = args.learning_rate
     optimizer = optimizer_class(**optimizer_params)
     if args.debug:
         print(optimizer)
@@ -670,9 +714,13 @@ def main(args):
             else:
                 logs = {"Loss/pred": loss.detach().item()}
 
-            if train_unet and train_text_encoder:
-                logs["lr/unet"] = lr_scheduler.get_last_lr()[0]
-                logs["lr/text"] = lr_scheduler.get_last_lr()[1]
+            if train_unet and train_text_encoder and args.separate_token_embedding:
+                logs["lr/token"] = lr_scheduler.get_last_lr()["token_embedding"]
+                logs["lr/text"] = lr_scheduler.get_last_lr()["text_encoder"]
+                logs["lr/unet"] = lr_scheduler.get_last_lr()["unet"]
+            elif train_unet and train_text_encoder:
+                logs["lr/text"] = lr_scheduler.get_last_lr()["text_encoder"]
+                logs["lr/unet"] = lr_scheduler.get_last_lr()["unet"]
             else:
                 logs["lr"] = lr_scheduler.get_last_lr()[0]
                 
