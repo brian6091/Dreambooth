@@ -299,7 +299,7 @@ def main(args):
                     
         count2 = 0
         for p in text_encoder.parameters():
-            if p.requires.grad:
+            if p.requires_grad:
                 count2 += 1
                 
         print(f"{count2} parameters set to be trained. Found {count}, with {len(text_token_embedding)} token embeddings, and {len(text_nontoken)} others in text encoder")
