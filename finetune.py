@@ -324,7 +324,7 @@ def main(args):
             "params": [p for p in text_encoder.parameters() if p.requires_grad],
             "lr": args.lr_text*lr_scaling if args.lr_scale else args.lr_text,
         }
-        train_token_embedding = False # May be trained, but not in separate group
+        train_token_embedding = False # Note that embedding may be trained, but not in separate group
         train_text_encoder = len(text_params_to_optimize["params"])>0
 
     
@@ -527,6 +527,8 @@ def main(args):
                 revision=args.revision,
             )
             
+            # TODO enable_xformers for the pipe
+            
             # TODO: for custom diffusion, or generally distinct module training
             # dump entire checkpoint with all trainable
             
@@ -588,7 +590,7 @@ def main(args):
     global_step = 0
 
     # TODO: eventually move to debug
-    if train_text_encoder:
+    if (train_text_encoder or train_token_embedding):
         # keep original embeddings as reference
         orig_embeds_params = text_encoder.get_input_embeddings().weight.data.clone()
         if args.debug and (len(text_params_to_optimize["params"])>0) and args.add_instance_token:
@@ -597,7 +599,7 @@ def main(args):
     for epoch in range(args.num_train_epochs):
         if train_unet:
             unet.train()
-        if train_text_encoder:
+        if train_text_encoder or train_token_embedding:
             text_encoder.train()
             
         for step, batch in enumerate(train_dataloader):
@@ -629,6 +631,7 @@ def main(args):
                 model_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
 
                 # Get the target for loss depending on the prediction type
+                # TODO move error to instantiation of noise_scheduler
                 if noise_scheduler.config.prediction_type == "epsilon":
                     target = noise
                 elif noise_scheduler.config.prediction_type == "v_prediction":
@@ -657,7 +660,7 @@ def main(args):
                     # TODO: this should accept params_to_optimize as first input, no?
                     params_to_clip = (
                         itertools.chain(unet.parameters(), text_encoder.parameters())
-                        if train_text_encoder
+                        if (train_text_encoder or train_token_embedding)
                         else unet.parameters()
                     )
                     #params_to_clip = params_to_optimize
@@ -669,7 +672,7 @@ def main(args):
                     ema_unet.step(unet)
                 optimizer.zero_grad()
 
-                if args.debug and train_text_encoder and args.add_instance_token:
+                if args.debug and (train_text_encoder or train_token_embedding) and args.add_instance_token:
                     # TODO: eventually move all of this to debug
                     # Let's make sure we don't update any embedding weights besides the newly added token
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
@@ -699,6 +702,7 @@ def main(args):
                 logs = {"Loss/pred": loss.detach().item()}
 
             if train_unet and train_text_encoder and args.separate_token_embedding:
+                # TODO fix this to assign proper names https://discuss.pytorch.org/t/solved-use-two-scheduler-lambdalr-cosineannealinglr-but-seems-wierd/75184
                 logs["lr/token"] = lr_scheduler.get_last_lr()[0]
                 logs["lr/text"] = lr_scheduler.get_last_lr()[1]
                 logs["lr/unet"] = lr_scheduler.get_last_lr()[2]
