@@ -251,7 +251,7 @@ def main(args):
                              lora_rank=args.lora_text_rank,
                              lora_train_off_target=args.lora_text_train_off_target)
 
-    if True:#args.debug: # TODO: add parameter save_parameter_summary
+    if args.save_parameter_summary:
         f = open(os.path.join(args.output_dir, "unet_trainable_parameters.txt"), "w")
         count_parameters(unet, file=f)
         print_trainable_parameters(unet, file=f)
@@ -261,18 +261,19 @@ def main(args):
         print_trainable_parameters(text_encoder, file=f)
         f.close()
     
-    if False:#args.debug:# TODO: add parameter save_model_layout
-        from torchinfo import summary # Make this try/catch
-        
-        print(summary(unet, col_names=["num_params", "trainable"], verbose=1))
-        print(summary(text_encoder, col_names=["num_params", "trainable"], verbose=1))
+    if args.save_model_layout:
+        try:
+            from torchinfo import summary # Make this try/catch
+            
+            with open(os.path.join(args.output_dir, "unet_layout.txt"), "w") as f:
+                f.write(str(summary(unet, col_names=["num_params", "trainable"], verbose=2)))
+                f.close()
+            with open(os.path.join(args.output_dir, "text_encoder_layout.txt"), "w") as f:
+                f.write(str(summary(text_encoder, col_names=["num_params", "trainable"], verbose=2)))
+                f.close()
+        except:
+            print("pip install torchinfo if you want model layouts.")        
 
-        with open(os.path.join(args.output_dir, "unet_layout.txt"), "w") as f:
-            f.write(str(summary(unet, col_names=["num_params", "trainable"], verbose=2)))
-            f.close()
-        with open(os.path.join(args.output_dir, "text_encoder_layout.txt"), "w") as f:
-            f.write(str(summary(text_encoder, col_names=["num_params", "trainable"], verbose=2)))
-            f.close()
     
     lr_scaling = args.gradient_accumulation_steps * args.train_batch_size * accelerator.num_processes
     
@@ -442,7 +443,7 @@ def main(args):
     elif accelerator.mixed_precision == "bf16":
         weight_dtype = torch.bfloat16
 
-    # Move untrained components to GPU.
+    # Move untrained components to GPU
     # For mixed precision training we cast the weights to half-precision as it they are 
     # only used for inference, and keeping weights in full precision is not required.
     vae.to(accelerator.device, dtype=weight_dtype)
@@ -527,9 +528,7 @@ def main(args):
                 torch_dtype=torch.float16, # TODO option to save in fp32?
                 revision=args.revision,
             )
-            
-            # TODO enable_xformers for the pipe
-            
+                        
             # TODO: for custom diffusion, or generally distinct module training
             # dump entire checkpoint with all trainable
             
