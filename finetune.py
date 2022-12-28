@@ -502,7 +502,7 @@ def main(args):
                 {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
             )
                     
-            if train_text_encoder:
+            if train_text_encoder or train_token_embedding:
                 text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
             else:
                 text_enc_model = CLIPTextModel.from_pretrained(
