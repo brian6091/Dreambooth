@@ -106,9 +106,9 @@ save_min_steps: 200
 save_parameter_summary: true
 save_model_layout: false
 #
-save_sample_prompt: a photo of a person // a photo of Keanu Reeves // a photo of {}
+sample_prompt: a photo of a person // a photo of Keanu Reeves // a photo of {}
   person // an painting of {} person by Picasso
-save_sample_negative_prompt: hands, border
+sample_negative_prompt: hands, border
 sample_seed: null
 sample_guidance_scale: 7.5
 sample_infer_steps: 50
