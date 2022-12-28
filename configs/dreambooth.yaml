@@ -102,14 +102,17 @@ logging_dir: /content/logs/
 #
 #
 save_n_sample: 4
+save_interval: 200
+save_min_steps: 200
+save_parameter_summary: true
+save_model_layout: false
+#
 save_sample_prompt: a photo of a person // a photo of Keanu Reeves // a photo of {}
   person // an painting of {} person by Picasso
 save_sample_negative_prompt: hands, border
-save_seed: null
-save_interval: 200
-save_min_steps: 200
-save_guidance_scale: 7.5
-save_infer_steps: 50
+sample_seed: null
+sample_guidance_scale: 7.5
+sample_infer_steps: 50
 #
 #
 hub_token: null
