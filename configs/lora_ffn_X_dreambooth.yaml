@@ -1,5 +1,9 @@
 description: 'LoRA (ffn) X Dreambooth example configuration, training both Unet and text encoder, with prior preservation'
 #
+# T4
+# rank: 4, train_batch_size: 1, gradient_checkpointing: true [check working?]
+# Steps:   2% 200/10000 [03:08<2:25:30,  1.12it/s, GPU=6586]
+#
 # A100
 # rank: 4, train_batch_size: 4, gradient_checkpointing: false
 # Steps:   0% 39/10000 [00:29<1:42:56,  1.61it/s, GPU=16920]
@@ -75,8 +79,8 @@ max_grad_norm: 1.0
 #
 #
 lr_scale: false
-learning_rate: 1e-4
-learning_rate_text: 1.0e-06
+learning_rate: 3e-4
+learning_rate_text: 1.0e-05
 lr_scheduler: cosine
 lr_warmup_steps: 50
 lr_cosine_num_cycles: 5.0
