@@ -1,8 +1,8 @@
 description: textual inversion example configuration
 #
 # T4
-# train_batch_size: 4, gradient_checkpointing: false
-# Steps:   3% 279/10000 [08:40<5:02:02,  1.86s/it, GPU=7276]
+# train_batch_size: 1, gradient_checkpointing: true
+# Steps:   4% 400/10000 [13:35<1:24:57,  1.88it/s, GPU=6410]
 #
 # A100
 # train_batch_size: 4, gradient_checkpointing: false
@@ -84,7 +84,7 @@ lr_cosine_num_cycles: 5.0
 #
 lr_scale: false
 lr_unet: 1e-5
-lr_text: 5e-4
+lr_text: 8e-4
 separate_token_embedding: false
 lr_token_embedding: 5e-4
 #
