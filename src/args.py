@@ -471,24 +471,6 @@ def parse_args(input_args=None):
         help="The number of samples to save.",
     )
     parser.add_argument(
-        "--save_sample_prompt",
-        type=str,
-        default=None,
-        help="The prompt used to generate sample outputs to save.",
-    )
-    parser.add_argument(
-        "--save_sample_negative_prompt",
-        type=str,
-        default=None,
-        help="The negative prompt used to generate sample outputs to save.",
-    )
-    parser.add_argument(
-        "--save_seed",
-        type=none_or_int,
-        default=None,
-        help="A seed for intermediate samples.",
-    )
-    parser.add_argument(
         "--save_interval",
         type=int,
         default=10_000,
@@ -500,13 +482,42 @@ def parse_args(input_args=None):
         help="Start saving weights after N steps.",
     )
     parser.add_argument(
-        "--save_guidance_scale",
+        "--save_parameter_summary",
+        action="store_true",
+        help="Save a summary of parameters that were set to be trained.",
+    )
+    parser.add_argument(
+        "--save_model_layout",
+        action="store_true",
+        help="Save model hierarchy of Unet and text encoder (requires torchinfo library).",
+    )
+    
+    parser.add_argument(
+        "--sample_prompt",
+        type=str,
+        default=None,
+        help="The prompt used to generate sample outputs to save.",
+    )
+    parser.add_argument(
+        "--sample_negative_prompt",
+        type=str,
+        default=None,
+        help="The negative prompt used to generate sample outputs to save.",
+    )
+    parser.add_argument(
+        "--sample_seed",
+        type=none_or_int,
+        default=None,
+        help="A seed for intermediate samples.",
+    )
+    parser.add_argument(
+        "--sample_guidance_scale",
         type=float,
         default=7.5,
         help="CFG for save sample.",
     )
     parser.add_argument(
-        "--save_infer_steps",
+        "--sample_infer_steps",
         type=int,
         default=50,
         help="The number of inference steps for save sample.",
