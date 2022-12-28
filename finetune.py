@@ -67,16 +67,10 @@ logger = get_logger(__name__)
 
 
 def main(args):
-    if args.debug:
-        torch.set_printoptions(precision=10)
-    
-    env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
-    if env_local_rank != -1 and env_local_rank != args.local_rank:
-        args.local_rank = env_local_rank
-
     logging_dir = Path(args.output_dir, args.logging_dir)
 
     # TODO: CHECK FATAL ERRORS (e.g., no training, etc)
+    # TODO: check instance and class (if given) path existence    
     if args.with_prior_preservation:
         if args.class_data_dir is None:
             raise ValueError("You must specify a data directory for class images.")
@@ -88,15 +82,7 @@ def main(args):
         mixed_precision=args.mixed_precision,
         log_with="tensorboard",
         logging_dir=logging_dir,
-    )
-    
-    # TODO: check instance and class (if given) path existence
-    # Check https://huggingface.co/docs/accelerate/main/en/package_reference/accelerator#only-ever-once-across-all-servers
-    if args.output_dir is not None:
-        os.makedirs(args.output_dir, exist_ok=True)
-    
-    with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
-        yaml.dump(format_args(args), f, indent=2, sort_keys=False)
+    )    
         
     # Handle the repository creation
     if accelerator.is_main_process:
@@ -112,15 +98,22 @@ def main(args):
                     gitignore.write("step_*\n")
                 if "epoch_*" not in gitignore:
                     gitignore.write("epoch_*\n")
-
+        elif args.output_dir is not None:
+            os.makedirs(args.output_dir, exist_ok=True)
+            
+        with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
+            yaml.dump(format_args(args), f, indent=2, sort_keys=False)            
+            
     if args.seed is not None:
         if args.enable_full_determinism:
             enable_full_determinism(args.seed)
         else:
             set_seed(args.seed)
+            
+    if args.debug:
+        torch.set_printoptions(precision=10)
 
     if args.with_prior_preservation:
-        pipeline = None
         class_images_dir = Path(args.class_data_dir)
         if not class_images_dir.exists():
             class_images_dir.mkdir(parents=True)
@@ -129,21 +122,20 @@ def main(args):
         # Generate class images if necessary
         if cur_class_images < args.num_class_images:
             torch_dtype = torch.float16 if accelerator.device.type == "cuda" else torch.float32
-            if pipeline is None:
-                pipeline = DiffusionPipeline.from_pretrained(
-                    args.pretrained_model_name_or_path,
-                    vae=AutoencoderKL.from_pretrained(
-                        args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
-                        subfolder=None if args.pretrained_vae_name_or_path else "vae",
-                        revision=None if args.pretrained_vae_name_or_path else args.revision,
-                        torch_dtype=torch_dtype,
-                    ),
-                    torch_dtype=torch_dtype, # TODO allow selection?
-                    safety_checker=None,
-                    revision=args.revision
-                )
-                pipeline.set_progress_bar_config(disable=True)
-                pipeline.to(accelerator.device)
+            pipeline = DiffusionPipeline.from_pretrained(
+                args.pretrained_model_name_or_path,
+                vae=AutoencoderKL.from_pretrained(
+                    args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
+                    subfolder=None if args.pretrained_vae_name_or_path else "vae",
+                    revision=None if args.pretrained_vae_name_or_path else args.revision,
+                    torch_dtype=torch_dtype,
+                ),
+                torch_dtype=torch_dtype, # TODO allow selection?
+                safety_checker=None,
+                revision=args.revision
+            )
+            pipeline.set_progress_bar_config(disable=True)
+            pipeline.to(accelerator.device)
 
             num_new_images = args.num_class_images - cur_class_images
             logger.info(f"Number of class images to sample: {num_new_images}.")
@@ -289,7 +281,6 @@ def main(args):
     
     if len(params_to_optimize)==0:
         raise ValueError("This configuration does not train anything.")
-    
     
     if train_unet and args.enable_xformers and is_xformers_available():
         try:
@@ -689,6 +680,9 @@ def main(args):
     if accelerator.is_main_process:
         save_weights(global_step)
     
+        if args.push_to_hub:
+            repo.push_to_hub(commit_message="End of training", blocking=False, auto_lfs_prune=True)
+            
     accelerator.end_training()
 
 
