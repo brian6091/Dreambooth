@@ -59,7 +59,7 @@ from src.model_utils import (
     count_parameters,
     print_trainable_parameters,
 )
-from src.optim import load_optimizer
+from src.optim import load_optimizer, group_parameters
 from src.utils import image_grid, get_full_repo_name, get_gpu_memory_map
 
 
