@@ -43,7 +43,7 @@ def group_parameters(unet,
                      text_encoder,
                      lr_text,
                      lr_scaling=1.0,
-                     separate_token_embeddings=False, 
+                     separate_token_embedding=False, 
                      lr_token_embeddings=None,
                      debug=False,
 ):
