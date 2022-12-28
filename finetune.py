@@ -669,7 +669,8 @@ def main(args):
                     )
                     #params_to_clip = params_to_optimize
                     # TODO avoid upscale error? GradScaler
-                    accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
+                    accelerator.clip_grad_norm_(params_to_optimize, args.max_grad_norm)
+#                     accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
                 optimizer.step()
                 lr_scheduler.step()
                 if args.use_ema:
