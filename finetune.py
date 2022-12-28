@@ -336,12 +336,13 @@ def main(args):
 #     if train_unet:
 #         params_to_optimize.append(unet_params_to_optimize)
         
+    lr_scaling = args.gradient_accumulation_steps * args.train_batch_size * accelerator.num_processes
     train_token_embedding, train_text_encoder, train_unet, params_to_optimize = group_parameters(
         unet,
         args.lr_unet,
         text_encoder,
         args.lr_text,
-        lr_scaling=args.gradient_accumulation_steps * args.train_batch_size * accelerator.num_processes,
+        lr_scaling=lr_scaling if args.lr_scale else 1.0,
         separate_token_embeddings=args.separate_token_embedding,
         lr_token_embeddings=args.lr_token_embedding,
         debug=args.debug,
