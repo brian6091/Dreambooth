@@ -275,67 +275,6 @@ def main(args):
             print("pip install torchinfo if you want to save model layouts.")        
 
     
-#    lr_scaling = args.gradient_accumulation_steps * args.train_batch_size * accelerator.num_processes
-    
-#     unet_params_to_optimize = {
-#         "name": "unet",
-#         "params": [p for p in unet.parameters() if p.requires_grad],
-#         "lr": args.lr_unet*lr_scaling if args.lr_scale else args.lr_unet,
-#     }
-#     train_unet = len(unet_params_to_optimize["params"])>0
-
-#     if args.separate_token_embedding:
-#         # Put token_embedding into it's own parameter group
-#         text_token_embedding = []
-#         text_nontoken = []
-#         count = 0
-#         for n, p in text_encoder.named_parameters():
-#             if p.requires_grad:
-#                 count += 1
-#                 if n.find("token_embedding")>0:
-#                     text_token_embedding.append(p)
-#                 else:
-#                     text_nontoken.append(p)
-                    
-#         count2 = 0
-#         for p in text_encoder.parameters():
-#             if p.requires_grad:
-#                 count2 += 1
-                
-#         print(f"{count2} parameters set to be trained. Found {count}, with {len(text_token_embedding)} token embeddings, and {len(text_nontoken)} others in text encoder")
-                    
-#         token_embedding_to_optimize = {
-#             "name": "token_embedding",
-#             "params": text_token_embedding,
-#             "lr": args.lr_token_embedding*lr_scaling if args.lr_scale else args.lr_token_embedding,
-#         }
-#         train_token_embedding = len(text_token_embedding)>0
-
-#         text_params_to_optimize = {
-#             "name": "text_encoder",
-#             "params": text_nontoken,
-#             "lr": args.lr_text*lr_scaling if args.lr_scale else args.lr_text,
-#         }
-#         train_text_encoder = len(text_nontoken)>0
-#     else:
-#         # Group all of text_encoder together
-#         text_params_to_optimize = {
-#             "name": "text_encoder",
-#             "params": [p for p in text_encoder.parameters() if p.requires_grad],
-#             "lr": args.lr_text*lr_scaling if args.lr_scale else args.lr_text,
-#         }
-#         train_token_embedding = False # Note that embedding may be trained, but not in separate group
-#         train_text_encoder = len(text_params_to_optimize["params"])>0
-
-    
-#     params_to_optimize = []
-#     if train_token_embedding:
-#         params_to_optimize.append(token_embedding_to_optimize)
-#     if train_text_encoder:
-#         params_to_optimize.append(text_params_to_optimize)    
-#     if train_unet:
-#         params_to_optimize.append(unet_params_to_optimize)
-        
     lr_scaling = args.gradient_accumulation_steps * args.train_batch_size * accelerator.num_processes
     train_token_embedding, train_text_encoder, train_unet, params_to_optimize = group_parameters(
         unet,
