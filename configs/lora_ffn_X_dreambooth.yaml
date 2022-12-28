@@ -82,7 +82,6 @@ lr_scheduler: cosine
 lr_warmup_steps: 50
 lr_cosine_num_cycles: 5.0
 #
-learning_rate_text: 1.0e-05
 lr_scale: false
 lr_unet: 3e-4
 lr_text: 1.0e-05
