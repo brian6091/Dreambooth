@@ -662,15 +662,16 @@ def main(args):
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:
                     # TODO: this should accept params_to_optimize as first input, no?
-                    params_to_clip = (
-                        itertools.chain(unet.parameters(), text_encoder.parameters())
-                        if (train_text_encoder or train_token_embedding)
-                        else unet.parameters()
-                    )
+#                     params_to_clip = (
+#                         itertools.chain(unet.parameters(), text_encoder.parameters())
+#                         if (train_text_encoder or train_token_embedding)
+#                         else unet.parameters()
+#                     )
                     #params_to_clip = params_to_optimize
                     # TODO avoid upscale error? GradScaler
-                    accelerator.clip_grad_norm_(params_to_optimize, args.max_grad_norm)
-#                     accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
+#                     accelerator.clip_grad_norm_(params_to_optimize, args.max_grad_norm)
+                    params_to_clip = itertools.chain(*[g["params"] for g in params_to_optimize])
+                    accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
                 optimizer.step()
                 lr_scheduler.step()
                 if args.use_ema:
