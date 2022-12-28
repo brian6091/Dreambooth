@@ -449,7 +449,7 @@ def main(args):
     if not train_unet:
         unet.to(accelerator.device, dtype=weight_dtype)
         unet.eval()
-    if not (train_text_encoder or train_text_embedding):
+    if not (train_text_encoder or train_token_embedding):
         text_encoder.to(accelerator.device, dtype=weight_dtype)
         text_encoder.eval()
 
