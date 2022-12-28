@@ -555,8 +555,8 @@ def main(args):
 
             if args.save_n_sample>0:
                 
-                save_sample_prompt = args.save_sample_prompt.replace("{}", args.instance_token)
-                save_sample_prompt = list(map(str.strip, save_sample_prompt.split('//')))
+                sample_prompt = args.sample_prompt.replace("{}", args.instance_token)
+                sample_prompt = list(map(str.strip, sample_prompt.split('//')))
                 
                 pipeline = pipeline.to(accelerator.device)
                 pipeline.enable_attention_slicing()
@@ -565,7 +565,7 @@ def main(args):
                     pipeline.enable_xformers_memory_efficient_attention()
                 
                 g_cuda = torch.Generator(device=accelerator.device).manual_seed(
-                    args.save_seed if args.save_seed!=None else args.seed,
+                    args.sample_seed if args.sample_seed!=None else args.seed,
                 )
                 pipeline.set_progress_bar_config(disable=True)
                 sample_dir = os.path.join(save_dir, "samples")
@@ -575,15 +575,15 @@ def main(args):
                     all_images = []
                     for i in tqdm(range(args.save_n_sample), desc="Generating samples"):
                         images = pipeline(
-                            save_sample_prompt,
-                            negative_prompt=[args.save_sample_negative_prompt]*len(save_sample_prompt),
-                            guidance_scale=args.save_guidance_scale,
-                            num_inference_steps=args.save_infer_steps,
+                            sample_prompt,
+                            negative_prompt=[args.sample_negative_prompt]*len(sample_prompt),
+                            guidance_scale=args.sample_guidance_scale,
+                            num_inference_steps=args.sample_infer_steps,
                             generator=g_cuda
                         ).images
                         all_images.extend(images)
                         
-                    grid = image_grid(all_images, rows=args.save_n_sample, cols=len(save_sample_prompt))
+                    grid = image_grid(all_images, rows=args.save_n_sample, cols=len(sample_prompt))
                     grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
                     
                 del pipeline
