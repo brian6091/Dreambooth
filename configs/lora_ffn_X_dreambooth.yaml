@@ -15,7 +15,7 @@ revision: null
 train_unet_module_or_class: [ff]
 train_unet_submodule: null
 #
-train_text_module_or_class: [CLIPAttention]
+train_text_module_or_class: [mlp]
 train_text_submodule: null
 #
 lora_unet_layer: [Linear]
