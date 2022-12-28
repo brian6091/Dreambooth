@@ -65,10 +65,10 @@ seed: 1275017
 enable_full_determinism: false
 resolution: 512
 mixed_precision: fp16
-train_batch_size: 4
+train_batch_size: 1
 max_train_steps: 10000
 gradient_accumulation_steps: 1
-gradient_checkpointing: false
+gradient_checkpointing: true
 enable_xformers: true
 #
 #
