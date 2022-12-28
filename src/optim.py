@@ -42,7 +42,7 @@ def group_parameters(unet,
                      lr_unet,
                      text_encoder,
                      lr_text,
-                     lr_scaling=1,
+                     lr_scaling=1.0,
                      separate_token_embeddings=False, 
                      lr_token_embeddings=None,
                      debug=False,
@@ -50,7 +50,7 @@ def group_parameters(unet,
     unet_params_to_optimize = {
         "name": "unet",
         "params": [p for p in unet.parameters() if p.requires_grad],
-        "lr": lr_unet*lr_scaling if lr_scale else lr_unet,
+        "lr": lr_unet*lr_scaling,
     }
     train_unet = len(unet_params_to_optimize["params"])>0
 
@@ -78,7 +78,7 @@ def group_parameters(unet,
         token_embedding_to_optimize = {
             "name": "token_embedding",
             "params": text_token_embedding,
-            "lr": lr_token_embedding*lr_scaling if lr_scale else lr_token_embedding,
+            "lr": lr_token_embedding*lr_scaling,
         }
         train_token_embedding = len(text_token_embedding)>0
 
@@ -86,7 +86,7 @@ def group_parameters(unet,
         text_params_to_optimize = {
             "name": "text_encoder",
             "params": text_nontoken,
-            "lr": lr_text*lr_scaling if lr_scale else lr_text,
+            "lr": lr_text*lr_scaling,
         }
         train_text_encoder = len(text_nontoken)>0
     else:
@@ -94,7 +94,7 @@ def group_parameters(unet,
         text_params_to_optimize = {
             "name": "text_encoder",
             "params": [p for p in text_encoder.parameters() if p.requires_grad],
-            "lr": lr_text*lr_scaling if lr_scale else lr_text,
+            "lr": lr_text*lr_scaling,
         }
         train_token_embedding = False # Note that embedding may be trained, but not in separate group
         train_text_encoder = len(text_params_to_optimize["params"])>0
