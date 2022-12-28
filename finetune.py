@@ -343,8 +343,8 @@ def main(args):
         text_encoder,
         args.lr_text,
         lr_scaling=lr_scaling if args.lr_scale else 1.0,
-        separate_token_embeddings=args.separate_token_embedding,
-        lr_token_embeddings=args.lr_token_embedding,
+        separate_token_embedding=args.separate_token_embedding,
+        lr_token_embedding=args.lr_token_embedding,
         debug=args.debug,
     )
     
