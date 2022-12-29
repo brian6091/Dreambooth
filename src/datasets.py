@@ -143,7 +143,7 @@ class FineTuningDataset(Dataset):
             self.instance_prompt = caption
         else:
             if self.instance_prompt is None:
-                raise ValueError("An instance_prompt must be provided if use_textual_inversion_templates=False, and use_image_captions=False.")
+                raise ValueError("An instance_prompt must be provided if prompt templates not provided and use_image_captions=False.")
 
         example["instance_prompt_ids"] = self.tokenizer(
             self.instance_prompt,
@@ -177,10 +177,12 @@ class FineTuningDataset(Dataset):
                     with open(caption_path) as f:
                         caption = f.read()
                 else:
+                    # Take filename as caption
                     caption = caption_path.stem
+                    caption = caption.replace("_"," ")
 
-                caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
-                caption = caption.replace("_"," ")
+                #caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
+                caption = caption.replace("{}", self.instance_token)
                 self.class_prompt = caption
             
             example["class_prompt_ids"] = self.tokenizer(
