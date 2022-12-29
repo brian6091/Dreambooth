@@ -36,7 +36,7 @@ from diffusers import AutoencoderKL, DDPMScheduler, DiffusionPipeline, UNet2DCon
 from diffusers.optimization import get_scheduler
 from diffusers.training_utils import EMAModel, enable_full_determinism
 from diffusers.utils.import_utils import is_xformers_available
-from huggingface_hub import HfFolder, Repository, whoami
+from huggingface_hub import Repository
 
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, AutoTokenizer
