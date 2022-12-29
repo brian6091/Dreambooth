@@ -121,6 +121,14 @@ def _inject_trainable_lora(
             print("LoRA up/down weights")
             print(get_tensor_info(model._modules[target_name].lora_up.weight))
             print(get_tensor_info(model._modules[target_name].lora_down.weight))
+            
+            model._modules[target_name].lora_up.weight.retain_grad()
+            model._modules[target_name].lora_down.weight.retain_grad()
+
+            print("LoRA up/down weights retain_grad")
+            print(get_tensor_info(model._modules[target_name].lora_up.weight))
+            print(get_tensor_info(model._modules[target_name].lora_down.weight))
+            
         else:
             print(f"Cannot inject LoRA into {_child_module.__class__.__name__}")
             if train_off_target!=None:
