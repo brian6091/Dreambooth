@@ -304,7 +304,8 @@ def main(args):
         if train_unet:
             unet.enable_gradient_checkpointing()
         if train_token_embedding or train_text_encoder:
-            print("skipping the text encoder")
+            print("Gradient checkpointing for the text_encoder not implemented")
+            # https://github.com/brian6091/Dreambooth/issues/23
             #text_encoder.gradient_checkpointing_enable()
 
     optimizer_class = load_optimizer(args.optimizer)
