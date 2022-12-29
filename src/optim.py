@@ -134,33 +134,43 @@ def group_parameters(unet,
     
     
 
-def get_pivotal_tuning_schedule_with_warmup(
-    optimizer: Optimizer, num_warmup_steps: int, num_training_steps: int, num_cycles: float = 0.5, last_epoch: int = -1
+def get_explore_exploit_schedule_with_warmup(
+    optimizer: Optimizer,
+    num_warmup_steps0: int,
+    num_warmup_steps1: int,
+    start_step0: int,
+    start_step1: int,
+    num_explore_steps0: int,
+    num_explore_steps1: int,
+    num_total_steps0: int,
+    num_total_steps1: int,
+    last_epoch: int = -1
 ):
     """
-    Create a schedule with a learning rate that decreases following the values of the cosine function between the
-    initial lr set in the optimizer to 0, after a warmup period during which it increases linearly between 0 and the
-    initial lr set in the optimizer.
-    Args:
-        optimizer ([`~torch.optim.Optimizer`]):
-            The optimizer for which to schedule the learning rate.
-        num_warmup_steps (`int`):
-            The number of steps for the warmup phase.
-        num_training_steps (`int`):
-            The total number of training steps.
-        num_periods (`float`, *optional*, defaults to 0.5):
-            The number of periods of the cosine function in a schedule (the default is to just decrease from the max
-            value to 0 following a half-cosine).
-        last_epoch (`int`, *optional*, defaults to -1):
-            The index of the last epoch when resuming training.
-    Return:
-        `torch.optim.lr_scheduler.LambdaLR` with the appropriate schedule.
     """
 
-    def lr_lambda(current_step):
-        if current_step < num_warmup_steps:
-            return float(current_step) / float(max(1, num_warmup_steps))
-        progress = float(current_step - num_warmup_steps) / float(max(1, num_training_steps - num_warmup_steps))
-        return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress)))
+    def lr_lambda_0(current_step):
+        if current_step <= start_step0:
+            return 0.0
+        if current_step <= (num_warmup_steps0 + start_step0):
+            return float(current_step) / float(max(1, num_warmup_steps0 + start_step0))
+        elif current_step <= (num_explore_steps0 + num_warmup_steps0 + start_step0):
+            return 1.0
+        else:
+            return max(
+                0.0, float(num_total_steps0 - current_step) / float(max(1, num_total_steps0 - num_warmup_steps0))
+            )
+        
+    def lr_lambda1(current_step):
+        if current_step <= start_step1:
+            return 0.0
+        if current_step <= (num_warmup_steps1 + start_step1):
+            return float(current_step) / float(max(1, num_warmup_steps1 + start_step1))
+        elif current_step <= (num_explore_steps1 + num_warmup_steps1 + start_step1):
+            return 1.0
+        else:
+            return max(
+                0.0, float(num_total_steps1 - current_step) / float(max(1, num_total_steps1 - num_warmup_steps1))
+            )
     
-    return LambdaLR(optimizer, lr_lambda, last_epoch)
+    return LambdaLR(optimizer, [lr_lambda0, lr_lambda1], last_epoch)
