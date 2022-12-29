@@ -32,6 +32,13 @@ def print_trainable_parameters(model: nn.Module, file=sys.stdout):
         if param.requires_grad:
             print(name, param.shape, file=file)
 
+            
+def get_tensor_info(tensor):
+    info = []
+    for name in ['is_leaf', 'requires_grad', 'retains_grad', 'grad_fn', 'grad']:
+        info.append(f'{name}({getattr(tensor, name, None)})')
+    return ' '.join(info)            
+
 
 def find_modules_by_name_or_class(
     model: nn.Module,
