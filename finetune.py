@@ -16,7 +16,6 @@
 #    SPDX short identifier: Apache-2.0
 #    save_weights modified from https://github.com/ShivamShrirao/diffusers/blob/main/examples/dreambooth/train_dreambooth.py
 #    SPDX short identifier: Apache-2.0
-
 import yaml
 import hashlib
 import itertools
@@ -27,7 +26,7 @@ import inspect
 
 import torch
 import torch.nn.functional as F
-import torch.utils.checkpoint
+#import torch.utils.checkpoint
 
 from accelerate import Accelerator
 from accelerate.logging import get_logger
@@ -601,6 +600,9 @@ def main(args):
                 loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
 
             loss = loss / args.gradient_accumulation_steps
+            
+            print(loss)
+            print(loss.requires_grad)
             
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0:
