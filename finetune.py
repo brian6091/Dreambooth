@@ -16,6 +16,7 @@
 #    SPDX short identifier: Apache-2.0
 #    save_weights modified from https://github.com/ShivamShrirao/diffusers/blob/main/examples/dreambooth/train_dreambooth.py
 #    SPDX short identifier: Apache-2.0
+#
 import yaml
 import hashlib
 import itertools
@@ -602,20 +603,16 @@ def main(args):
             else:
                 loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
 
-            print("Before")
-            print("loss=", loss)
-            print(get_tensor_info(loss))
-#             print("loss=", loss)
-#             print("loss.requires_grad=", loss.requires_grad)
-#             print("leaf=", loss.is_leaf) # This is false for some configurations and true for others???
-#             print("grad_fn=", loss.grad_fn)            
-            #loss.requires_grad = True
+            if args.debug
+                print("Before")
+                print("loss=", loss)
+                print(get_tensor_info(loss))
             loss = loss / args.gradient_accumulation_steps
             
-            print("After")
-            print("loss=", loss)
-            print(get_tensor_info(loss))
-            #print("loss.requires_grad=", loss.requires_grad)
+            if args.debug
+                print("After")
+                print("loss=", loss)
+                print(get_tensor_info(loss))
             
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0:
