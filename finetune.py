@@ -329,11 +329,11 @@ def main(args):
         prompt_templates=args.prompt_templates,
         class_data_root=args.class_data_dir if args.with_prior_preservation else None,
         class_prompt=args.class_prompt,
-        use_image_captions=args.use_image_captions,
+        use_instance_image_captions=args.use_instance_image_captions,
+        use_class_image_captions=args.use_class_image_captions,
         unconditional_prompt=args.unconditional_prompt,
         size=args.resolution,
         augment_output_dir=args.augment_output_dir if args.augment_output_dir!=None else None,
-#        augment_output_dir=None if args.augment_output_dir=="" else args.augment_output_dir, #TODO this should check None?
         augment_min_resolution=args.augment_min_resolution,
         augment_center_crop=args.augment_center_crop,
         augment_hflip=args.augment_hflip,
