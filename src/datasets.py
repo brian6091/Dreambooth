@@ -43,7 +43,8 @@ class FineTuningDataset(Dataset):
         prompt_templates=None,
         class_data_root=None,
         class_prompt=None,
-        use_image_captions=False,
+        use_instance_image_captions=False,
+        use_class_image_captions=False,
         unconditional_prompt=" ",
         size=512,
         augment_output_dir=None,
@@ -89,7 +90,8 @@ class FineTuningDataset(Dataset):
         else:
             self.class_data_root = None
 
-        self.use_image_captions = use_image_captions
+        self.use_instance_image_captions = use_instance_image_captions
+        self.use_class_image_captions = use_class_image_captions
         self.unconditional_prompt = unconditional_prompt
         
         self.size = size
@@ -146,7 +148,7 @@ class FineTuningDataset(Dataset):
 
         if self.prompt_templates is not None:
             self.instance_prompt = random.choice(self.prompt_templates).format(self.instance_token)
-        elif self.use_image_captions:
+        elif self.use_instance_image_captions:
             caption_path = image_path.with_suffix(".txt")
             if caption_path.exists():
                 with open(caption_path) as f:
@@ -188,7 +190,7 @@ class FineTuningDataset(Dataset):
                     image.save(os.path.join(self.augment_output_dir, image_filename))
             example["class_images"] = self.image_transforms(image)
             
-            if self.use_image_captions:
+            if self.use_class_image_captions:
                 caption_path = image_path.with_suffix(".txt")
                 if caption_path.exists():
                     with open(caption_path) as f:
@@ -198,7 +200,6 @@ class FineTuningDataset(Dataset):
                     caption = caption_path.stem
                     caption = caption.replace("_"," ")
 
-                #caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
                 caption = caption.replace("{}", self.instance_token)
                 self.class_prompt = caption
             
