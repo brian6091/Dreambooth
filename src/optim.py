@@ -119,7 +119,7 @@ def group_parameters(unet,
         train_text_encoder = len(text_params_to_optimize["params"])>0
     
     params_to_optimize = []
-    if train_token_embedding and not separate_token_embedding:
+    if train_token_embedding and separate_token_embedding:
         params_to_optimize.append(token_embedding_to_optimize)
     if train_text_encoder:
         params_to_optimize.append(text_params_to_optimize)    
