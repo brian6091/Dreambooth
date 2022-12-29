@@ -604,6 +604,7 @@ def main(args):
             print("loss.requires_grad=", loss.requires_grad)
             print("leaf=", loss.is_leaf)
             print("grad_fn=", loss.grad_fn)            
+            loss.requires_grad = True
             loss = loss / args.gradient_accumulation_steps
             
             print("After")
