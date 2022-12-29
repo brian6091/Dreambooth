@@ -48,7 +48,8 @@ with_prior_preservation: true
 prior_loss_weight: 1.0
 num_class_images: 1500
 sample_batch_size: 4
-use_image_captions: false
+use_instance_image_captions: false
+use_class_image_captions: false
 #
 #
 conditioning_dropout_prob: 0.0
