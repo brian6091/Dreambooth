@@ -545,56 +545,53 @@ def main(args):
             text_encoder.train()
             
         for step, batch in enumerate(train_dataloader):
-            # TODO: how to handle context setting when unet is not training?
-            # https://stackoverflow.com/a/14029481
-            #train_all = train_unet and train_text_encoder
-            #with (accelerator.accumulate(unet), accelerator.accumulate(text_encoder)) if train_all else (accelerator.accumulate(unet) if train_unet else accelerator.accumulate(text_encoder))
-            with accelerator.accumulate(unet):
-                # Convert images to latent space
-                latents = vae.encode(batch["pixel_values"].to(dtype=weight_dtype)).latent_dist.sample()
-                latents = latents * 0.18215
+            # Convert images to latent space
+            latents = vae.encode(batch["pixel_values"].to(dtype=weight_dtype)).latent_dist.sample()
+            latents = latents * 0.18215
 
-                # Sample noise that we'll add to the latents
-                noise = torch.randn_like(latents)
-                bsz = latents.shape[0]
-                
-                # Sample a random timestep for each image
-                timesteps = torch.randint(0, noise_scheduler.config.num_train_timesteps, (bsz,), device=latents.device)
-                timesteps = timesteps.long()
+            # Sample noise that we'll add to the latents
+            noise = torch.randn_like(latents)
+            bsz = latents.shape[0]
 
-                # Add noise to the latents according to the noise magnitude at each timestep
-                # (this is the forward diffusion process)
-                noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
+            # Sample a random timestep for each image
+            timesteps = torch.randint(0, noise_scheduler.config.num_train_timesteps, (bsz,), device=latents.device)
+            timesteps = timesteps.long()
 
-                # Get the text embedding for conditioning
-                encoder_hidden_states = text_encoder(batch["input_ids"])[0].to(dtype=weight_dtype)
+            # Add noise to the latents according to the noise magnitude at each timestep (forward diffusion process)
+            noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
-                # Predict the noise residual
-                model_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
+            # Get the text embedding for conditioning
+            encoder_hidden_states = text_encoder(batch["input_ids"])[0].to(dtype=weight_dtype)
 
-                # Get the target for loss depending on the prediction type
-                if noise_scheduler.config.prediction_type == "epsilon":
-                    target = noise
-                else: # "v_prediction"
-                    target = noise_scheduler.get_velocity(latents, noise, timesteps)
+            # Predict the noise residual
+            model_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
 
-                if args.with_prior_preservation:
-                    # Chunk the noise and model_pred into two parts and compute the loss on each part separately.
-                    model_pred, model_pred_prior = torch.chunk(model_pred, 2, dim=0)
-                    target, target_prior = torch.chunk(target, 2, dim=0)
+            # Get the target for loss depending on the prediction type
+            if noise_scheduler.config.prediction_type == "epsilon":
+                target = noise
+            else: # "v_prediction"
+                target = noise_scheduler.get_velocity(latents, noise, timesteps)
 
-                    # Compute instance loss
-                    pred_loss = F.mse_loss(model_pred.float(), target.float(), reduction="none").mean([1, 2, 3]).mean()
+            if args.with_prior_preservation:
+                # Chunk the noise and model_pred into two parts and compute the loss on each part separately.
+                model_pred, model_pred_prior = torch.chunk(model_pred, 2, dim=0)
+                target, target_prior = torch.chunk(target, 2, dim=0)
 
-                    # Compute prior loss
-                    prior_loss = F.mse_loss(model_pred_prior.float(), target_prior.float(), reduction="mean")
+                # Compute instance loss
+                pred_loss = F.mse_loss(model_pred.float(), target.float(), reduction="none").mean([1, 2, 3]).mean()
 
-                    # Add the prior loss to the instance loss.
-                    loss = pred_loss + args.prior_loss_weight * prior_loss
-                else:
-                    loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+                # Compute prior loss
+                prior_loss = F.mse_loss(model_pred_prior.float(), target_prior.float(), reduction="mean")
 
-                accelerator.backward(loss)
+                # Add the prior loss to the instance loss.
+                loss = pred_loss + args.prior_loss_weight * prior_loss
+            else:
+                loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+
+            loss = loss / args.gradient_accumulation_steps
+            
+            accelerator.backward(loss)
+            if step % gradient_accumulation_steps == 0:
                 if accelerator.sync_gradients:
                     params_to_clip = itertools.chain(*[g["params"] for g in params_to_optimize])
                     accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
