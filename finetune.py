@@ -599,10 +599,15 @@ def main(args):
             else:
                 loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
 
+            print("Before")
+            print("loss=", loss)
+            print("loss.requires_grad=", loss.requires_grad)
+
             loss = loss / args.gradient_accumulation_steps
             
-            print(loss)
-            print(loss.requires_grad)
+            print("After")
+            print("loss=", loss)
+            print("loss.requires_grad=", loss.requires_grad)
             
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0:
