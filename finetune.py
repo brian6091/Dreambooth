@@ -600,7 +600,7 @@ def main(args):
             else:
                 loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
 
-            loss = loss / args.gradient_accumulation_steps
+            #loss = loss / args.gradient_accumulation_steps
             
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0:
