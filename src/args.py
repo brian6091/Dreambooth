@@ -14,6 +14,7 @@
 #
 #    Based on https://github.com/huggingface/diffusers/blob/v0.8.0/examples/dreambooth/train_dreambooth.py
 #    SPDX short identifier: Apache-2.0
+import os
 import configargparse
 import yaml
 import ast
