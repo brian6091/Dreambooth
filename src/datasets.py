@@ -152,10 +152,11 @@ class FineTuningDataset(Dataset):
                 with open(caption_path) as f:
                     caption = f.read()
             else:
+                # Take the filename
                 caption = caption_path.stem
-                
-            caption = ''.join([i for i in caption if not i.isdigit()]) # not sure necessary
+                        
             caption = caption.replace("_"," ")
+            caption = caption.replace("{}", self.instance_token)
             self.instance_prompt = caption
         else:
             if self.instance_prompt is None:
