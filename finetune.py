@@ -57,6 +57,7 @@ from src.model_utils import (
     _inject_trainable_lora,
     count_parameters,
     print_trainable_parameters,
+    get_tensor_info,
 )
 from src.optim import load_optimizer, group_parameters
 from src.utils import image_grid, get_full_repo_name, get_gpu_memory_map
@@ -601,15 +602,18 @@ def main(args):
 
             print("Before")
             print("loss=", loss)
-            print("loss.requires_grad=", loss.requires_grad)
-            print("leaf=", loss.is_leaf) # This is false for some configurations and true for others???
-            print("grad_fn=", loss.grad_fn)            
+            print(get_tensor_info(loss))
+#             print("loss=", loss)
+#             print("loss.requires_grad=", loss.requires_grad)
+#             print("leaf=", loss.is_leaf) # This is false for some configurations and true for others???
+#             print("grad_fn=", loss.grad_fn)            
             #loss.requires_grad = True
             loss = loss / args.gradient_accumulation_steps
             
             print("After")
             print("loss=", loss)
-            print("loss.requires_grad=", loss.requires_grad)
+            print(get_tensor_info(loss))
+            #print("loss.requires_grad=", loss.requires_grad)
             
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0:
