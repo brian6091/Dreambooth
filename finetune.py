@@ -603,6 +603,7 @@ def main(args):
             print("loss=", loss)
             print("loss.requires_grad=", loss.requires_grad)
             print("leaf=", loss.is_leaf)
+            print("grad_fn=", loss.grad_fn)            
             loss = loss / args.gradient_accumulation_steps
             
             print("After")
