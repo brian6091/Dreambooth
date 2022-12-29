@@ -26,18 +26,19 @@ def unfreeze_params(params):
     for param in params:
         param.requires_grad = True
 
-
-def print_trainable_parameters(model: nn.Module, file=sys.stdout):
-    for name, param in model.named_parameters():
-        if param.requires_grad:
-            print(name, param.shape, file=file)
-
             
 def get_tensor_info(tensor):
     info = []
     for name in ['is_leaf', 'requires_grad', 'retains_grad', 'grad_fn', 'grad']:
         info.append(f'{name}({getattr(tensor, name, None)})')
-    return ' '.join(info)            
+    return ' '.join(info)
+
+
+def print_trainable_parameters(model: nn.Module, file=sys.stdout):
+    for n, p in model.named_parameters():
+        if p.requires_grad:
+            print(n, p.shape, file=file)
+            print(get_tensor_info(p))
 
 
 def find_modules_by_name_or_class(
