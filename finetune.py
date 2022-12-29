@@ -302,7 +302,7 @@ def main(args):
     if args.gradient_checkpointing:
         if train_unet:
             unet.enable_gradient_checkpointing()
-        if train_text_encoder:
+        if train_token_embedding or train_text_encoder:
             text_encoder.gradient_checkpointing_enable()
 
     optimizer_class = load_optimizer(args.optimizer)
@@ -623,10 +623,10 @@ def main(args):
                 if args.add_instance_token:
                     # Let's make sure we don't update any embedding weights besides the newly added token
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
-                    with torch.no_grad():
-                        accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[
-                            index_no_updates
-                        ] = orig_embeds_params[index_no_updates]
+#                     with torch.no_grad():
+#                         accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[
+#                             index_no_updates
+#                         ] = orig_embeds_params[index_no_updates]
                 
             # Checks if the accelerator has performed an optimization step behind the scenes
             if accelerator.sync_gradients:
