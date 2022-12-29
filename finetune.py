@@ -304,7 +304,8 @@ def main(args):
         if train_unet:
             unet.enable_gradient_checkpointing()
         if train_token_embedding or train_text_encoder:
-            text_encoder.gradient_checkpointing_enable()
+            print("skipping the text encoder")
+            #text_encoder.gradient_checkpointing_enable()
 
     optimizer_class = load_optimizer(args.optimizer)
         
