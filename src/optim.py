@@ -68,18 +68,29 @@ def group_parameters(unet,
     }
     train_unet = len(unet_params_to_optimize["params"])>0
 
+    text_token_embedding = []
+    text_nontoken = []
+    count = 0
+    for n, p in text_encoder.named_parameters():
+        if p.requires_grad:
+            count += 1
+            if n.find("token_embedding")>0:
+                text_token_embedding.append(p)
+            else:
+                text_nontoken.append(p)
+                
     if separate_token_embedding:
         # Put token_embedding into it's own parameter group
-        text_token_embedding = []
-        text_nontoken = []
-        count = 0
-        for n, p in text_encoder.named_parameters():
-            if p.requires_grad:
-                count += 1
-                if n.find("token_embedding")>0:
-                    text_token_embedding.append(p)
-                else:
-                    text_nontoken.append(p)
+#         text_token_embedding = []
+#         text_nontoken = []
+#         count = 0
+#         for n, p in text_encoder.named_parameters():
+#             if p.requires_grad:
+#                 count += 1
+#                 if n.find("token_embedding")>0:
+#                     text_token_embedding.append(p)
+#                 else:
+#                     text_nontoken.append(p)
                     
         count2 = 0
         for p in text_encoder.parameters():
@@ -111,12 +122,14 @@ def group_parameters(unet,
             "lr": lr_text*lr_scaling,
         }
         
-        train_token_embedding = False # Note that embedding may be trained, but not in separate group
-        for n, p in text_encoder.named_parameters():
-            if p.requires_grad and (n.find("token_embedding")>0):
-                train_token_embedding = True
-            
-        train_text_encoder = len(text_params_to_optimize["params"])>0
+        train_token_embedding = len(text_token_embedding)>0
+#         train_token_embedding = False # Note that embedding may be trained, but not in separate group
+#         for n, p in text_encoder.named_parameters():
+#             if p.requires_grad and (n.find("token_embedding")>0):
+#                 train_token_embedding = True
+         
+        train_text_encoder = len(text_nontoken)>0
+        #train_text_encoder = len(text_params_to_optimize["params"])>0
     
     params_to_optimize = []
     if train_token_embedding and separate_token_embedding:
