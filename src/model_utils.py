@@ -60,6 +60,8 @@ def _find_children(
                 yield parent, name, module
 
 
+# adapted from: https://github.com/cloneofsimo/lora/blob/master/lora_diffusion/lora.py
+# SPDX short identifier: Apache-2.0
 def _inject_trainable_lora(
     model: nn.Module,
     target_name: str,
@@ -97,6 +99,7 @@ def _inject_trainable_lora(
                 _tmp.linear.bias = bias
 
             # Switch the module
+            _tmp.to(_child_module.weight.device).to(_child_module.weight.dtype)
             model._modules[target_name] = _tmp
 
             model._modules[target_name].lora_up.weight.requires_grad = True
