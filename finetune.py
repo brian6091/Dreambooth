@@ -488,14 +488,14 @@ def main(args):
 #                         os.path.join(save_dir, "lora_text_encoder.pt"),
 #                         target_replace_module=args.lora_text_modules,
 #                     )
-                    if args.debug:
-                        for _up, _down in extract_lora_ups_down(
-                            pipeline.text_encoder,
-                            target_replace_module=["CLIPAttention"],
-                        ):
-                            print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
-                            print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
-                            break
+                if args.debug:
+                    for _up, _down in extract_lora_ups_down(
+                        pipeline.text_encoder,
+                        target_replace_module=["CLIPAttention"],
+                    ):
+                        print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
+                        print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
+                        break
                             
                 # already monkeypatched, but could change alpha? TODO: add save_lora_alpha
                 tune_lora_scale(pipeline.unet, 1.00)
