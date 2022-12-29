@@ -100,6 +100,7 @@ def _inject_trainable_lora(
                 r,
             )
 
+            print(get_tensor_info(_child_module.weight))
             # Assign pretrained parameters
             _tmp.linear.weight = weight
             if bias is not None:
