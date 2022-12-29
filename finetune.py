@@ -541,7 +541,7 @@ def main(args):
     if args.add_instance_token:
         # keep original embeddings as reference
         orig_embeds_params = accelerator.unwrap_model(text_encoder).get_input_embeddings().weight.data.clone()
-        if args.debug
+        if args.debug:
             print(instance_token_id)    
 
     for epoch in range(args.num_train_epochs):
