@@ -488,7 +488,15 @@ def main(args):
 #                         os.path.join(save_dir, "lora_text_encoder.pt"),
 #                         target_replace_module=args.lora_text_modules,
 #                     )
-
+                    if args.debug:
+                        for _up, _down in extract_lora_ups_down(
+                            pipeline.text_encoder,
+                            target_replace_module=["CLIPAttention"],
+                        ):
+                            print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
+                            print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
+                            break
+                            
                 # already monkeypatched, but could change alpha? TODO: add save_lora_alpha
                 tune_lora_scale(pipeline.unet, 1.00)
                 tune_lora_scale(pipeline.text_encoder, 1.00)
@@ -541,8 +549,6 @@ def main(args):
     if args.add_instance_token:
         # keep original embeddings as reference
         orig_embeds_params = accelerator.unwrap_model(text_encoder).get_input_embeddings().weight.data.clone()
-        if args.debug:
-            print(instance_token_id)    
 
     for epoch in range(args.num_train_epochs):
         if train_unet:
@@ -611,22 +617,9 @@ def main(args):
                     # Let's make sure we don't update any embedding weights besides the newly added token
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
                     with torch.no_grad():
-                        if args.debug:
-                            print("Are we changing?")
-                            print("Original embedding parameters that should not be changing")
-                            print(orig_embeds_params[index_no_updates])
-                            print("After step")
-                            print(accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[index_no_updates])
-                            
                         accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[
                             index_no_updates
                         ] = orig_embeds_params[index_no_updates]
-                        
-                        if args.debug:
-                            print("After reassignment")
-                            print(accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[index_no_updates])
-                            
-                
                 
             # Checks if the accelerator has performed an optimization step behind the scenes
             if accelerator.sync_gradients:
