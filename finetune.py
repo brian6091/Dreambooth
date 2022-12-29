@@ -591,7 +591,7 @@ def main(args):
             loss = loss / args.gradient_accumulation_steps
             
             accelerator.backward(loss)
-            if step % gradient_accumulation_steps == 0:
+            if step % args.gradient_accumulation_steps == 0:
                 if accelerator.sync_gradients:
                     params_to_clip = itertools.chain(*[g["params"] for g in params_to_optimize])
                     accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
