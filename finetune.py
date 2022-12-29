@@ -537,6 +537,12 @@ def main(args):
     progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
     progress_bar.set_description("Steps")
     global_step = 0
+    
+    if args.add_instance_token:
+        # keep original embeddings as reference
+        orig_embeds_params = accelerator.unwrap_model(text_encoder).get_input_embeddings().weight.data.clone()
+        if args.debug
+            print(instance_token_id)    
 
     for epoch in range(args.num_train_epochs):
         if train_unet:
@@ -600,6 +606,22 @@ def main(args):
                 if args.use_ema:
                     ema_unet.step(unet)
                 optimizer.zero_grad()
+
+                if args.add_instance_token:
+                    # Let's make sure we don't update any embedding weights besides the newly added token
+                    index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
+                    with torch.no_grad():
+                        if args.debug:
+                            print("Are we changing?")
+                            print("Original embedding parameters that should not be changing")
+                            print(orig_embeds_params[index_no_updates])
+                            print("After step")
+                            print(accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[index_no_updates])
+                            
+                        accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[
+                            index_no_updates
+                        ] = orig_embeds_params[index_no_updates]
+                
                 
             # Checks if the accelerator has performed an optimization step behind the scenes
             if accelerator.sync_gradients:
