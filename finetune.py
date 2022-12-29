@@ -602,10 +602,10 @@ def main(args):
             print("Before")
             print("loss=", loss)
             print("loss.requires_grad=", loss.requires_grad)
-            print("leaf=", loss.is_leaf)
+            print("leaf=", loss.is_leaf) # This is false for some configurations and true for others???
             print("grad_fn=", loss.grad_fn)            
-            loss.requires_grad = True
-            #loss = loss / args.gradient_accumulation_steps
+            #loss.requires_grad = True
+            loss = loss / args.gradient_accumulation_steps
             
             print("After")
             print("loss=", loss)
