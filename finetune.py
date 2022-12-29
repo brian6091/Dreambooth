@@ -572,7 +572,7 @@ def main(args):
             noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
             # Get the text embedding for conditioning
-            encoder_hidden_states = text_encoder(batch["input_ids"])[0].to(dtype=weight_dtype)
+            encoder_hidden_states = text_encoder(batch["input_ids"])[0]#.to(dtype=weight_dtype)
 
             # Predict the noise residual
             model_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
@@ -602,7 +602,7 @@ def main(args):
             print("Before")
             print("loss=", loss)
             print("loss.requires_grad=", loss.requires_grad)
-
+            print("leaf=", loss.is_leaf)
             loss = loss / args.gradient_accumulation_steps
             
             print("After")
@@ -620,13 +620,13 @@ def main(args):
                     ema_unet.step(unet)
                 optimizer.zero_grad()
 
-                if args.add_instance_token:
+                if args.add_instance_token: #and train_token_embedding: TODO CHECK Whether AND is necessary
                     # Let's make sure we don't update any embedding weights besides the newly added token
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
-#                     with torch.no_grad():
-#                         accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[
-#                             index_no_updates
-#                         ] = orig_embeds_params[index_no_updates]
+                    with torch.no_grad():
+                        accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[
+                            index_no_updates
+                        ] = orig_embeds_params[index_no_updates]
                 
             # Checks if the accelerator has performed an optimization step behind the scenes
             if accelerator.sync_gradients:
