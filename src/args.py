@@ -252,9 +252,14 @@ def parse_args(input_args=None):
     )
     
     parser.add_argument(
-        "--use_image_captions",
+        "--use_instance_image_captions",
         action="store_true",
-        help="Get captions from textfile, otherwise filename",
+        help="Use instance image captions from textfile, otherwise filename",
+    )
+    parser.add_argument(
+        "--use_class_image_captions",
+        action="store_true",
+        help="Use class image captions from textfile, otherwise filename",
     )
 
     parser.add_argument(
