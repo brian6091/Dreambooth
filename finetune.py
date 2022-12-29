@@ -621,6 +621,11 @@ def main(args):
                         accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[
                             index_no_updates
                         ] = orig_embeds_params[index_no_updates]
+                        
+                        if args.debug:
+                            print("After reassignment")
+                            print(accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[index_no_updates])
+                            
                 
                 
             # Checks if the accelerator has performed an optimization step behind the scenes
