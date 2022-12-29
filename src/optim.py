@@ -114,7 +114,7 @@ def group_parameters(unet,
         train_token_embedding = False # Note that embedding may be trained, but not in separate group
         for n, p in text_encoder.named_parameters():
             if p.requires_grad and (n.find("token_embedding")>0):
-            train_token_embedding = True
+                train_token_embedding = True
             
         train_text_encoder = len(text_params_to_optimize["params"])>0
     
