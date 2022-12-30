@@ -14,6 +14,7 @@
 #
 #    Based on https://github.com/huggingface/diffusers/blob/v0.8.0/examples/dreambooth/train_dreambooth.py
 #    SPDX short identifier: Apache-2.0
+#
 import hashlib
 import math
 import random
@@ -27,7 +28,7 @@ from torchvision import transforms
 
 from .textual_inversion_templates import object_templates, style_templates
 
-class FineTuningDataset(Dataset):
+class FinetuneTrainDataset(Dataset):
     """
     A dataset to prepare the instance and class images with the prompts for fine-tuning the model.
     It pre-processes the images and the tokenizes prompts.
