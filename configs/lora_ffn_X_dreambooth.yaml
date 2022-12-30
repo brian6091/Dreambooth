@@ -89,6 +89,9 @@ lr_text: 1.0e-05
 separate_token_embedding: false
 lr_token_embedding: null
 #
+lr_inversion_fraction: 0.5
+lr_overlap_fraction: 0.25
+#
 #
 use_ema: false
 ema_inv_gamma: 1.0
