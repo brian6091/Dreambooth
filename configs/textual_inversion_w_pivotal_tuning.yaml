@@ -80,7 +80,8 @@ lr_text: 8e-4
 separate_token_embedding: true
 lr_token_embedding: 5e-4
 #
-lr_inversion_fraction: 0.7
+lr_inversion_fraction: 0.5
+lr_overlap_fraction: 0.25
 #
 #
 use_ema: false
