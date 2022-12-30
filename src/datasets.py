@@ -52,6 +52,7 @@ class FinetuneTrainDataset(Dataset):
         augment_min_resolution=None,
         augment_center_crop=False,
         augment_hflip=False,
+        augment_trivialwide=False,
         debug=False,
     ):
         self.tokenizer = tokenizer
@@ -102,6 +103,7 @@ class FinetuneTrainDataset(Dataset):
         self.augment_min_resolution = augment_min_resolution
         self.augment_center_crop = augment_center_crop
         self.augment_hflip = augment_hflip
+        self.augment_trivialwide = augment_trivialwide
 
         self.debug = debug
         
@@ -115,6 +117,8 @@ class FinetuneTrainDataset(Dataset):
             augment_list.append(transforms.RandomCrop(size))
         if augment_hflip:
             augment_list.append(transforms.RandomHorizontalFlip(0.5))
+        if augment_trivialwide:
+            augment_list.append(transforms.TrivialAugmentWide())
 
         # Convert to format usable by model. 
         # Keep separate in case dumping augmentations to disk
