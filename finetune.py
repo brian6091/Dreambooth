@@ -617,16 +617,7 @@ def main(args):
             else:
                 loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
 
-            if args.debug:
-                print("Before")
-                print("loss=", loss)
-                print(get_tensor_info(loss))
             loss = loss / args.gradient_accumulation_steps
-            
-            if args.debug:
-                print("After")
-                print("loss=", loss)
-                print(get_tensor_info(loss))
             
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0:
