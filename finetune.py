@@ -341,6 +341,7 @@ def main(args):
         augment_min_resolution=args.augment_min_resolution,
         augment_center_crop=args.augment_center_crop,
         augment_hflip=args.augment_hflip,
+        augment_trivialwide=args.augment_trivialwide,
         debug=args.debug,
     )
     
