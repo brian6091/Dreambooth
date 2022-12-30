@@ -135,12 +135,14 @@ def get_pivotal_tuning_schedule_with_warmup(
     warmup_steps: int,
     total_steps: int,
     inversion_fraction: float,
+    overlap_fraction: float = 0.0,
     explore_fraction0: float = 0.65,
     explore_fraction1: float = 0.65,
     last_epoch: int = -1
 ):
     # Check inversion_fraction in (0,1)
     changepoint = round(inversion_fraction*total_steps)
+    shift = round(overlap_fraction*total_steps)
 
     lr_schedule = get_explore_exploit_schedule_with_warmup(
         optimizer,
@@ -148,7 +150,7 @@ def get_pivotal_tuning_schedule_with_warmup(
         num_warmup_steps0=warmup_steps,
         num_explore_steps0=round(changepoint*explore_fraction0),
         num_total_steps0=changepoint,
-        start_step1=changepoint,
+        start_step1=max(0,changepoint-shift),
         num_warmup_steps1=warmup_steps,
         num_explore_steps1=round((total_steps-changepoint)*explore_fraction1),
         num_total_steps1=total_steps,
