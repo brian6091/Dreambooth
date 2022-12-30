@@ -365,7 +365,7 @@ def main(args):
         overrode_max_train_steps = True
 
     if args.lr_scheduler=="pivotal_tuning":
-        lr_scheduler =  get_pivotal_tuning_schedule_with_warmup(
+        lr_scheduler = get_pivotal_tuning_schedule_with_warmup(
             optimizer,
             warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
             total_steps=args.max_train_steps * args.gradient_accumulation_steps,
