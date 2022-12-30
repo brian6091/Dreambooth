@@ -604,7 +604,7 @@ def main(args):
                     ema_unet.step(unet)
                 optimizer.zero_grad()
 
-                if args.add_instance_token: and train_token_embedding:
+                if args.add_instance_token and train_token_embedding:
                     # Re-insert original embedding weights for everything except the newly added token(s)
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
                     with torch.no_grad():
