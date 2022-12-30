@@ -629,7 +629,7 @@ def main(args):
             else:
                 logs = {"Loss/pred": loss.detach().item()}
 
-            if train_token_embedding and train_text_encoder and train_unet:
+            if (train_token_embedding and args.separate_token_embedding) and train_text_encoder and train_unet:
                 # TODO fix this to assign proper names https://discuss.pytorch.org/t/solved-use-two-scheduler-lambdalr-cosineannealinglr-but-seems-wierd/75184
                 logs["lr/token"] = lr_scheduler.get_last_lr()[0]
                 logs["lr/text"] = lr_scheduler.get_last_lr()[1]
