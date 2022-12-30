@@ -204,5 +204,4 @@ def get_explore_exploit_schedule_with_warmup(
     # The remaining groups get the same schedule
     lr_lambda_list.extend([lr_lambda1]*(len(optimizer.param_groups)-1))
 
-    print(lr_lambda_list)
     return LambdaLR(optimizer, lr_lambda_list, last_epoch)
