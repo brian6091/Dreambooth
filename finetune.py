@@ -289,6 +289,7 @@ def main(args):
     if train_unet and args.enable_xformers and is_xformers_available():
         try:
             unet.enable_xformers_memory_efficient_attention()
+            # TODO for vae also?
         except Exception as e:
             logger.warning(
                 "Could not enable memory efficient attention. Make sure xformers is installed"
@@ -297,7 +298,6 @@ def main(args):
     
     # Currently, it's not possible to do gradient accumulation when training two models with accelerate.accumulate
     # This will be enabled soon in accelerate. For now, we don't allow gradient accumulation when training two models.
-    # TODO (patil-suraj): Remove this check when gradient accumulation with two models is enabled in accelerate.
     if (train_unet and (train_text_encoder or train_token_embedding)) and args.gradient_accumulation_steps > 1 and accelerator.num_processes > 1:
         logger.warning(
             "Gradient accumulation is not supported when training both unet and the text encoder in distributed training. "
@@ -308,7 +308,7 @@ def main(args):
         if train_unet:
             unet.enable_gradient_checkpointing()
         if train_token_embedding or train_text_encoder:
-            print("Gradient checkpointing for the text_encoder not implemented")
+            logger.warning("Gradient checkpointing for the text_encoder not implemented")
             # https://github.com/brian6091/Dreambooth/issues/23
             #text_encoder.gradient_checkpointing_enable()
 
@@ -542,7 +542,6 @@ def main(args):
     global_step = 0
     
     if args.add_instance_token:
-        # keep original embeddings as reference
         orig_embeds_params = accelerator.unwrap_model(text_encoder).get_input_embeddings().weight.data.clone()
 
     for epoch in range(args.num_train_epochs):
@@ -550,7 +549,6 @@ def main(args):
             unet.train()
         if train_text_encoder or train_token_embedding:
             text_encoder.train()
-            
         for step, batch in enumerate(train_dataloader):
             # Convert images to latent space
             latents = vae.encode(batch["pixel_values"].to(dtype=weight_dtype)).latent_dist.sample()
@@ -608,8 +606,8 @@ def main(args):
                     ema_unet.step(unet)
                 optimizer.zero_grad()
 
-                if args.add_instance_token: #and train_token_embedding: TODO CHECK Whether AND is necessary
-                    # Let's make sure we don't update any embedding weights besides the newly added token
+                if args.add_instance_token: and train_token_embedding:
+                    # Re-insert original embedding weights for everything except the newly added token(s)
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
                     with torch.no_grad():
                         accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[
@@ -624,6 +622,7 @@ def main(args):
                 if global_step > 0 and not global_step % args.save_interval and global_step >= args.save_min_steps:
                     save_weights(global_step)
                             
+            # TODO function get_step_logs(pred_loss, prior_loss, loss, args)
             if args.with_prior_preservation:
                 logs = {"Loss/pred": pred_loss.detach().item(),
                         "Loss/prior": prior_loss.detach().item(),
