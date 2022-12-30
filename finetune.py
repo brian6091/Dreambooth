@@ -48,7 +48,7 @@ from lora_diffusion import (
     tune_lora_scale,
 )
 
-from src.datasets import FineTuningDataset, PromptDataset, collate_fn
+from src.datasets import FinetuneTrainDataset, PromptDataset, collate_fn
 from src.args import parse_args, format_args
 from src.model_utils import (
     find_modules_by_name_or_class,
@@ -324,7 +324,7 @@ def main(args):
     if noise_scheduler.config.prediction_type not in {"epsilon", "v_prediction"}:
         raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
 
-    train_dataset = FineTuningDataset(
+    train_dataset = FinetuneTrainDataset(
         tokenizer=tokenizer,
         add_instance_token=args.add_instance_token,
         instance_data_root=args.instance_data_dir,
