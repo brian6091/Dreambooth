@@ -86,6 +86,9 @@ lr_token_embedding: 5e-4
 lr_inversion_fraction: 0.5
 lr_overlap_fraction: 0.25
 #
+lr_inversion_fraction: 0.5
+lr_overlap_fraction: 0.25
+#
 #
 use_ema: false
 ema_inv_gamma: 1.0
