@@ -136,8 +136,8 @@ def get_pivotal_tuning_schedule_with_warmup(
     total_steps: int,
     inversion_fraction: float,
     overlap_fraction: float = 0.0,
-    explore_fraction0: float = 0.65,
-    explore_fraction1: float = 0.65,
+    explore_fraction0: float = 0.5,
+    explore_fraction1: float = 0.5,
     last_epoch: int = -1
 ):
     # Check inversion_fraction in (0,1)
