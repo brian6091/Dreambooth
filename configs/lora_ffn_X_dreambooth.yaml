@@ -60,6 +60,7 @@ augment_output_dir: null
 augment_min_resolution: null
 augment_center_crop: false
 augment_hflip: false
+augment_trialwide: false
 #
 #
 seed: 1275017
