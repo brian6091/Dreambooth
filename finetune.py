@@ -59,7 +59,7 @@ from src.model_utils import (
     print_trainable_parameters,
     get_tensor_info,
 )
-from src.optim import load_optimizer, group_parameters
+from src.optim import load_optimizer, group_parameters, get_pivotal_tuning_schedule_with_warmup
 from src.utils import image_grid, get_full_repo_name, get_gpu_memory_map
 
 
