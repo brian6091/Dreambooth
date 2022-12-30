@@ -492,28 +492,6 @@ def main(args):
             # dump entire checkpoint with all trainable
             
             if args.lora_unet_layer!=None or args.lora_unet_layer!=None:
-                # TODO: if add_instance_token, I assume we have to save the tokenizer?
-#                 save_lora_weight(
-#                     pipeline.unet,
-#                     os.path.join(save_dir, "lora_unet.pt"),
-#                     target_replace_module=args.lora_unet_modules,
-#                 )
-
-#                 if args.train_text_encoder or args.train_text_embedding_only:
-#                     save_lora_weight(
-#                         pipeline.text_encoder,
-#                         os.path.join(save_dir, "lora_text_encoder.pt"),
-#                         target_replace_module=args.lora_text_modules,
-#                     )
-#                 if args.debug:
-#                     for _up, _down in extract_lora_ups_down(
-#                         pipeline.text_encoder,
-#                         target_replace_module=["CLIPAttention"],
-#                     ):
-#                         print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
-#                         print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
-#                         break
-                            
                 # already monkeypatched, but could change alpha? TODO: add save_lora_alpha
                 tune_lora_scale(pipeline.unet, 1.00)
                 tune_lora_scale(pipeline.text_encoder, 1.00)
