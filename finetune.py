@@ -59,7 +59,11 @@ from src.model_utils import (
     print_trainable_parameters,
     get_tensor_info,
 )
-from src.optim import load_optimizer, group_parameters, get_pivotal_tuning_schedule_with_warmup
+from src.optim import (
+    load_optimizer, 
+    group_parameters, 
+    get_pivotal_tuning_schedule_with_warmup
+)
 from src.utils import image_grid, get_full_repo_name, get_gpu_memory_map
 
 
@@ -361,7 +365,7 @@ def main(args):
         overrode_max_train_steps = True
 
     if args.lr_scheduler=="pivotal_tuning":
-        scheduler =  get_pivotal_tuning_schedule_with_warmup(
+        lr_scheduler =  get_pivotal_tuning_schedule_with_warmup(
             optimizer,
             warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
             total_steps=args.max_train_steps * args.gradient_accumulation_steps,
