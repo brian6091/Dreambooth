@@ -303,7 +303,11 @@ def parse_args(input_args=None):
         action="store_true",
         help="Whether to center crop images before resizing to resolution",
     )
-
+    parser.add_argument(
+        "--augment_trivialwide",
+        action="store_true",
+        help="Whether to use TrivialAugment Wide",
+    )
 
     parser.add_argument(
         "--seed",
