@@ -370,8 +370,8 @@ def main(args):
             warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
             total_steps=args.max_train_steps * args.gradient_accumulation_steps,
             inversion_fraction=args.lr_inversion_fraction,
-            explore_fraction0=0.6,
-            explore_fraction1=0.6,
+            explore_fraction0=0.5,
+            explore_fraction1=0.5,
         )
     else:
         lr_scheduler = get_scheduler(
