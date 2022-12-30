@@ -360,13 +360,23 @@ def main(args):
         args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
         overrode_max_train_steps = True
 
-    lr_scheduler = get_scheduler(
-        args.lr_scheduler,
-        optimizer=optimizer,
-        num_warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
-        num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
-        num_cycles=args.lr_cosine_num_cycles,
-    )
+    if args.lr_scheduler=="pivotal_tuning":
+        scheduler =  get_pivotal_tuning_schedule_with_warmup(
+            optimizer,
+            warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
+            total_steps=args.max_train_steps * args.gradient_accumulation_steps,
+            inversion_fraction=args.lr_inversion_fraction,
+            explore_fraction0=0.6,
+            explore_fraction1=0.6,
+        )
+    else:
+        lr_scheduler = get_scheduler(
+            args.lr_scheduler,
+            optimizer=optimizer,
+            num_warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
+            num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
+            num_cycles=args.lr_cosine_num_cycles,
+        )
 
     if train_unet and (train_text_encoder or train_token_embedding):
         unet, text_encoder, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
