@@ -89,6 +89,8 @@ lr_text: 8e-4
 separate_token_embedding: false
 lr_token_embedding: 5e-4
 #
+lr_inversion_fraction: null
+#
 #
 use_ema: false
 ema_inv_gamma: 1.0
