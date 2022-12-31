@@ -282,4 +282,4 @@ class PromptDataset(Dataset):
         example = {}
         example["prompt"] = self.prompt
         example["index"] = index
-        return 
+        return example
