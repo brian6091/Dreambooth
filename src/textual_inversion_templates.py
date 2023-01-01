@@ -1,4 +1,33 @@
-# https://github.com/rinongal/textual_inversion/tree/main/ldm/data
+person_templates = [
+    'a photo of {}',
+    'a black and white photo of {}',
+    'a colorful photo of {}',
+    'a cropped photo of {}',
+    'a dark photo of {}',
+    'a close-up photo of {}',
+    'a bright photo of {}',
+    'a cropped photo of {}',
+    'a good photo of {}',
+    'a close up photo of {}',
+    'a photo of a cute {}',
+    'a photo of a beautiful {}',
+    'a photo of a cool {}',
+    'a photo of a serious {}',
+    'a photo of a moody {}',
+    'a photo of a smiling {}',
+    'a cropped photograph of {}',
+    'the photo of {}',
+    'a striking photo of {}',
+    'a sharp photo of {}',
+    'a in-focus photo of {}',
+    'a highres photo of {}',
+    'a portrait photo of {}',
+    'a studio photo of {}',
+    'a detailed photo of a {}',
+]
+
+
+# code below from https://github.com/rinongal/textual_inversion/tree/main/ldm/data
 # MIT License
 
 # Copyright (c) 2022 Rinon Gal, Yuval Alaluf, Yuval Atzmon, Or Patashnik and contributors
