@@ -26,7 +26,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 from torchvision import transforms
 
-from .textual_inversion_templates import object_templates, style_templates
+from .textual_inversion_templates import person_templates, object_templates, style_templates
 
 class FinetuneTrainDataset(Dataset):
     """
