@@ -60,9 +60,10 @@ from src.model_utils import (
     get_tensor_info,
 )
 from src.optim import (
+    calculate_loss,
     load_optimizer, 
     group_parameters, 
-    get_pivotal_tuning_schedule_with_warmup
+    get_pivotal_tuning_schedule_with_warmup,
 )
 from src.utils import image_grid, get_full_repo_name, get_gpu_memory_map
 
@@ -582,15 +583,18 @@ def main(args):
                 target, target_prior = torch.chunk(target, 2, dim=0)
 
                 # Compute instance loss
-                pred_loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+                #pred_loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+                pred_loss = calculate_loss(model_pred.float(), target.float(), loss_function=args.loss)
 
                 # Compute prior loss
-                prior_loss = F.mse_loss(model_pred_prior.float(), target_prior.float(), reduction="mean")
+                #prior_loss = F.mse_loss(model_pred_prior.float(), target_prior.float(), reduction="mean")
+                prior_loss = calculate_loss(model_prior.float(), target_prior.float(), loss_function=args.loss)
 
                 # Add the prior loss to the instance loss.
                 loss = pred_loss + args.prior_loss_weight * prior_loss
             else:
-                loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+                #loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+                loss = calculate_loss(model_pred.float(), target.float(), loss_function=args.loss)
 
             loss = loss / args.gradient_accumulation_steps
             
