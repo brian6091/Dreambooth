@@ -583,17 +583,14 @@ def main(args):
                 target, target_prior = torch.chunk(target, 2, dim=0)
 
                 # Compute instance loss
-                #pred_loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
                 pred_loss = calculate_loss(model_pred.float(), target.float(), loss_function=args.loss)
 
                 # Compute prior loss
-                #prior_loss = F.mse_loss(model_pred_prior.float(), target_prior.float(), reduction="mean")
                 prior_loss = calculate_loss(model_pred_prior.float(), target_prior.float(), loss_function=args.loss)
 
                 # Add the prior loss to the instance loss.
                 loss = pred_loss + args.prior_loss_weight * prior_loss
             else:
-                #loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
                 loss = calculate_loss(model_pred.float(), target.float(), loss_function=args.loss)
 
             loss = loss / args.gradient_accumulation_steps
