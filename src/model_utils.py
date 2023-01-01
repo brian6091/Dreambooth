@@ -16,16 +16,6 @@ import sys
 from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union
 import torch.nn as nn
 from lora_diffusion import LoraInjectedLinear
-
-# def freeze_params(params):
-#     for param in params:
-#         param.requires_grad = False
-
-
-# def unfreeze_params(params):
-#     for param in params:
-#         param.requires_grad = True
-
             
 def get_tensor_info(tensor):
     info = []
