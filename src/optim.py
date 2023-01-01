@@ -15,7 +15,17 @@
 import math
 import torch
 from torch.optim import Optimizer
+import torch.nn.functional as F
 from torch.optim.lr_scheduler import LambdaLR
+
+def calculate_loss(input, target, loss_function="mse", reduction="mean"):
+    if loss_function=="mse":
+        loss = F.mse_loss(input, target, reduction=reduction)
+    elif loss_function=="l1":
+        loss = F.l1_loss(input, target, reduction=reduction)
+
+    return loss
+
 
 def load_optimizer(optname):    
     opts = dict()
