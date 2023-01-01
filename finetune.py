@@ -588,7 +588,7 @@ def main(args):
 
                 # Compute prior loss
                 #prior_loss = F.mse_loss(model_pred_prior.float(), target_prior.float(), reduction="mean")
-                prior_loss = calculate_loss(model_prior.float(), target_prior.float(), loss_function=args.loss)
+                prior_loss = calculate_loss(model_pred_prior.float(), target_prior.float(), loss_function=args.loss)
 
                 # Add the prior loss to the instance loss.
                 loss = pred_loss + args.prior_loss_weight * prior_loss
