@@ -71,6 +71,8 @@ class FinetuneTrainDataset(Dataset):
 
         if prompt_templates==None:
             self.prompt_templates = None
+        elif prompt_templates=="person":
+            self.prompt_templates = person_templates
         elif prompt_templates=="object":
             self.prompt_templates = object_templates
         elif prompt_templates=="style":
