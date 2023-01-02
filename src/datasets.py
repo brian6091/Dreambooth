@@ -158,8 +158,9 @@ class FinetuneTrainDataset(Dataset):
         elif self.use_instance_image_captions:
             caption_path = image_path.with_suffix(".txt")
             if caption_path.exists():
-                with open(caption_path) as f:
-                    caption = f.read()
+#                 with open(caption_path) as f:
+#                     caption = f.read()
+                caption = random.choice(list(open(caption_path)))
             else:
                 # Take the filename
                 caption = caption_path.stem
@@ -200,8 +201,9 @@ class FinetuneTrainDataset(Dataset):
             if self.use_class_image_captions:
                 caption_path = image_path.with_suffix(".txt")
                 if caption_path.exists():
-                    with open(caption_path) as f:
-                        caption = f.read()
+#                     with open(caption_path) as f:
+#                         caption = f.read()
+                    caption = random.choice(list(open(caption_path)))
                 else:
                     # Take filename as caption
                     caption = caption_path.stem
