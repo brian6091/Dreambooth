@@ -449,17 +449,24 @@ def parse_args(input_args=None):
     )
     
     parser.add_argument(
-        "--lr_inversion_fraction",
-        type=none_or_float,
-        default=5e-6,
-        help="Fraction of max_train_steps to train token embedding before switching to generator training in pivotal tuning.",
-    )
-    parser.add_argument(
-        "--lr_overlap_fraction",
-        type=none_or_float,
-        default=5e-6,
-        help="Fraction of max_train_steps to overlap token embdedding and text_encoder training during pivotal tuning.",
-    )
+        "--lr_scheduler_params",
+        dest="lr_scheduler_params",
+        action=StoreDictKeyPair,
+        metavar="KEY1=VAL1;KEY2=VAL2...",
+        help="Learning rate scheduler parameters as semi-colon separated string",
+        )
+#     parser.add_argument(
+#         "--lr_inversion_fraction",
+#         type=none_or_float,
+#         default=5e-6,
+#         help="Fraction of max_train_steps to train token embedding before switching to generator training in pivotal tuning.",
+#     )
+#     parser.add_argument(
+#         "--lr_overlap_fraction",
+#         type=none_or_float,
+#         default=5e-6,
+#         help="Fraction of max_train_steps to overlap token embdedding and text_encoder training during pivotal tuning.",
+#     )
     
     parser.add_argument(
         "--use_ema",
