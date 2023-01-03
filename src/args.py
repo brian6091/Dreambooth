@@ -406,17 +406,17 @@ def parse_args(input_args=None):
             ' "constant", "constant_with_warmup"]'
         ),
     )
-    parser.add_argument(
-        "--lr_warmup_steps",
-        type=int,
-        default=100,
-        help="Number of steps for the warmup in the lr scheduler.",
-    )
-    parser.add_argument(
-        "--lr_cosine_num_cycles",
-        type=float, default=1.0,
-        help="Number of cycles when using cosine_with_restarts lr scheduler.",
-    )
+#     parser.add_argument(
+#         "--lr_warmup_steps",
+#         type=int,
+#         default=100,
+#         help="Number of steps for the warmup in the lr scheduler.",
+#     )
+#     parser.add_argument(
+#         "--lr_cosine_num_cycles",
+#         type=float, default=1.0,
+#         help="Number of cycles when using cosine_with_restarts lr scheduler.",
+#     )
 
     parser.add_argument(
         "--lr_scale",
