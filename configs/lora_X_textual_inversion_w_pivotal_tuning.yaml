@@ -62,7 +62,7 @@ enable_full_determinism: false
 resolution: 512
 mixed_precision: fp16
 train_batch_size: 1
-max_train_steps: 1200
+max_train_steps: 2000
 gradient_accumulation_steps: 1
 gradient_checkpointing: false
 enable_xformers: true
@@ -74,18 +74,14 @@ optimizer_params: 'lr=1e-4;betas=(0.9, 0.999);weight_decay=1e-5;eps=1.0e-08'
 max_grad_norm: 1.0
 #
 #
-lr_scheduler: pivotal_tuning
-lr_warmup_steps: 100
-lr_cosine_num_cycles: 5.0
-#
+lr_scheduler: multi_explore_exploit
 lr_scale: false
 lr_unet: 1e-5
 lr_text: 1e-5
 separate_token_embedding: true
 lr_token_embedding: 5e-4
 #
-lr_inversion_fraction: 0.5
-lr_overlap_fraction: 0.25
+lr_scheduler_params: 'start_step=(0,600);num_warmup_steps=(0,0);num_explore_steps=(500,1000);num_total_steps=(600,2000)'
 #
 lr_inversion_fraction: 0.5
 lr_overlap_fraction: 0.25
