@@ -366,15 +366,27 @@ def main(args):
         args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
         overrode_max_train_steps = True
 
-    if args.lr_scheduler=="pivotal_tuning":
-        lr_scheduler = get_pivotal_tuning_schedule_with_warmup(
+    if args.lr_scheduler=="multi_explore_exploit":
+        # TODO multiply tuples by 
+        lr_scheduler =  get_explore_exploit_schedule_with_warmup(
             optimizer,
-            warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
-            total_steps=args.max_train_steps * args.gradient_accumulation_steps,
-            inversion_fraction=args.lr_inversion_fraction,
-            overlap_fraction=args.lr_overlap_fraction,
-        )
+            start_step=args.lr_params["start_step"],
+            num_warmup_steps=args.lr_params["num_warmup_steps"],
+            num_explore_steps=args.lr_params["num_explore_steps"],
+            num_total_steps=args.lr_params["num_total_steps"],
+        )        
+#         lr_scheduler = get_pivotal_tuning_schedule_with_warmup(
+#             optimizer,
+#             warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
+#             total_steps=args.max_train_steps * args.gradient_accumulation_steps,
+#             inversion_fraction=args.lr_inversion_fraction,
+#             overlap_fraction=args.lr_overlap_fraction,
+#         )
     else:
+        # TODO adapt for num_cycles
+#         optimizer_params = args.optimizer_params
+#         optimizer_params["params"] = params_to_optimize
+#         optimizer = optimizer_class(**optimizer_params)
         lr_scheduler = get_scheduler(
             args.lr_scheduler,
             optimizer=optimizer,
