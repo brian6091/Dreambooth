@@ -76,7 +76,7 @@ enable_xformers: true
 #
 loss: mse
 optimizer: AdamW8bit
-optimizer_params: 'lr=1e-4;betas=(0.9, 0.999);weight_decay=0.01;eps=1.0e-08'
+optimizer_params: 'lr=1e-4;betas=(0.9, 0.999);weight_decay=0.0;eps=1.0e-08'
 max_grad_norm: 1.0
 #
 #
@@ -111,7 +111,7 @@ save_min_steps: 200
 save_parameter_summary: true
 save_model_layout: false
 #
-sample_prompt: a photo of {} // a photo of {} holding a mug // an painting of {} by Picasso
+sample_prompt: a photo of {} // a photo of {} holding a mug // a painting of {} by Picasso
 sample_negative_prompt: border
 sample_seed: null
 sample_guidance_scale: 7.5
