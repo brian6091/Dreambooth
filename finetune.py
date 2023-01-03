@@ -62,7 +62,8 @@ from src.model_utils import (
 from src.optim import (
     calculate_loss,
     load_optimizer, 
-    group_parameters, 
+    group_parameters,
+    get_explore_exploit_schedule_with_warmup,
 )
 from src.utils import image_grid, get_full_repo_name, get_gpu_memory_map
 
