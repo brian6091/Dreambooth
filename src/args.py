@@ -406,17 +406,7 @@ def parse_args(input_args=None):
             ' "constant", "constant_with_warmup"]'
         ),
     )
-#     parser.add_argument(
-#         "--lr_warmup_steps",
-#         type=int,
-#         default=100,
-#         help="Number of steps for the warmup in the lr scheduler.",
-#     )
-#     parser.add_argument(
-#         "--lr_cosine_num_cycles",
-#         type=float, default=1.0,
-#         help="Number of cycles when using cosine_with_restarts lr scheduler.",
-#     )
+    
 
     parser.add_argument(
         "--lr_scale",
@@ -455,18 +445,6 @@ def parse_args(input_args=None):
         metavar="KEY1=VAL1;KEY2=VAL2...",
         help="Learning rate scheduler parameters as semi-colon separated string",
         )
-#     parser.add_argument(
-#         "--lr_inversion_fraction",
-#         type=none_or_float,
-#         default=5e-6,
-#         help="Fraction of max_train_steps to train token embedding before switching to generator training in pivotal tuning.",
-#     )
-#     parser.add_argument(
-#         "--lr_overlap_fraction",
-#         type=none_or_float,
-#         default=5e-6,
-#         help="Fraction of max_train_steps to overlap token embdedding and text_encoder training during pivotal tuning.",
-#     )
     
     parser.add_argument(
         "--use_ema",
