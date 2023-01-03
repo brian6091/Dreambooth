@@ -93,8 +93,7 @@ lr_text: 2.0e-06
 separate_token_embedding: true
 lr_token_embedding: 1e-6
 #
-lr_inversion_fraction: 0.5
-lr_overlap_fraction: 0.25
+lr_params: null
 #
 #
 use_ema: false
