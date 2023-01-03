@@ -370,10 +370,10 @@ def main(args):
         # TODO multiply tuples by 
         lr_scheduler =  get_explore_exploit_schedule_with_warmup(
             optimizer,
-            start_step=args.lr_params["start_step"],
-            num_warmup_steps=args.lr_params["num_warmup_steps"],
-            num_explore_steps=args.lr_params["num_explore_steps"],
-            num_total_steps=args.lr_params["num_total_steps"],
+            start_step=args.lr_scheduler_params["start_step"],
+            num_warmup_steps=args.lr_scheduler_params["num_warmup_steps"],
+            num_explore_steps=args.lr_scheduler_params["num_explore_steps"],
+            num_total_steps=args.lr_scheduler_params["num_total_steps"],
         )        
 #         lr_scheduler = get_pivotal_tuning_schedule_with_warmup(
 #             optimizer,
@@ -383,7 +383,7 @@ def main(args):
 #             overlap_fraction=args.lr_overlap_fraction,
 #         )
     else:
-        # TODO adapt for num_cycles
+        # TODO adapt for num_cycles, warmup
 #         optimizer_params = args.optimizer_params
 #         optimizer_params["params"] = params_to_optimize
 #         optimizer = optimizer_class(**optimizer_params)
