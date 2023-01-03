@@ -3,7 +3,21 @@ from typing import Iterable, Optional
 from PIL import Image
 from huggingface_hub import HfFolder, whoami
 
+import torch
+import torch.nn as nn
 
+
+#https://discuss.pytorch.org/t/free-all-gpu-memory-used-in-between-runs/168202
+def memory_stats():
+    print(torch.cuda.memory_allocated()/1024**2)
+    print(torch.cuda.memory_cached()/1024**2)
+
+
+def allocate():
+    x = torch.randn(1024*1024, device='cuda')
+    memory_stats()
+    
+    
 def get_full_repo_name(model_id: str, organization: Optional[str] = None, token: Optional[str] = None):
     if token is None:
         token = HfFolder.get_token()
