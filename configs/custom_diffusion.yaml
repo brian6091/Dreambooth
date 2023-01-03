@@ -84,16 +84,13 @@ max_grad_norm: 1.0
 #
 #
 lr_scheduler: cosine
-lr_warmup_steps: 50
-lr_cosine_num_cycles: 5.0
-#
 lr_scale: false
 lr_unet: 1e-5
 lr_text: 2.0e-06
 separate_token_embedding: true
 lr_token_embedding: 1e-6
 #
-lr_params: null
+lr_scheduler_params: 'num_warmup_steps=0'
 #
 #
 use_ema: false
