@@ -135,7 +135,7 @@ def group_parameters(unet,
     params_to_optimize = []
     if train_token_embedding and separate_token_embedding:
         params_to_optimize.append(token_embedding_to_optimize)
-    if train_token_embedding or train_text_encoder:
+    if train_text_encoder:
         params_to_optimize.append(text_params_to_optimize)    
     if train_unet:
         params_to_optimize.append(unet_params_to_optimize)
