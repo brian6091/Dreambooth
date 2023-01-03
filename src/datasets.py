@@ -125,6 +125,8 @@ class FinetuneTrainDataset(Dataset):
         # Convert to format usable by model. 
         # Keep separate in case dumping augmentations to disk
         transform_list = []
+        if len(augment_list)==0:
+             transform_list.append(transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR))
         transform_list.append(transforms.ToTensor())
         # check that this matches for textual inversion image = (image / 127.5 - 1.0).astype(np.float32)
         transform_list.append(transforms.Normalize([0.5], [0.5]))
