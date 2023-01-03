@@ -367,33 +367,36 @@ def main(args):
         overrode_max_train_steps = True
 
     if args.lr_scheduler=="multi_explore_exploit":
-        # TODO multiply tuples by 
+        # TODO multiply tuples by gradient_accumulation_steps
         lr_scheduler =  get_explore_exploit_schedule_with_warmup(
             optimizer,
             start_step=args.lr_scheduler_params["start_step"],
             num_warmup_steps=args.lr_scheduler_params["num_warmup_steps"],
             num_explore_steps=args.lr_scheduler_params["num_explore_steps"],
             num_total_steps=args.lr_scheduler_params["num_total_steps"],
-        )        
-#         lr_scheduler = get_pivotal_tuning_schedule_with_warmup(
-#             optimizer,
-#             warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
-#             total_steps=args.max_train_steps * args.gradient_accumulation_steps,
-#             inversion_fraction=args.lr_inversion_fraction,
-#             overlap_fraction=args.lr_overlap_fraction,
-#         )
+        )
     else:
         # TODO adapt for num_cycles, warmup
-#         optimizer_params = args.optimizer_params
-#         optimizer_params["params"] = params_to_optimize
-#         optimizer = optimizer_class(**optimizer_params)
-        lr_scheduler = get_scheduler(
-            args.lr_scheduler,
-            optimizer=optimizer,
-            num_warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
-            num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
-            num_cycles=args.lr_cosine_num_cycles,
-        )
+        lr_scheduler_params = args.lr_scheduler_params
+        lr_scheduler_params["name"] = args.lr_scheduler
+        lr_scheduler_params["optimizer"] = optimizer
+        if "num_warmup_steps" in lr_scheduler_params:
+            lr_scheduler_params["num_warmup_steps"] = lr_scheduler_params["num_warmup_steps"] * args.gradient_accumulation_steps
+        else:
+            lr_scheduler_params["num_warmup_steps"] = 0
+        if "num_training_steps" in lr_scheduler_params:
+            lr_scheduler_params["num_training_steps"] = lr_scheduler_params["num_training_steps"] * args.gradient_accumulation_steps
+        else:
+            lr_scheduler_params["num_training_steps"] = args.max_train_steps * args.gradient_accumulation_steps
+            
+        lr_scheduler = get_scheduler(**lr_scheduler_params)
+#         lr_scheduler = get_scheduler(
+#             args.lr_scheduler,
+#             optimizer=optimizer,
+#             num_warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
+#             num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
+#             num_cycles=args.lr_cosine_num_cycles,
+#         )
 
     if train_unet and (train_text_encoder or train_token_embedding):
         unet, text_encoder, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
