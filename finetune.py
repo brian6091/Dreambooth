@@ -501,8 +501,8 @@ def main(args):
             
             if args.lora_unet_layer!=None or args.lora_unet_layer!=None:
                 # already monkeypatched, but could change alpha? TODO: add save_lora_alpha
-                tune_lora_scale(pipeline.unet, 1.00)
-                tune_lora_scale(pipeline.text_encoder, 1.00)
+                tune_lora_scale(pipeline.unet, 0.75)
+                tune_lora_scale(pipeline.text_encoder, 0.75)
             else:
                 pipeline.save_pretrained(save_dir)
 
