@@ -376,7 +376,6 @@ def main(args):
             num_total_steps=args.lr_scheduler_params["num_total_steps"],
         )
     else:
-        # TODO adapt for num_cycles, warmup
         lr_scheduler_params = args.lr_scheduler_params
         lr_scheduler_params["name"] = args.lr_scheduler
         lr_scheduler_params["optimizer"] = optimizer
@@ -390,14 +389,8 @@ def main(args):
             lr_scheduler_params["num_training_steps"] = args.max_train_steps * args.gradient_accumulation_steps
             
         lr_scheduler = get_scheduler(**lr_scheduler_params)
-#         lr_scheduler = get_scheduler(
-#             args.lr_scheduler,
-#             optimizer=optimizer,
-#             num_warmup_steps=args.lr_warmup_steps * args.gradient_accumulation_steps,
-#             num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
-#             num_cycles=args.lr_cosine_num_cycles,
-#         )
 
+        
     if train_unet and (train_text_encoder or train_token_embedding):
         unet, text_encoder, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
             unet, text_encoder, optimizer, train_dataloader, lr_scheduler
