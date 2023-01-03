@@ -12,7 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
+from typing import Tuple, Union
+
 import math
+
 import torch
 from torch.optim import Optimizer
 import torch.nn.functional as F
@@ -140,46 +143,12 @@ def group_parameters(unet,
     return train_token_embedding, train_text_encoder, train_unet, params_to_optimize
     
     
-def get_pivotal_tuning_schedule_with_warmup(
-    optimizer: Optimizer,
-    warmup_steps: int,
-    total_steps: int,
-    inversion_fraction: float,
-    overlap_fraction: float = 0.0,
-    explore_fraction0: float = 0.5,
-    explore_fraction1: float = 0.5,
-    last_epoch: int = -1
-):
-    # Check inversion_fraction in (0,1)
-    changepoint = round(inversion_fraction*total_steps)
-    shift = round(overlap_fraction*total_steps)
-
-    lr_schedule = get_explore_exploit_schedule_with_warmup(
-        optimizer,
-        start_step0=0,
-        num_warmup_steps0=warmup_steps,
-        num_explore_steps0=round(changepoint*explore_fraction0),
-        num_total_steps0=changepoint,
-        start_step1=max(0,changepoint-shift),
-        num_warmup_steps1=warmup_steps,
-        num_explore_steps1=round((total_steps-changepoint)*explore_fraction1),
-        num_total_steps1=total_steps,
-        last_epoch=last_epoch,
-    )
-
-    return lr_schedule
-
-
 def get_explore_exploit_schedule_with_warmup(
     optimizer: Optimizer,
-    start_step0: int,
-    num_warmup_steps0: int,
-    num_explore_steps0: int,
-    num_total_steps0: int,
-    start_step1: int,
-    num_warmup_steps1: int,
-    num_explore_steps1: int,
-    num_total_steps1: int,
+    start_step: Union[Tuple[int], int],
+    num_warmup_steps: Union[Tuple[int], int],
+    num_explore_steps: Union[Tuple[int], int],
+    num_total_steps: Union[Tuple[int], int],
     last_epoch: int = -1
 ):
     """
@@ -187,33 +156,118 @@ def get_explore_exploit_schedule_with_warmup(
     https://arxiv.org/pdf/2003.03977.pdf
     """
 
-    def lr_lambda0(current_step):
-        if current_step <= start_step0:
-            return 0.0
-        if current_step <= (num_warmup_steps0 + start_step0):
-            return float(current_step - start_step0) / float(max(1, num_warmup_steps0))
-        elif current_step <= (num_explore_steps0 + num_warmup_steps0 + start_step0):
-            return 1.0
-        else:
-            return max(
-                0.0, float(num_total_steps0 - current_step) / float(max(1, num_total_steps0 - num_warmup_steps0 - num_explore_steps0 - start_step0))
-            )
-
-    def lr_lambda1(current_step):
-        if current_step <= start_step1:
-            return 0.0
-        if current_step <= (num_warmup_steps1 + start_step1):
-            return float(current_step - start_step1) / float(max(1, num_warmup_steps1))
-        elif current_step <= (num_explore_steps1 + num_warmup_steps1 + start_step1):
-            return 1.0
-        else:
-            return max(
-                0.0, float(num_total_steps1 - current_step) / float(max(1, num_total_steps1 - num_warmup_steps1 - num_explore_steps1 - start_step1))
-            )
+    # assert all ints or all Tuple[int] of same length
     
-    # First group is unique
-    lr_lambda_list = [lr_lambda0]
-    # The remaining groups get the same schedule
-    lr_lambda_list.extend([lr_lambda1]*(len(optimizer.param_groups)-1))
+    if isinstance(start_step, int):
+        def lr_lambda(current_step):
+            if current_step <= start_step:
+                return 0.0
+            if current_step <= (num_warmup_steps + start_step):
+                return float(current_step - start_step) / float(max(1, num_warmup_steps))
+            elif current_step <= (num_explore_steps + num_warmup_steps + start_step):
+                return 1.0
+            else:
+                return max(
+                    0.0, float(num_total_steps - current_step) / float(max(1, num_total_steps - num_warmup_steps - num_explore_steps - start_step))
+                )
 
-    return LambdaLR(optimizer, lr_lambda_list, last_epoch)
+        return LambdaLR(optimizer, lr_lambda, last_epoch)
+    else:
+        def factory(start, warmup, explore, total):
+            def f(current_step):
+                if current_step <= start:
+                    return 0.0
+                if current_step <= (warmup + start):
+                    return float(current_step - start) / float(max(1, warmup))
+                elif current_step <= (explore + warmup + start):
+                    return 1.0
+                else:
+                    return max(
+                        0.0, float(total - current_step) / float(max(1, total - warmup - explore - start))
+                    )
+
+            return f
+
+        lr_lambda_list = []
+        for start, warmup, explore, total in zip(start_step, num_warmup_steps, num_explore_steps, num_total_steps):
+            lr_lambda_list.extend([factory(start, warmup, explore, total)])
+
+        return LambdaLR(optimizer, lr_lambda_list, last_epoch)
+    
+# def get_pivotal_tuning_schedule_with_warmup(
+#     optimizer: Optimizer,
+#     warmup_steps: int,
+#     total_steps: int,
+#     inversion_fraction: float,
+#     overlap_fraction: float = 0.0,
+#     explore_fraction0: float = 0.5,
+#     explore_fraction1: float = 0.5,
+#     last_epoch: int = -1
+# ):
+#     # Check inversion_fraction in (0,1)
+#     changepoint = round(inversion_fraction*total_steps)
+#     shift = round(overlap_fraction*total_steps)
+
+#     lr_schedule = get_explore_exploit_schedule_with_warmup(
+#         optimizer,
+#         start_step0=0,
+#         num_warmup_steps0=warmup_steps,
+#         num_explore_steps0=round(changepoint*explore_fraction0),
+#         num_total_steps0=changepoint,
+#         start_step1=max(0,changepoint-shift),
+#         num_warmup_steps1=warmup_steps,
+#         num_explore_steps1=round((total_steps-changepoint)*explore_fraction1),
+#         num_total_steps1=total_steps,
+#         last_epoch=last_epoch,
+#     )
+
+#     return lr_schedule
+
+
+# def get_explore_exploit_schedule_with_warmup(
+#     optimizer: Optimizer,
+#     start_step0: int,
+#     num_warmup_steps0: int,
+#     num_explore_steps0: int,
+#     num_total_steps0: int,
+#     start_step1: int,
+#     num_warmup_steps1: int,
+#     num_explore_steps1: int,
+#     num_total_steps1: int,
+#     last_epoch: int = -1
+# ):
+#     """
+#     Explore-Exploit learning rate schedule (Knee schedule)
+#     https://arxiv.org/pdf/2003.03977.pdf
+#     """
+
+#     def lr_lambda0(current_step):
+#         if current_step <= start_step0:
+#             return 0.0
+#         if current_step <= (num_warmup_steps0 + start_step0):
+#             return float(current_step - start_step0) / float(max(1, num_warmup_steps0))
+#         elif current_step <= (num_explore_steps0 + num_warmup_steps0 + start_step0):
+#             return 1.0
+#         else:
+#             return max(
+#                 0.0, float(num_total_steps0 - current_step) / float(max(1, num_total_steps0 - num_warmup_steps0 - num_explore_steps0 - start_step0))
+#             )
+
+#     def lr_lambda1(current_step):
+#         if current_step <= start_step1:
+#             return 0.0
+#         if current_step <= (num_warmup_steps1 + start_step1):
+#             return float(current_step - start_step1) / float(max(1, num_warmup_steps1))
+#         elif current_step <= (num_explore_steps1 + num_warmup_steps1 + start_step1):
+#             return 1.0
+#         else:
+#             return max(
+#                 0.0, float(num_total_steps1 - current_step) / float(max(1, num_total_steps1 - num_warmup_steps1 - num_explore_steps1 - start_step1))
+#             )
+    
+#     # First group is unique
+#     lr_lambda_list = [lr_lambda0]
+#     # The remaining groups get the same schedule
+#     lr_lambda_list.extend([lr_lambda1]*(len(optimizer.param_groups)-1))
+
+#     return LambdaLR(optimizer, lr_lambda_list, last_epoch)
