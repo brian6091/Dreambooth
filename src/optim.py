@@ -154,6 +154,9 @@ def get_explore_exploit_schedule_with_warmup(
     """
     Explore-Exploit learning rate schedule (Knee schedule)
     https://arxiv.org/pdf/2003.03977.pdf
+    
+    Setting num_explore_steps=0 will reproduce Slanted triangular learning rates
+    https://arxiv.org/pdf/1801.06146.pdf
     """
 
     # assert all ints or all Tuple[int] of same length
