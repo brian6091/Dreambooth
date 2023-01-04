@@ -199,4 +199,4 @@ def get_explore_exploit_schedule_with_warmup(
         for start, warmup, explore, total in zip(start_step, num_warmup_steps, num_explore_steps, num_total_steps):
             lr_lambda.extend([factory(start, warmup, explore, total)])
 
-    return LambdaLR(optimizer, lr_lambda_list, last_epoch)
+    return LambdaLR(optimizer, lr_lambda, last_epoch)
