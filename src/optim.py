@@ -21,11 +21,13 @@ from torch.optim import Optimizer
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import LambdaLR
 
-def calculate_loss(input, target, loss_function="mse", reduction="mean"):
-    if loss_function=="mse":
+def calculate_loss(input, target, loss_function="mse", reduction="mean", beta=1.0):
+    if loss_function in ("mse", "MSE"):
         loss = F.mse_loss(input, target, reduction=reduction)
-    elif loss_function=="l1":
+    elif loss_function in ("l1", "L1"):
         loss = F.l1_loss(input, target, reduction=reduction)
+    elif loss_function in ("smoothl1", "smoothL1"):
+        loss = F.smooth_l1_loss(input, target, beta=beta, reduction=reduction)        
 
     return loss
 
