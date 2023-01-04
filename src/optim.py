@@ -54,7 +54,8 @@ def load_optimizer(optname):
 
     opts2 = {'Adagrad': torch.optim.Adagrad, 'Adam': torch.optim.Adam, 
             'AdamW': torch.optim.AdamW, 'RAdam': torch.optim.RAdam, 
-            'NAdam': torch.optim.NAdam, 'SGD': torch.optim.SGD}
+            'NAdam': torch.optim.NAdam, 'Adamax': torch.optim.Adamax,
+             'SGD': torch.optim.SGD}
     
     opts = {**opts, **opts2}
     
