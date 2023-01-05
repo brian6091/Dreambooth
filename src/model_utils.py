@@ -82,7 +82,6 @@ def _inject_trainable_lora(
                             r=r,
                             alpha=alpha,
                             nonlin=nonlin,
-                            init="kaiming",
                 )
     else:
         try:
