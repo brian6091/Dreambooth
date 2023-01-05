@@ -119,13 +119,13 @@ def _inject_trainable_lora(
 
 def get_nonlin(nonlin: str):
     if nonlin=="ReLU":
-        return nn.ReLU()
+        return nn.ReLU(inplace=True)
     elif nonlin=="GELU":
         return nn.GELU()
     elif nonlin=="SiLU":
-        return nn.SiLU()
+        return nn.SiLU(inplace=True)
     elif nonlin=="Mish":
-        return nn.Mish()
+        return nn.Mish(inplace=True)
     else:
         return None
     
