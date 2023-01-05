@@ -97,6 +97,11 @@ def _inject_trainable_lora(
                 init="kaiming",
             )
             
+            print(_tmp.alpha)
+            print(_tmp.r)
+            print(_tmp.scale)
+            print(_tmp.nonlin)
+            
             # Assign pretrained parameters
             _tmp.linear.weight = weight
             if bias is not None:
