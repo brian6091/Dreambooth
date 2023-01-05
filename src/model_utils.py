@@ -79,7 +79,7 @@ def _inject_trainable_lora(
                 _inject_trainable_lora(
                             p,
                             target_name=n,
-                            r=r
+                            r=r,
                             alpha=alpha,
                             nonlin=nonlin,
                             init="kaiming",
