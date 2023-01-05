@@ -90,38 +90,18 @@ def _inject_trainable_lora(
                 _child_module.bias is not None,
                 r,
             )
-
-#             print("Before LoRA assignment")
-#             print(get_tensor_info(_child_module.weight))
             
             # Assign pretrained parameters
             _tmp.linear.weight = weight
             if bias is not None:
                 _tmp.linear.bias = bias
 
-#             print("After LoRA assignment")
-#             print(get_tensor_info(_tmp.linear.weight))
-            
             # Switch the module
             _tmp.to(_child_module.weight.device).to(_child_module.weight.dtype)
             model._modules[target_name] = _tmp
 
             model._modules[target_name].lora_up.weight.requires_grad = True
-            model._modules[target_name].lora_down.weight.requires_grad = True
-
-#             print("LoRA up/down weights")
-#             print(get_tensor_info(model._modules[target_name].lora_up.weight))
-#             print(get_tensor_info(model._modules[target_name].lora_down.weight))
-  
-# These are leaf tensors, so it's a nop
-# https://pytorch.org/docs/stable/generated/torch.Tensor.retain_grad.html
-#             model._modules[target_name].lora_up.weight.retain_grad()
-#             model._modules[target_name].lora_down.weight.retain_grad()
-
-#             print("LoRA up/down weights retain_grad")
-#             print(get_tensor_info(model._modules[target_name].lora_up.weight))
-#             print(get_tensor_info(model._modules[target_name].lora_down.weight))
-            
+            model._modules[target_name].lora_down.weight.requires_grad = True            
         else:
             print(f"Cannot inject LoRA into {_child_module.__class__.__name__}")
             if train_off_target!=None:
