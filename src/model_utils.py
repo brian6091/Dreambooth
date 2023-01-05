@@ -76,7 +76,14 @@ def _inject_trainable_lora(
     if target_name==None:
         for p, n, m in _find_children(model):
             if not isinstance(p, LoraInjectedLinear):
-                _inject_trainable_lora(p, target_name=n, r=r)
+                _inject_trainable_lora(
+                            p,
+                            target_name=n,
+                            r=r
+                            alpha=alpha,
+                            nonlin=nonlin,
+                            init="kaiming",
+                )
     else:
         try:
             _child_module = model._modules[target_name]
