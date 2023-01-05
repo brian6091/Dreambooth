@@ -109,6 +109,7 @@ def _inject_trainable_lora(
             print(_tmp.r)
             print(_tmp.scale)
             print(_tmp.nonlin)
+            print(_tmp)
             
             # Assign pretrained parameters
             _tmp.linear.weight = weight
