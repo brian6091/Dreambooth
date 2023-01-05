@@ -180,20 +180,7 @@ def get_explore_exploit_schedule_with_warmup(
         return f
 
     if isinstance(start_step, int):
-#         def lr_lambda(current_step):
-#             if current_step <= start_step:
-#                 return 0.0
-#             if current_step <= (num_warmup_steps + start_step):
-#                 return float(current_step - start_step) / float(max(1, num_warmup_steps))
-#             elif current_step <= (num_explore_steps + num_warmup_steps + start_step):
-#                 return 1.0
-#             else:
-#                 return max(
-#                     0.0, float(num_total_steps - current_step) / float(max(1, num_total_steps - num_warmup_steps - num_explore_steps - start_step))
-#                 )
         lr_lambda = factory(start_step, num_warmup_steps, num_explore_steps, num_explore_steps)
-
-#         return LambdaLR(optimizer, lr_lambda, last_epoch)
     else:
         lr_lambda = []
         for start, warmup, explore, total in zip(start_step, num_warmup_steps, num_explore_steps, num_total_steps):
