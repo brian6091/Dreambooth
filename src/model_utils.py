@@ -77,11 +77,12 @@ def _inject_trainable_lora(
         for p, n, m in _find_children(model):
             if not isinstance(p, LoraInjectedLinear):
                 _inject_trainable_lora(
-                            p,
-                            target_name=n,
-                            r=r,
-                            alpha=alpha,
-                            nonlin=nonlin,
+                    p,
+                    target_name=n,
+                    r=r,
+                    alpha=alpha,
+                    nonlin=nonlin,
+                    train_off_target=train_off_target,
                 )
     else:
         try:
