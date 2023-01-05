@@ -14,6 +14,7 @@
 #
 import sys
 from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union
+
 import torch.nn as nn
 from lora_diffusion import LoraInjectedLinear
             
@@ -64,6 +65,8 @@ def _inject_trainable_lora(
     model: nn.Module,
     target_name: str,
     r: int = 4,
+    alpha: float = 4.0,
+    nonlin: nn.Module = None,
     train_off_target: Set[str] = None,
 ):
     """
@@ -88,7 +91,9 @@ def _inject_trainable_lora(
                 _child_module.in_features,
                 _child_module.out_features,
                 _child_module.bias is not None,
-                r,
+                r=r,
+                alpha=alpha,
+                nonlin=nonlin,
             )
             
             # Assign pretrained parameters
@@ -112,13 +117,28 @@ def _inject_trainable_lora(
                     print(f"But {_child_module.__class__.__name__} was *not* enabled by request")
 
 
+def get_nonlin(nonlin: str):
+    if nonlin=="ReLU":
+        return nn.ReLU()
+    elif nonlin=="GELU":
+        return nn.GELU()
+    elif nonlin=="SiLU":
+        return nn.SiLU()
+    elif nonlin=="Mish":
+        return nn.Mish()
+    else:
+        return None
+    
+
 def set_trainable_parameters(
     model: nn.Module,
     target_module_or_class: Set[str],
     target_submodule: Set[str],
+    lora_rank: int = 4,
+    lora_alpha: float = 4.0,
+    lora_nonlin: str = None,
     lora_layer: Set[str] = None,
     lora_train_off_target: Set[str] = None,
-    lora_rank: int = None,
     ):
 
     if target_module_or_class is not None:
@@ -139,6 +159,8 @@ def set_trainable_parameters(
                             _m,
                             target_name=None,
                             r=lora_rank,
+                            alpha=lora_alpha,
+                            nonlin=get_nonlin(lora_nonlin),
                             train_off_target=lora_train_off_target,
                             )       
                 else:
@@ -154,6 +176,8 @@ def set_trainable_parameters(
                                 _m,
                                 target_name=__n,
                                 r=lora_rank,
+                                alpha=lora_alpha,
+                                nonlin=get_nonlin(lora_nonlin),
                                 train_off_target=lora_train_off_target,
                                 )
 
