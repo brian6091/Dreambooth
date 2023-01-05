@@ -144,6 +144,12 @@ def parse_args(input_args=None):
         default=4.0,
         help="Alpha for LoRA in Unet.",
     )
+    parser.add_argument(
+        "--lora_unet_nonlin",
+        type=none_or_str,
+        default=None,
+        help="Nonlinearity for LoRA in Unet.",
+    )
     
     parser.add_argument(
         "--lora_text_layer",
@@ -168,6 +174,12 @@ def parse_args(input_args=None):
         type=none_or_float,
         default=4.0,
         help="Alpha for LoRA in text encoder.",
+    )
+    parser.add_argument(
+        "--lora_text_nonlin",
+        type=none_or_str,
+        default=None,
+        help="Nonlinearity for LoRA in text encoder.",
     )
     
     parser.add_argument(
