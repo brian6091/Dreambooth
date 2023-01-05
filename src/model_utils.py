@@ -97,6 +97,7 @@ def _inject_trainable_lora(
                 init="kaiming",
             )
             
+            print(target_name)
             print(_tmp.alpha)
             print(_tmp.r)
             print(_tmp.scale)
