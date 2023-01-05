@@ -238,6 +238,8 @@ def main(args):
                              target_submodule=args.train_unet_submodule,
                              lora_layer=args.lora_unet_layer,
                              lora_rank=args.lora_unet_rank,
+                             lora_alpha=args.lora_unet_alpha,
+                             lora_nonlin=args.lora_unet_nonlin,
                              lora_train_off_target=args.lora_unet_train_off_target)
         
     text_encoder.requires_grad_(False)
@@ -246,6 +248,8 @@ def main(args):
                              target_submodule=args.train_text_submodule,
                              lora_layer=args.lora_text_layer,
                              lora_rank=args.lora_text_rank,
+                             lora_alpha=args.lora_text_alpha,
+                             lora_nonlin=args.lora_text_nonlin,
                              lora_train_off_target=args.lora_text_train_off_target)
 
     if args.save_parameter_summary:
