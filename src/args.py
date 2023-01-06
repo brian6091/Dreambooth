@@ -140,10 +140,10 @@ def parse_args(input_args=None):
         help="Rank reduction for LoRA.",
     )
     parser.add_argument(
-        "--lora_unet_alpha",
+        "--lora_unet_scale",
         type=none_or_float,
         default=4.0,
-        help="Alpha for LoRA in Unet.",
+        help="Scale for LoRA in Unet.",
     )
     parser.add_argument(
         "--lora_unet_nonlin",
@@ -171,10 +171,10 @@ def parse_args(input_args=None):
         help="Rank reduction for LoRA.",
     )
     parser.add_argument(
-        "--lora_text_alpha",
+        "--lora_text_scale",
         type=none_or_float,
         default=4.0,
-        help="Alpha for LoRA in text encoder.",
+        help="Scale for LoRA in text encoder.",
     )
     parser.add_argument(
         "--lora_text_nonlin",
