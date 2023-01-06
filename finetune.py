@@ -370,7 +370,7 @@ def main(args):
         args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
         overrode_max_train_steps = True
 
-    if args.lr_scheduler=="multi_explore_exploit":
+    if args.lr_scheduler in ("explore_exploit", "multi_explore_exploit"):
         # TODO multiply tuples by gradient_accumulation_steps
         lr_scheduler =  get_explore_exploit_schedule_with_warmup(
             optimizer,
