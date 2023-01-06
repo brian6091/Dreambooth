@@ -65,7 +65,7 @@ def _inject_trainable_lora(
     model: nn.Module,
     target_name: str,
     r: int = 4,
-    alpha: float = 4.0,
+    scale: float = 1.0,
     nonlin: nn.Module = None,
     train_off_target: Set[str] = None,
 ):
@@ -80,7 +80,7 @@ def _inject_trainable_lora(
                     p,
                     target_name=n,
                     r=r,
-                    alpha=alpha,
+                    scale=scale,
                     nonlin=nonlin,
                     train_off_target=train_off_target,
                 )
@@ -99,7 +99,7 @@ def _inject_trainable_lora(
                 _child_module.out_features,
                 _child_module.bias is not None,
                 r=r,
-                alpha=alpha,
+                scale=scale,
                 nonlin=nonlin,
                 init=None,
             )
@@ -150,7 +150,7 @@ def set_trainable_parameters(
     target_module_or_class: Set[str],
     target_submodule: Set[str],
     lora_rank: int = 4,
-    lora_alpha: float = 4.0,
+    lora_scale: float = 1.0,
     lora_nonlin: str = None,
     lora_layer: Set[str] = None,
     lora_train_off_target: Set[str] = None,
@@ -174,7 +174,7 @@ def set_trainable_parameters(
                             _m,
                             target_name=None,
                             r=lora_rank,
-                            alpha=lora_alpha,
+                            scale=lora_scale,
                             nonlin=get_nonlin(lora_nonlin),
                             train_off_target=lora_train_off_target,
                             )       
@@ -191,7 +191,7 @@ def set_trainable_parameters(
                                 _m,
                                 target_name=__n,
                                 r=lora_rank,
-                                alpha=lora_alpha,
+                                scale=lora_scale,
                                 nonlin=get_nonlin(lora_nonlin),
                                 train_off_target=lora_train_off_target,
                                 )
