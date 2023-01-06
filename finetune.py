@@ -238,7 +238,7 @@ def main(args):
                              target_submodule=args.train_unet_submodule,
                              lora_layer=args.lora_unet_layer,
                              lora_rank=args.lora_unet_rank,
-                             lora_alpha=args.lora_unet_alpha,
+                             lora_scale=args.lora_unet_scale,
                              lora_nonlin=args.lora_unet_nonlin,
                              lora_train_off_target=args.lora_unet_train_off_target)
         
@@ -248,7 +248,7 @@ def main(args):
                              target_submodule=args.train_text_submodule,
                              lora_layer=args.lora_text_layer,
                              lora_rank=args.lora_text_rank,
-                             lora_alpha=args.lora_text_alpha,
+                             lora_scale=args.lora_text_scale,
                              lora_nonlin=args.lora_text_nonlin,
                              lora_train_off_target=args.lora_text_train_off_target)
 
@@ -429,7 +429,7 @@ def main(args):
     # Create EMA for the unet.
     if args.use_ema and train_unet:
         ema_unet = EMAModel(
-            accelerator.unwrap_model(unet), 
+            accelerator.unwrap_model(unet), # TODO update to fp32_wrapper
             inv_gamma=args.ema_inv_gamma, 
             power=args.ema_power, 
             min_value=args.ema_min_value,
@@ -467,6 +467,7 @@ def main(args):
                 os.makedirs(save_dir)
 
             # https://github.com/huggingface/diffusers/issues/1566
+            # TODO move this up, rename extra_args > accelerator_unwrap_extra_args
             accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
                 inspect.signature(accelerator.unwrap_model).parameters.keys()
             )
