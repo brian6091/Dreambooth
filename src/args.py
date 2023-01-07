@@ -381,6 +381,11 @@ def parse_args(input_args=None):
         action="store_true",
         help="Whether or not to enable xformers.",
     )
+    parser.add_argument(
+        "--allow_tf32",
+        action="store_true",
+        help="Whether or not to allow TF32 for faster training on Ampere GPUs.",
+    )
 
     parser.add_argument(
         "--loss",
