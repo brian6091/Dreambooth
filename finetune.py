@@ -300,7 +300,12 @@ def main(args):
                 "Could not enable memory efficient attention. Make sure xformers is installed"
                 f" correctly and a GPU is available: {e}"
             )
-    
+
+    # Enable TF32 for faster training on Ampere GPUs,
+    # cf https://pytorch.org/docs/stable/notes/cuda.html#tensorfloat-32-tf32-on-ampere-devices
+    if args.allow_tf32:
+        torch.backends.cuda.matmul.allow_tf32 = True
+            
     # Currently, it's not possible to do gradient accumulation when training two models with accelerate.accumulate
     # This will be enabled soon in accelerate. For now, we don't allow gradient accumulation when training two models.
     if (train_unet and (train_text_encoder or train_token_embedding)) and args.gradient_accumulation_steps > 1 and accelerator.num_processes > 1:
