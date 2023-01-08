@@ -214,13 +214,15 @@ def get_trainable_param_dict(
             # TODO check for requires_grad, currently assumes that if LoRA exists, it is being trained
             tensors_dict[f"{n}.lora_down.weight"] = m.lora_down.weight.cpu().clone()
             tensors_dict[f"{n}.lora_up.weight"] = m.lora_up.weight.cpu().clone()
+			# Information necessary to reconstruct LoRALinear
             metadata[f"{n}.r"] = str(m.r)
             metadata[f"{n}.scale"] = str(m.scale)
             metadata[f"{n}.nonlin"] = m.nonlin.__class__.__name__
         else:
-            for _n, p in m.named_parameters():
-                if p.requires_grad:
-                    tensors_dict[f"{n}.{_n}"] = p.cpu().clone()
+            if "lora_" not in n:
+                for _n, p in m.named_parameters():
+                    if p.requires_grad and ("lora_" not in _n):
+                        tensors_dict[f"{n}.{_n}"] = p.cpu().clone()
 
     return tensors_dict, metadata
 
