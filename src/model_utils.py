@@ -17,7 +17,11 @@ from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union
 
 import torch.nn as nn
 from lora_diffusion import LoraInjectedLinear
-            
+    
+from safetensors.torch import safe_open
+from safetensors.torch import save_file as safe_save
+    
+
 def get_tensor_info(tensor):
     info = []
     for name in ['is_leaf', 'requires_grad', 'retains_grad', 'grad_fn', 'grad']:
@@ -196,7 +200,89 @@ def set_trainable_parameters(
                                 train_off_target=lora_train_off_target,
                                 )
 
-                            
+
+def get_trainable_param_dict(
+    model: nn.Module,
+    separate_loras=True,
+):
+    trainable_dict = {"params": {}, "params_loras": {}}
+
+    for n, m in model.named_modules():
+        if isinstance(m, LoraInjectedLinear) and separate_loras:
+            for _n, p in m.named_parameters():
+                if p.requires_grad:
+                    lora = {
+                        "lora_down": p.lora_down.weight.cpu().clone(),
+                        "lora_up": p.lora_up.weight.cpu().clone(), #?
+                        "r": p.r,
+                        "scale": p.scale,
+                        "nonlin": p.nonlin}
+
+                    trainable_dict["params_loras"][f"{n}.{_n}"] = lora                        
+        else:
+            for _n, p in m.named_parameters():
+                if p.requires_grad:
+                    trainable_dict["params"][f"{n}.{_n}"] = p.cpu().clone()
+
+    return trainable_dict
+
+
+def save_trainable_parameters(
+    accelerator,
+    tokenizer,
+    text_encoder,
+    unet,
+    instance_token=None,
+    instance_token_id=None,
+    save_path,
+#    dtype?
+):
+    to_save = {
+    "embeddins": {},
+    "text_encoder": {},
+    "text_encoder_loras": {},
+    "unet": {},
+    "unet_loras": {},
+    }
+
+    # https://github.com/huggingface/diffusers/issues/1566
+    # TODO move this up, rename extra_args > accelerator_unwrap_extra_args
+    accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
+        inspect.signature(accelerator.unwrap_model).parameters.keys()
+    )
+    extra_args = (
+        {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
+    )
+
+    if instance_token:
+        # TODO: multi-token case
+        instance_token_id = tokenizer.convert_tokens_to_ids(instance_token)
+        token_embeddings = accelerator.unwrap_model(text_encoder, **extra_args).get_input_embeddings()
+        trained_embeddings = token_embeddings.weight[instance_token_id]
+
+        to_save["embeddings"][instance_token] = trained_embeddings.detach().cpu()
+    if text_encoder:
+        if accelerator:
+            text_encoder_model = accelerator.unwrap_model(text_encoder)
+        else:
+            text_encoder_model = text_encoder
+
+        trainable_dict = get_trainable_param_dict(text_encoder_model, **extra_args)
+        to_save["text_encoder"] = trainable_dict["params_encoder"]
+        to_save["text_encoder_loras"] = trainable_dict["params_loras"]
+    if unet:
+        if accelerator:
+            unet_model = accelerator.unwrap_model(unet, **extra_args)
+        else:
+            unet_model = unet
+
+        trainable_dict = get_trainable_param_dict(unet_model)
+        to_save["unet"] = trainable_dict["params"]
+        to_save["unet_loras"] = trainable_dict["params_loras"]
+
+    torch.save(to_save, save_path)
+    
+
 # Function below is modified from
 # MIT License
 
