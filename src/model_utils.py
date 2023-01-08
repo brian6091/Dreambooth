@@ -207,6 +207,7 @@ def get_trainable_param_dict(
 ):
     trainable_dict = {"params": {}, "params_loras": {}}
 
+    # TODO will probably be useful to put module_name(parent) and parameter_name(child) into dict
     for n, m in model.named_modules():
         if isinstance(m, LoraInjectedLinear) and separate_loras:
             for _n, p in m.named_parameters():
@@ -218,7 +219,7 @@ def get_trainable_param_dict(
                         "scale": p.scale,
                         "nonlin": p.nonlin}
 
-                    trainable_dict["params_loras"][f"{n}.{_n}"] = lora                        
+                    trainable_dict["params_loras"][f"{n}.{_n}"] = lora
         else:
             for _n, p in m.named_parameters():
                 if p.requires_grad:
