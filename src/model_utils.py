@@ -159,7 +159,7 @@ def set_trainable_parameters(
     lora_nonlin: str = None,
     lora_layer: Set[str] = None,
     lora_train_off_target: Set[str] = None,
-    ):
+):
 
     if target_module_or_class is not None:
         if "ALL" in target_module_or_class:
@@ -214,7 +214,7 @@ def get_trainable_param_dict(
             # TODO check for requires_grad, currently assumes that if LoRA exists, it is being trained
             tensors_dict[f"{n}.lora_down.weight"] = m.lora_down.weight.cpu().clone()
             tensors_dict[f"{n}.lora_up.weight"] = m.lora_up.weight.cpu().clone()
-			# Information necessary to reconstruct LoRALinear
+			# Metadata necessary to reconstruct LoraInjectedLinear module
             metadata[f"{n}.r"] = str(m.r)
             metadata[f"{n}.scale"] = str(m.scale)
             metadata[f"{n}.nonlin"] = m.nonlin.__class__.__name__
