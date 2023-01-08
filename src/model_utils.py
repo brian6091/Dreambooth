@@ -218,7 +218,7 @@ def get_trainable_param_dict(
                         "lora_up": p.lora_up.weight.cpu().clone(), #?
                         "r": p.r,
                         "scale": p.scale,
-                        "nonlin": p.nonlin}
+                        "nonlin": p.nonlin.__class__.__name__}
 
                     trainable_dict["params_loras"][f"{n}.{_n}"] = lora
         else:
