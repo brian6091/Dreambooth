@@ -1,6 +1,6 @@
 # One script to rule them all
 
-Fine-tune Stable diffusion models using [Dreambooth](https://arxiv.org/abs/2208.12242), [Textual inversion](https://arxiv.org/abs/2208.01618), [Custom diffusion](https://arxiv.org/abs/2212.04488), [Low-rank Adaptation (LoRA)](https://arxiv.org/abs/2106.09685), and variants thereof all in one place.
+Fine-tune Stable diffusion models using [Dreambooth](https://arxiv.org/abs/2208.12242), [Textual inversion](https://arxiv.org/abs/2208.01618), [Custom diffusion](https://arxiv.org/abs/2212.04488), [Low-rank Adaptation (LoRA)](https://arxiv.org/abs/2106.09685), and mixtures and variants thereof all in one place.
 
 Notebook that is less flexible, but contains more explanations:
 
