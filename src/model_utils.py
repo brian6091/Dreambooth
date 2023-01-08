@@ -238,7 +238,7 @@ def save_trainable_parameters(
 #    dtype?
 ):
     to_save = {
-    "embeddins": {},
+    "embeddings": {},
     "text_encoder": {},
     "text_encoder_loras": {},
     "unet": {},
@@ -256,8 +256,8 @@ def save_trainable_parameters(
 
     if instance_token:
         # TODO: multi-token case
-        instance_token_id = tokenizer.convert_tokens_to_ids(instance_token)
         token_embeddings = accelerator.unwrap_model(text_encoder, **extra_args).get_input_embeddings()
+        instance_token_id = tokenizer.convert_tokens_to_ids(instance_token)
         trained_embeddings = token_embeddings.weight[instance_token_id]
 
         to_save["embeddings"][instance_token] = trained_embeddings.detach().cpu()
