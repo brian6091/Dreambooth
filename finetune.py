@@ -137,6 +137,7 @@ def main(args):
                 ),
                 torch_dtype=torch_dtype, # TODO allow selection?
                 safety_checker=None,
+                requires_safety_checker=None,
                 revision=args.revision
             )
             pipeline.set_progress_bar_config(disable=True)
@@ -502,6 +503,7 @@ def main(args):
                     revision=None if args.pretrained_vae_name_or_path else args.revision,
                 ),
                 safety_checker=None,
+                requires_safety_checker=None,
                 torch_dtype=torch.float16, # TODO option to save in fp32?
                 revision=args.revision,
             )
