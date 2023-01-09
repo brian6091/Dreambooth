@@ -204,25 +204,55 @@ def set_trainable_parameters(
 
 def get_trainable_param_dict(
     model: nn.Module,
+    validate=True,
 ):
     tensors_dict = {}
     metadata = {}
 
-    # TODO will probably be useful to put module_name(parent) and parameter_name(child) into dict
-    for n, m in model.named_modules():
-        if isinstance(m, LoraInjectedLinear):
-            # TODO check for requires_grad, currently assumes that if LoRA exists, it is being trained
-            tensors_dict[f"{n}.lora_down.weight"] = m.lora_down.weight.cpu().clone()
-            tensors_dict[f"{n}.lora_up.weight"] = m.lora_up.weight.cpu().clone()
-			# Metadata necessary to reconstruct LoraInjectedLinear module
-            metadata[f"{n}.r"] = str(m.r)
-            metadata[f"{n}.scale"] = str(m.scale)
-            metadata[f"{n}.nonlin"] = m.nonlin.__class__.__name__
+    for nc, c in model.named_children():
+        for nm, m in c.named_modules():
+            if isinstance(m, LoraInjectedLinear):
+                # TODO check for requires_grad, currently assumes that if LoRA exists, it is being trained
+                tensors_dict[f"{nc}.{nm}.lora_down.weight"] = m.lora_down.weight.cpu().clone()
+                tensors_dict[f"{nc}.{nm}.lora_up.weight"] = m.lora_up.weight.cpu().clone()
+                # Only non-diffusers modules will have metadata, which should contain
+                # all the information necessary to reapply the to the pretrained model
+                metadata[f"{nc}.{nm}:class"] = m.__class__.__name__
+                metadata[f"{nc}.{nm}:r"] = str(m.r)
+                metadata[f"{nc}.{nm}:scale"] = str(m.scale)
+                metadata[f"{nc}.{nm}:nonlin"] = m.nonlin.__class__.__name__
+            else:
+                if nm=="":
+                    pass
+					# TODO some modules have no names, maybe moduleList?
+                    #print("NO_MODULE_NAME", nm, type(m), "\t in child", nc, type(c))
+                else:
+                  for np, p in m.named_parameters():
+                      if p.requires_grad:
+                          #print(nm, type(m), "\t", np, type(p))
+                          tensors_dict[f"{nc}.{nm}.{np}"] = p.cpu().clone()
+
+    if validate:
+        trainable_params = set()
+        count = 0
+        for n, p in model.named_parameters():
+            count += 1
+            if p.requires_grad:
+                trainable_params.add(n)
+
+        if tensors_dict.keys()==trainable_params:
+            print("Copying trainable parameters:")
+            print(f"\t {len(trainable_params)} trainable of {count} total parameters in have been copied to tensors_dict.")
+
+            get_name = lambda k: k.split(":")[0]
+            metadata_names = set()
+            for k in metadata.keys():
+                metadata_names.add(get_name(k))
+
+            print(f"\t {len(metadata_names)} modules have associated metadata.")
         else:
-            if "lora_" not in n:
-                for _n, p in m.named_parameters():
-                    if p.requires_grad and ("lora_" not in _n):
-                        tensors_dict[f"{n}.{_n}"] = p.cpu().clone()
+            pass
+            # TODO implement warning, print missing?
 
     return tensors_dict, metadata
 
