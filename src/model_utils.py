@@ -284,7 +284,7 @@ def save_trainable_parameters(
 
     if instance_token:
         # TODO: multi-token case
-	    token_embeddings = text_encoder.get_input_embeddings()
+        token_embeddings = text_encoder.get_input_embeddings()
         instance_token_id = tokenizer.convert_tokens_to_ids(instance_token)
         trained_embeddings = token_embeddings.weight[instance_token_id]
 
