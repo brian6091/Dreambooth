@@ -260,24 +260,20 @@ def get_trainable_param_dict(
 
 
 def save_trainable_parameters(
-    accelerator,
     tokenizer,
     text_encoder,
     unet,
     instance_token=None,
-    instance_token_id=None,
     save_path="./lora.safetensors",
 #    dtype?
 ):
-    if accelerator:
-        # https://github.com/huggingface/diffusers/issues/1566
-        accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
-            inspect.signature(accelerator.unwrap_model).parameters.keys()
-        )
-        extra_args = (
-            {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
-        )
-
+    md = {
+        "version": "__0.1.0__",
+        "separator": ":",
+        "token_embedding_prefix": "token_embedding",
+        "text_encoder_prefix": "text_encoder",
+        "unet_prefix": "unet",
+    }
     td_token_embedding = {}
     md_token_embedding = {}
     td_text_encoder = {}
@@ -287,36 +283,22 @@ def save_trainable_parameters(
 
     if instance_token:
         # TODO: multi-token case
-        if accelerator:
-            token_embeddings = accelerator.unwrap_model(text_encoder, **extra_args).get_input_embeddings()
-        else:
-            token_embeddings = text_encoder.get_input_embeddings()
+	    token_embeddings = text_encoder.get_input_embeddings()
         instance_token_id = tokenizer.convert_tokens_to_ids(instance_token)
         trained_embeddings = token_embeddings.weight[instance_token_id]
 
-        k = f"text_encoder.embedding_vector_for:{instance_token}"
+        k = f"token_embedding:{instance_token}"
         td_token_embedding[k] = trained_embeddings.detach().cpu()
-        md_token_embedding[k] = f"embedding_vector_at:{instance_token_id}"
+        md_token_embedding[k] = str(instance_token_id)
     if text_encoder:
-        if accelerator:
-            text_encoder_model = accelerator.unwrap_model(text_encoder, **extra_args)
-        else:
-            text_encoder_model = text_encoder
-
-        td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder_model)
+        td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder)
         # PREFIX keys
     if unet:
-        if accelerator:
-            unet_model = accelerator.unwrap_model(unet, **extra_args)
-        else:
-            unet_model = unet
-
-        td_unet, md_unet = get_trainable_param_dict(unet_model)
+        td_unet, md_unet = get_trainable_param_dict(unet)
         # PREFIX keys
 
-
     tensors_dict = {**td_token_embedding, **td_text_encoder, **td_unet}
-    metadata = {**md_token_embedding, **md_text_encoder, **md_unet}
+    metadata = {**md, **md_token_embedding, **md_text_encoder, **md_unet}
 
     print(f"Saving weights to {save_path}")
     safe_save(tensors_dict, save_path, metadata)
