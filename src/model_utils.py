@@ -19,8 +19,8 @@ import torch.nn as nn
 from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler, AutoencoderKL
 from lora_diffusion import LoraInjectedLinear
 
-from safetensors.torch import safe_open
 from safetensors.torch import save_file as safe_save
+from safetensors import safe_open
     
 
 def get_tensor_info(tensor):
@@ -266,55 +266,76 @@ def save_trainable_parameters(
     unet,
     instance_token=None,
     instance_token_id=None,
-    save_path,
+    save_path="./lora.safetensors",
 #    dtype?
 ):
-    to_save = {
-    "embeddings": {},
-    "text_encoder": {},
-    "text_encoder_loras": {},
-    "unet": {},
-    "unet_loras": {},
-    }
+    if accelerator:
+        # https://github.com/huggingface/diffusers/issues/1566
+        accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
+            inspect.signature(accelerator.unwrap_model).parameters.keys()
+        )
+        extra_args = (
+            {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
+        )
 
-    # https://github.com/huggingface/diffusers/issues/1566
-    # TODO move this up, rename extra_args > accelerator_unwrap_extra_args
-    accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
-        inspect.signature(accelerator.unwrap_model).parameters.keys()
-    )
-    extra_args = (
-        {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
-    )
+    td_token_embedding = {}
+    md_token_embedding = {}
+    td_text_encoder = {}
+    md_text_encoder = {}
+    td_unet = {}
+    md_unet = {}
 
     if instance_token:
         # TODO: multi-token case
-        token_embeddings = accelerator.unwrap_model(text_encoder, **extra_args).get_input_embeddings()
+        if accelerator:
+            token_embeddings = accelerator.unwrap_model(text_encoder, **extra_args).get_input_embeddings()
+        else:
+            token_embeddings = text_encoder.get_input_embeddings()
         instance_token_id = tokenizer.convert_tokens_to_ids(instance_token)
         trained_embeddings = token_embeddings.weight[instance_token_id]
 
-        to_save["embeddings"][instance_token] = trained_embeddings.detach().cpu()
+        k = f"text_encoder.embedding_vector_for:{instance_token}"
+        td_token_embedding[k] = trained_embeddings.detach().cpu()
+        md_token_embedding[k] = f"embedding_vector_at:{instance_token_id}"
     if text_encoder:
         if accelerator:
-            text_encoder_model = accelerator.unwrap_model(text_encoder)
+            text_encoder_model = accelerator.unwrap_model(text_encoder, **extra_args)
         else:
             text_encoder_model = text_encoder
 
-        trainable_dict = get_trainable_param_dict(text_encoder_model, **extra_args)
-        to_save["text_encoder"] = trainable_dict["params_encoder"]
-        to_save["text_encoder_loras"] = trainable_dict["params_loras"]
+        td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder_model)
+        # PREFIX keys
     if unet:
         if accelerator:
             unet_model = accelerator.unwrap_model(unet, **extra_args)
         else:
             unet_model = unet
 
-        trainable_dict = get_trainable_param_dict(unet_model)
-        to_save["unet"] = trainable_dict["params"]
-        to_save["unet_loras"] = trainable_dict["params_loras"]
+        td_unet, md_unet = get_trainable_param_dict(unet_model)
+        # PREFIX keys
 
-    torch.save(to_save, save_path)
+
+    tensors_dict = {**td_token_embedding, **td_text_encoder, **td_unet}
+    metadata = {**md_token_embedding, **md_text_encoder, **md_unet}
+
+    print(f"Saving weights to {save_path}")
+    safe_save(tensors_dict, save_path, metadata)
     
 
+def load_trained_parameters(
+	filename,
+    framework="pt",
+    device="cpu",
+):
+    metadata = {}
+    tensors_dict_loaded = {}
+    with safe_open(filname, framework=framework, device=device) as f:
+        metadata = f.metadata()
+        for k in f.keys():
+            tensors_dict[k] = f.get_tensor(k)
+            
+    return tensors_dict, metadata
+	
 # Function below is modified from
 # MIT License
 
