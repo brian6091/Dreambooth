@@ -47,7 +47,9 @@ def find_modules_by_name_or_class(
             yield module.__class__.__name__, fullname, name, module
             
 
-# From lora_diffusion, TODO: import
+# TODO import
+# This function is from: https://github.com/cloneofsimo/lora/blob/master/lora_diffusion/lora.py
+# SPDX short identifier: Apache-2.0
 def _find_children(
     model,
     search_class: List[Type[nn.Module]] = [nn.Linear],
@@ -64,7 +66,7 @@ def _find_children(
                 yield parent, name, module
 
 
-# adapted from: https://github.com/cloneofsimo/lora/blob/master/lora_diffusion/lora.py
+# This function adapted from: https://github.com/cloneofsimo/lora/blob/master/lora_diffusion/lora.py
 # SPDX short identifier: Apache-2.0
 def _inject_trainable_lora(
     model: nn.Module,
