@@ -201,6 +201,7 @@ def main(args):
         # Resize the token embeddings
         text_encoder.resize_token_embeddings(len(tokenizer))
         
+        # TODO if no class_token, initialize to zero?
         if args.class_token is not None:
             # Convert the class_token to ids
             token_ids = tokenizer.encode(args.class_token, add_special_tokens=False)
@@ -512,6 +513,18 @@ def main(args):
             # dump entire checkpoint with all trainable
             
             if args.lora_unet_layer!=None or args.lora_unet_layer!=None:
+                
+                save_trainable_parameters(
+                    tokenizer=tokenizer,
+                    text_encoder=accelerator.unwrap_model(text_encoder, **extra_args),
+                    unet=accelerator.unwrap_model(
+                            ema_unet.averaged_model if args.use_ema else unet,
+                            **extra_args,
+                        ),
+                    instance_token=instance_token if args.add_instance_token else None,
+                    save_path=os.path.join(save_dir, f"{step}_trained_parameters.safetensors"),
+                )
+                
                 # already monkeypatched, but could change alpha? TODO: add save_lora_alpha
                 tune_lora_scale(pipeline.unet, 0.75)
                 tune_lora_scale(pipeline.text_encoder, 0.75)
