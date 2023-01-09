@@ -217,6 +217,7 @@ def get_trainable_param_dict(
                 # TODO check for requires_grad, currently assumes that if LoRA exists, it is being trained
                 tensors_dict[f"{nc}.{nm}.lora_down.weight"] = m.lora_down.weight.cpu().clone()
                 tensors_dict[f"{nc}.{nm}.lora_up.weight"] = m.lora_up.weight.cpu().clone()
+		
                 # Only non-diffusers modules will have metadata, which should contain
                 # all the information necessary to reapply the to the pretrained model
                 metadata[f"{nc}.{nm}:class"] = m.__class__.__name__
