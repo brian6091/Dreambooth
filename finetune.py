@@ -522,7 +522,7 @@ def main(args):
                             ema_unet.averaged_model if args.use_ema else unet,
                             **extra_args,
                         ),
-                    instance_token=instance_token if args.add_instance_token else None,
+                    instance_token=args.instance_token if args.add_instance_token else None,
                     save_path=os.path.join(save_dir, f"{step}_trained_parameters.safetensors"),
                 )
                 
