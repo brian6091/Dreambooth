@@ -58,6 +58,7 @@ from src.model_utils import (
     count_parameters,
     print_trainable_parameters,
     get_tensor_info,
+    save_trainable_parameters,
 )
 from src.optim import (
     calculate_loss,
