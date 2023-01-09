@@ -515,16 +515,16 @@ def main(args):
             
             if args.lora_unet_layer!=None or args.lora_unet_layer!=None:
                 
-#                 save_trainable_parameters(
-#                     tokenizer=tokenizer,
-#                     text_encoder=accelerator.unwrap_model(text_encoder, **extra_args),
-#                     unet=accelerator.unwrap_model(
-#                             ema_unet.averaged_model if args.use_ema else unet,
-#                             **extra_args,
-#                         ),
-#                     instance_token=args.instance_token if args.add_instance_token else None,
-#                     save_path=os.path.join(save_dir, f"{step}_trained_parameters.safetensors"),
-#                 )
+                save_trainable_parameters(
+                    tokenizer=tokenizer,
+                    text_encoder=accelerator.unwrap_model(text_encoder, **extra_args),
+                    unet=accelerator.unwrap_model(
+                            ema_unet.averaged_model if args.use_ema else unet,
+                            **extra_args,
+                        ),
+                    instance_token=args.instance_token if args.add_instance_token else None,
+                    save_path=os.path.join(save_dir, f"{step}_trained_parameters.safetensors"),
+                )
                 
                 # already monkeypatched, but could change alpha? TODO: add save_lora_alpha
                 tune_lora_scale(pipeline.unet, 0.75)
