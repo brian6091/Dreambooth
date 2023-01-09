@@ -30,11 +30,12 @@ def get_tensor_info(tensor):
     return ' '.join(info)
 
 
-def print_trainable_parameters(model: nn.Module, file=sys.stdout):
+def print_trainable_parameters(model: nn.Module, file=sys.stdout, tensor_info=True):
     for n, p in model.named_parameters():
         if p.requires_grad:
             print(n, p.shape, file=file)
-            print(get_tensor_info(p), file=file)
+            if tensor_info:
+                print(get_tensor_info(p), file=file)
 
 
 def find_modules_by_name_or_class(
