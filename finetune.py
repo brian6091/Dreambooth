@@ -528,7 +528,7 @@ def main(args):
                 
                 # already monkeypatched, but could change alpha? TODO: add save_lora_alpha
                 tune_lora_scale(pipeline.unet, args.lora_unet_scale)
-                tune_lora_scale(pipeline.text_encoder, args.lora_text_scale5)
+                tune_lora_scale(pipeline.text_encoder, args.lora_text_scale)
             else:
                 pipeline.save_pretrained(save_dir)
 
