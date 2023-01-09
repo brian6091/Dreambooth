@@ -513,7 +513,7 @@ def main(args):
             # TODO: for custom diffusion, or generally distinct module training
             # dump entire checkpoint with all trainable
             
-#             if args.lora_unet_layer!=None or args.lora_unet_layer!=None:
+            if args.lora_unet_layer!=None or args.lora_unet_layer!=None:
                 
 #                 save_trainable_parameters(
 #                     tokenizer=tokenizer,
