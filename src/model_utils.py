@@ -48,7 +48,7 @@ def print_trainable_parameters(model: nn.Module, file=sys.stdout, tensor_info=Tr
 
 def add_instance_tokens(
     tokenizer,
-    text_encoder
+    text_encoder,
     instance_tokens,
     initializer_tokens,
     debug=False,
