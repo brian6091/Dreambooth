@@ -1,4 +1,4 @@
-git+https://github.com/huggingface/diffusers@main#egg=diffusers
+git+https://github.com/brian6091/diffusers@main#egg=diffusers
 accelerate
 torchvision
 transformers>=4.25.1
