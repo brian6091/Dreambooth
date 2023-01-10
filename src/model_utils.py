@@ -46,6 +46,53 @@ def print_trainable_parameters(model: nn.Module, file=sys.stdout, tensor_info=Tr
                 print(get_tensor_info(p), file=file)
 
 
+def add_instance_tokens(
+    tokenizer,
+    text_encoder
+    instance_tokens,
+    initializer_tokens,
+    debug=False,
+):
+    # TODO: multiple tokens
+    num_added_tokens = tokenizer.add_tokens(instance_tokens)
+    if num_added_tokens == 0:
+        raise ValueError(
+            f"The tokenizer already contains the token {instance_tokens}. Please pass a different"
+            " `instance_token` that is not already in the tokenizer."
+        )
+    else:
+        if debug:
+            print(f"{instance_tokens} added to tokenizer.")
+
+    # Resize the token embeddings
+    text_encoder.resize_token_embeddings(len(tokenizer))
+
+    # TODO if no class_token, initialize to zero?
+    if initializer_tokens is not None:
+        # Convert the class_token to ids
+        token_ids = tokenizer.encode(initializer_tokens, add_special_tokens=False)
+        initializer_token_id = token_ids[0]
+        if len(token_ids) > 1:
+            raise ValueError("The initializer token must be a single token.")
+
+        # TODO should I be disabling grad here?
+        # Initialise new instance_token embedding with the embedding of the initializer_token
+        token_embeds = text_encoder.get_input_embeddings().weight.data
+        instance_token_id = tokenizer.convert_tokens_to_ids(instance_tokens)
+
+        if args.debug:
+            print("Instance weights: ")
+            print(token_embeds[instance_token_id])
+
+        token_embeds[instance_token_id] = token_embeds[initializer_token_id]
+
+        if debug:
+            print("Instance weights intialized: ")
+            print(token_embeds[instance_token_id])
+
+    return instance_token_id, initializer_token_id
+
+
 def find_modules_by_name_or_class(
     model: nn.Module,
     target: Set[str],
