@@ -22,6 +22,14 @@ from lora_diffusion import LoraInjectedLinear
 from safetensors.torch import save_file as safe_save
 from safetensors import safe_open
     
+SAVE_CONFIG = {
+    "version": "__0.1.0__",
+    "separator": ":",
+    "token_embedding_prefix": "token_embedding",
+    "text_encoder_prefix": "text_encoder",
+    "unet_prefix": "unet",
+    "lora_prefix": "lora",
+}
 
 def get_tensor_info(tensor):
     info = []
@@ -208,8 +216,9 @@ def set_trainable_parameters(
 def get_trainable_param_dict(
     model: nn.Module,
     validate=True,
+    config=SAVE_CONFIG,
 ):
-    # TODO pull in separator for metadata as param
+    cf = config
     tensors_dict = {}
     metadata = {}
 
@@ -217,15 +226,15 @@ def get_trainable_param_dict(
         for nm, m in c.named_modules():
             if isinstance(m, LoraInjectedLinear):
                 # TODO check for requires_grad, currently assumes that if LoRA exists, it is being trained
-                tensors_dict[f"{nc}.{nm}.lora_down.weight"] = m.lora_down.weight.cpu().clone()
-                tensors_dict[f"{nc}.{nm}.lora_up.weight"] = m.lora_up.weight.cpu().clone()
+                tensors_dict[f"{cf["lora_prefix"]}{cf["separator"]}{nc}.{nm}.lora_down.weight"] = m.lora_down.weight.cpu().clone()
+                tensors_dict[f"{cf["lora_prefix"]}{cf["separator"]}{nc}.{nm}.lora_up.weight"] = m.lora_up.weight.cpu().clone()
 		
                 # Only non-diffusers modules will have metadata, which should contain
                 # all the information necessary to reapply to the pretrained model
-                metadata[f"{nc}.{nm}:class"] = m.__class__.__name__
-                metadata[f"{nc}.{nm}:r"] = str(m.r)
-                metadata[f"{nc}.{nm}:scale"] = str(m.scale)
-                metadata[f"{nc}.{nm}:nonlin"] = m.nonlin.__class__.__name__
+                metadata[f"{cf["lora_prefix"]}{cf["separator"]}{nc}.{nm}{cf["separator"]}class"] = m.__class__.__name__
+                metadata[f"{cf["lora_prefix"]}{cf["separator"]}{nc}.{nm}{cf["separator"]}r"] = str(m.r)
+                metadata[f"{cf["lora_prefix"]}{cf["separator"]}{nc}.{nm}{cf["separator"]}scale"] = str(m.scale)
+                metadata[f"{cf["lora_prefix"]}{cf["separator"]}{nc}.{nm}{cf["separator"]}nonlin"] = m.nonlin.__class__.__name__
             else:
                 if nm=="":
                     pass
@@ -268,16 +277,10 @@ def save_trainable_parameters(
     unet,
     instance_token=None,
     save_path="./lora.safetensors",
+    config=SAVE_CONFIG,
 #    dtype?
 ):
-    # TODO: move this out, add config param
-    md = {
-        "version": "__0.1.0__",
-        "separator": ":",
-        "token_embedding_prefix": "token_embedding",
-        "text_encoder_prefix": "text_encoder",
-        "unet_prefix": "unet",
-    }
+    cf = config
     td_token_embedding = {}
     md_token_embedding = {}
     td_text_encoder = {}
@@ -291,20 +294,20 @@ def save_trainable_parameters(
         instance_token_id = tokenizer.convert_tokens_to_ids(instance_token)
         trained_embeddings = token_embeddings.weight[instance_token_id]
 
-        k = f"{md["token_embedding_prefix"}{md["separator"]}{instance_token}"
+        k = f"{cf["token_embedding_prefix"}{cf["separator"]}{instance_token}"
         td_token_embedding[k] = trained_embeddings.detach().cpu()
         md_token_embedding[k] = str(instance_token_id)
     if text_encoder:
         td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder)
-        td_text_encoder = {f"{md["text_encoder_prefix"]}{md["separator"]}{k}": v for k, v in td_text_encoder.items()}
-        md_text_encoder = {f"{md["text_encoder_prefix"]}{md["separator"]}{k}": v for k, v in md_text_encoder.items()}
+        td_text_encoder = {f"{cf["text_encoder_prefix"]}{cf["separator"]}{k}": v for k, v in td_text_encoder.items()}
+        md_text_encoder = {f"{cf["text_encoder_prefix"]}{cf["separator"]}{k}": v for k, v in md_text_encoder.items()}
     if unet:
         td_unet, md_unet = get_trainable_param_dict(unet)
-        td_unet = {f"{md["unet_prefix"]}{md["separator"]}{k}": v for k, v in td_unet.items()}
-        md_unet = {f"{md["unet_prefix"]}{md["separator"]}{k}": v for k, v in md_unet.items()}
+        td_unet = {f"{cf["unet_prefix"]}{cf["separator"]}{k}": v for k, v in td_unet.items()}
+        md_unet = {f"{cf["unet_prefix"]}{cf["separator"]}{k}": v for k, v in md_unet.items()}
 
     tensors_dict = {**td_token_embedding, **td_text_encoder, **td_unet}
-    metadata = {**md, **md_token_embedding, **md_text_encoder, **md_unet}
+    metadata = {**cf, **md_token_embedding, **md_text_encoder, **md_unet}
 
     print(f"Saving weights to {save_path}")
     safe_save(tensors_dict, save_path, metadata)
