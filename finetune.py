@@ -499,6 +499,7 @@ def main(args):
                         **extra_args,
                     ),
                 text_encoder=text_enc_model,
+                scheduler=noise_scheduler,
                 vae=AutoencoderKL.from_pretrained(
                     args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
                     subfolder=None if args.pretrained_vae_name_or_path else "vae",
