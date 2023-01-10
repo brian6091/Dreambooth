@@ -294,7 +294,7 @@ def save_trainable_parameters(
         instance_token_id = tokenizer.convert_tokens_to_ids(instance_token)
         trained_embeddings = token_embeddings.weight[instance_token_id]
 
-        k = f"{cf['token_embedding_prefix'}{cf['separator']}{instance_token}"
+        k = f"{cf['token_embedding_prefix']}{cf['separator']}{instance_token}"
         td_token_embedding[k] = trained_embeddings.detach().cpu()
         md_token_embedding[k] = str(instance_token_id)
     if text_encoder:
