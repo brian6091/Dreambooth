@@ -99,6 +99,20 @@ def parse_args(input_args=None):
 
     
     parser.add_argument(
+        "--scheduler",
+        type=str,
+        default="DDIMScheduler",
+        help="Scheduler",
+    )
+    parser.add_argument(
+        "--scheduler_params",
+        dest="scheduler_params",
+        action=StoreDictKeyPair,
+        metavar="KEY1=VAL1;KEY2=VAL2...",
+        help="Scheduler parameters as semi-colon separated string",
+        )
+    
+    parser.add_argument(
         "--train_unet_module_or_class",
         nargs='+',
         help="Modules or classes of the Unet to train.",
