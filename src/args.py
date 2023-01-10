@@ -105,8 +105,8 @@ def parse_args(input_args=None):
         help="Scheduler",
     )
     parser.add_argument(
-        "--scheduler_params",
-        dest="scheduler_params",
+        "--scheduler_config",
+        dest="scheduler_config",
         action=StoreDictKeyPair,
         metavar="KEY1=VAL1;KEY2=VAL2...",
         help="Scheduler parameters as semi-colon separated string",
