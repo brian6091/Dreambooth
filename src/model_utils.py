@@ -209,6 +209,7 @@ def get_trainable_param_dict(
     model: nn.Module,
     validate=True,
 ):
+    # TODO pull in separator for metadata as param
     tensors_dict = {}
     metadata = {}
 
@@ -220,7 +221,7 @@ def get_trainable_param_dict(
                 tensors_dict[f"{nc}.{nm}.lora_up.weight"] = m.lora_up.weight.cpu().clone()
 		
                 # Only non-diffusers modules will have metadata, which should contain
-                # all the information necessary to reapply the to the pretrained model
+                # all the information necessary to reapply to the pretrained model
                 metadata[f"{nc}.{nm}:class"] = m.__class__.__name__
                 metadata[f"{nc}.{nm}:r"] = str(m.r)
                 metadata[f"{nc}.{nm}:scale"] = str(m.scale)
@@ -228,7 +229,7 @@ def get_trainable_param_dict(
             else:
                 if nm=="":
                     pass
-					# TODO some modules have no names, maybe moduleList?
+                    # TODO some modules have no names, maybe moduleList?
                     #print("NO_MODULE_NAME", nm, type(m), "\t in child", nc, type(c))
                 else:
                   for np, p in m.named_parameters():
@@ -269,6 +270,7 @@ def save_trainable_parameters(
     save_path="./lora.safetensors",
 #    dtype?
 ):
+    # TODO: move this out, add config param
     md = {
         "version": "__0.1.0__",
         "separator": ":",
@@ -289,15 +291,17 @@ def save_trainable_parameters(
         instance_token_id = tokenizer.convert_tokens_to_ids(instance_token)
         trained_embeddings = token_embeddings.weight[instance_token_id]
 
-        k = f"token_embedding:{instance_token}"
+        k = f"{md["token_embedding_prefix"}{md["separator"]}{instance_token}"
         td_token_embedding[k] = trained_embeddings.detach().cpu()
         md_token_embedding[k] = str(instance_token_id)
     if text_encoder:
         td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder)
-        # PREFIX keys
+        td_text_encoder = {f"{md["text_encoder_prefix"]}{md["separator"]}{k}": v for k, v in td_text_encoder.items()}
+        md_text_encoder = {f"{md["text_encoder_prefix"]}{md["separator"]}{k}": v for k, v in md_text_encoder.items()}
     if unet:
         td_unet, md_unet = get_trainable_param_dict(unet)
-        # PREFIX keys
+        td_unet = {f"{md["unet_prefix"]}{md["separator"]}{k}": v for k, v in td_unet.items()}
+        md_unet = {f"{md["unet_prefix"]}{md["separator"]}{k}": v for k, v in md_unet.items()}
 
     tensors_dict = {**td_token_embedding, **td_text_encoder, **td_unet}
     metadata = {**md, **md_token_embedding, **md_text_encoder, **md_unet}
