@@ -549,6 +549,19 @@ def parse_args(input_args=None):
     )
     
     parser.add_argument(
+        "--sample_scheduler",
+        type=str,
+        default="DDIMScheduler",
+        help="Sample scheduler",
+    )
+    parser.add_argument(
+        "--sample_scheduler_config",
+        dest="sample_scheduler_config",
+        action=StoreDictKeyPair,
+        metavar="KEY1=VAL1;KEY2=VAL2...",
+        help="Sample scheduler parameters as semi-colon separated string",
+        )
+    parser.add_argument(
         "--sample_prompt",
         type=str,
         default=None,
