@@ -341,6 +341,9 @@ def main(args):
     if args.scheduler=="DPMSolverMultistepScheduler":
         noise_scheduler = DPMSolverMultistepScheduler.from_config(scheduler_config)
         print(noise_scheduler.config)
+    elif args.scheduler=="DDIMScheduler":
+        noise_scheduler = DDIMScheduler.from_config(scheduler_config)
+        print(noise_scheduler.config)
     else:
         noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
         
