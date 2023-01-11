@@ -24,15 +24,35 @@ from safetensors.torch import save_file as safe_save
 from safetensors import safe_open
 
 
-SAFE_CONFIG = {
-    "version": "__0.1.0__",
-    "separator": ":",
-    "token_embedding_prefix": "token_embedding",
-    "text_encoder_prefix": "text_encoder",
-    "unet_prefix": "unet",
-    "lora_prefix": "lora",
-}
+# SAFE_CONFIG = {
+#     "version": "__0.1.0__",
+#     "separator": ":",
+#     "token_embedding_prefix": "token_embedding",
+#     "text_encoder_prefix": "text_encoder",
+#     "unet_prefix": "unet",
+#     "lora_prefix": "lora",
+# }
 
+# TODO make frozen
+SAFE_CONFIGS = {
+    "0.0.0": {
+        "version": "__0.0.0__",
+        "separator": ":",
+        "token_embedding_prefix": "",
+        "text_encoder_prefix": "",
+        "unet_prefix": "",
+        "lora_prefix": "",
+        "token_is_key": "True",
+    },
+    "0.1.0": {
+        "version": "__0.1.0__",
+        "separator": ":",
+        "token_embedding_prefix": "token_embedding",
+        "text_encoder_prefix": "text_encoder",
+        "unet_prefix": "unet",
+        "lora_prefix": "lora",
+    }
+}
 
 def get_tensor_info(tensor):
     info = []
@@ -410,7 +430,7 @@ def save_trainable_parameters(
     unet,
     instance_token=None,
     save_path="./lora.safetensors",
-    config=SAFE_CONFIG,
+    config=SAFE_CONFIGS["0.1.0"],
 #    dtype?
 ):
     cf = config
