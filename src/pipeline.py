@@ -72,83 +72,85 @@ from .model_utils import get_nonlin
 #     else:
 #         return None
 
-def _inject_trained_lora(
-    module: nn.Module,
-    target,
-    up_weight,
-    down_weight,
-    r: int = 4,
-    scale: float = 1.0,
-    nonlin: nn.Module = None,
-):
-    """
-    inject lora for nn.Linear into model.
-    """
+from .model_utils import _inject_trained_lora
+# def _inject_trained_lora(
+#     module: nn.Module,
+#     target,
+#     up_weight,
+#     down_weight,
+#     r: int = 4,
+#     scale: float = 1.0,
+#     nonlin: nn.Module = None,
+# ):
+#     """
+#     inject lora for nn.Linear into model.
+#     """
 
-    # TODO if already LoRAInjected? Replace
-    if not isinstance(module._modules[target], LoraInjectedLinear):
-        _child_module = module._modules[target]
-        weight = _child_module.weight
-        bias = _child_module.bias
-        _tmp = LoraInjectedLinear(
-            _child_module.in_features,
-            _child_module.out_features,
-            _child_module.bias is not None,
-            r=r,
-            scale=scale,
-            nonlin=nonlin,
-            init=None,
-        )
+#     # TODO if already LoRAInjected? Replace
+#     if not isinstance(module._modules[target], LoraInjectedLinear):
+#         _child_module = module._modules[target]
+#         weight = _child_module.weight
+#         bias = _child_module.bias
+#         _tmp = LoraInjectedLinear(
+#             _child_module.in_features,
+#             _child_module.out_features,
+#             _child_module.bias is not None,
+#             r=r,
+#             scale=scale,
+#             nonlin=nonlin,
+#             init=None,
+#         )
         
-        # Assign pretrained parameters
-        _tmp.linear.weight = weight
-        if bias is not None:
-            _tmp.linear.bias = bias
+#         # Assign pretrained parameters
+#         _tmp.linear.weight = weight
+#         if bias is not None:
+#             _tmp.linear.bias = bias
 
-        # Switch the module
-        _tmp.to(_child_module.weight.device).to(_child_module.weight.dtype)
-        module._modules[target] = _tmp
+#         # Switch the module
+#         _tmp.to(_child_module.weight.device).to(_child_module.weight.dtype)
+#         module._modules[target] = _tmp
 
-        module._modules[target].lora_up.weight = nn.Parameter(
-            up_weight.type(weight.dtype)
-        )
-        module._modules[target].lora_down.weight = nn.Parameter(
-            down_weight.type(weight.dtype)
-        )
-    else:
-        print(f"skipping {target}")
+#         module._modules[target].lora_up.weight = nn.Parameter(
+#             up_weight.type(weight.dtype)
+#         )
+#         module._modules[target].lora_down.weight = nn.Parameter(
+#             down_weight.type(weight.dtype)
+#         )
+#     else:
+#         print(f"skipping {target}")
 
-def get_modules_to_inject_with_parent(
-    model: nn.Module,
-    lora_modules,
-):
-    # Parent module names
-    parent_modules = [n.rsplit('.', 1)[0] for n in lora_modules]
+from .model_utils import get_modules_to_inject_with_parent
+# def get_modules_to_inject_with_parent(
+#     model: nn.Module,
+#     lora_modules,
+# ):
+#     # Parent module names
+#     parent_modules = [n.rsplit('.', 1)[0] for n in lora_modules]
 
-    for n, m in model.named_modules():
-        if any(n==c for c in parent_modules):
-            # Some elements (ModuleLists) will get traversed twice, e.g., attn1, and attn1.to_out
-            # since to_out is a list of modules. They will get skipped in the injection, so it's
-            # just a little wasteful, but no harm done...
-            for _n, _m in m.named_modules():
-                if any(f"{n}.{_n}"==c for c in lora_modules):
-                    # Handle case where child is a ModuleList
-                    if "." in _n:
-                        # The name should have two parts
-                        parts = _n.split(".")
-                        # Only know how to handle this case
-                        if (len(parts)) > 2:
-                            print("unexpected???")
-                        if not isinstance(m._modules["to_out"], nn.ModuleList):
-                            print("unexpected???")
-                        # Reassign the parent 
-                        m = m._modules[parts[0]]
-                        n = f"{n}.{parts[0]}"
-                        # Reassign the child
-                        _m = m._modules[parts[1]]
-                        _n = parts[1]
+#     for n, m in model.named_modules():
+#         if any(n==c for c in parent_modules):
+#             # Some elements (ModuleLists) will get traversed twice, e.g., attn1, and attn1.to_out
+#             # since to_out is a list of modules. They will get skipped in the injection, so it's
+#             # just a little wasteful, but no harm done...
+#             for _n, _m in m.named_modules():
+#                 if any(f"{n}.{_n}"==c for c in lora_modules):
+#                     # Handle case where child is a ModuleList
+#                     if "." in _n:
+#                         # The name should have two parts
+#                         parts = _n.split(".")
+#                         # Only know how to handle this case
+#                         if (len(parts)) > 2:
+#                             print("unexpected???")
+#                         if not isinstance(m._modules["to_out"], nn.ModuleList):
+#                             print("unexpected???")
+#                         # Reassign the parent 
+#                         m = m._modules[parts[0]]
+#                         n = f"{n}.{parts[0]}"
+#                         # Reassign the child
+#                         _m = m._modules[parts[1]]
+#                         _n = parts[1]
 
-                    yield n, m, _n, _m
+#                     yield n, m, _n, _m
 
 ############################################### TODO move out if possible ###############################################
 
