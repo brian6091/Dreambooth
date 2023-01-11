@@ -49,7 +49,7 @@ from .model_utils import load_trained_parameters
             
 #     return tensors_dict, metadata
 
-from .model_utils import SAFE_CONFIG
+from .model_utils import SAFE_CONFIGS
 # SAFE_CONFIG = {
 #     "version": "__0.1.0__",
 #     "separator": ":",
