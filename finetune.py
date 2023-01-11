@@ -14,7 +14,7 @@
 #
 #    Based on https://github.com/huggingface/diffusers/blob/v0.8.0/examples/dreambooth/train_dreambooth.py
 #    SPDX short identifier: Apache-2.0
-#    save_weights modified from https://github.com/ShivamShrirao/diffusers/blob/main/examples/dreambooth/train_dreambooth.py
+#    save_weights intially from https://github.com/ShivamShrirao/diffusers/blob/main/examples/dreambooth/train_dreambooth.py
 #    SPDX short identifier: Apache-2.0
 #
 import yaml
@@ -310,22 +310,12 @@ def main(args):
     if True:#args.debug: # TODO remove
         print(optimizer)
     
-#     # Setup scheduler for training
-#     if args.scheduler_config:
-#         scheduler_config = args.scheduler_config
-#     else:
-#         scheduler_config = {}
-        
-#     if args.scheduler=="DPMSolverMultistepScheduler":
-#         noise_scheduler = DPMSolverMultistepScheduler.from_config(scheduler_config)
-#         print(noise_scheduler.config)
-#     elif args.scheduler=="DDIMScheduler":
-#         noise_scheduler = DDIMScheduler.from_config(scheduler_config)
-#         print(noise_scheduler.config)
-#     else:
-#         noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+    # Set up scheduler for training
+    if args.scheduler:
+        noise_scheduler = get_noise_scheduler(args.scheduler, args.scheduler_config)        
+    else:
+        noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
-    noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
     if True:#args.debug: # TODO remove
         print(noise_scheduler.__class__.__name__)
         print(noise_scheduler.config)
@@ -517,7 +507,10 @@ def main(args):
                 torch_dtype=torch.float16, # TODO option to save in fp32?
                 revision=args.revision,
             )
-                        
+            if True:#args.debug: # TODO remove
+                print(pipeline.scheduler.__class__.__name__)
+                print(pipeline.scheduler.config)
+        
             # TODO: for custom diffusion, or generally distinct module training
             # dump entire checkpoint with all trainable
             
