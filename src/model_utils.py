@@ -53,6 +53,7 @@ def add_instance_tokens(
     text_encoder,
     instance_tokens,
     initializer_tokens,
+	#initializer_embedding, # can pass directly embedding?
     debug=False,
 ):
     # TODO: multiple tokens
