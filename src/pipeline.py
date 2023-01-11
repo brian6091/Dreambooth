@@ -34,41 +34,43 @@ from lora_diffusion import (
 from safetensors.torch import save_file as safe_save
 from safetensors import safe_open
 
-#from .model_utils import load_trained_parameters
-def load_trained_parameters(
-    filename,
-    framework="pt",
-    device="cpu",
-):
-    metadata = {}
-    tensors_dict_loaded = {}
-    with safe_open(filname, framework=framework, device=device) as f:
-        metadata = f.metadata()
-        for k in f.keys():
-            tensors_dict[k] = f.get_tensor(k)
+from .model_utils import load_trained_parameters
+# def load_trained_parameters(
+#     filename,
+#     framework="pt",
+#     device="cpu",
+# ):
+#     metadata = {}
+#     tensors_dict_loaded = {}
+#     with safe_open(filname, framework=framework, device=device) as f:
+#         metadata = f.metadata()
+#         for k in f.keys():
+#             tensors_dict[k] = f.get_tensor(k)
             
-    return tensors_dict, metadata
+#     return tensors_dict, metadata
 
-SAVE_CONFIG = {
-    "version": "__0.1.0__",
-    "separator": ":",
-    "token_embedding_prefix": "token_embedding",
-    "text_encoder_prefix": "text_encoder",
-    "unet_prefix": "unet",
-    "lora_prefix": "lora",
-}
+from .model_utils import SAFE_CONFIG
+# SAFE_CONFIG = {
+#     "version": "__0.1.0__",
+#     "separator": ":",
+#     "token_embedding_prefix": "token_embedding",
+#     "text_encoder_prefix": "text_encoder",
+#     "unet_prefix": "unet",
+#     "lora_prefix": "lora",
+# }
 
-def get_nonlin(nonlin: str):
-    if nonlin=="ReLU":
-        return nn.ReLU(inplace=True)
-    elif nonlin=="GELU":
-        return nn.GELU()
-    elif nonlin=="SiLU":
-        return nn.SiLU(inplace=True)
-    elif nonlin=="Mish":
-        return nn.Mish(inplace=True)
-    else:
-        return None
+from .model_utils import get_nonlin
+# def get_nonlin(nonlin: str):
+#     if nonlin=="ReLU":
+#         return nn.ReLU(inplace=True)
+#     elif nonlin=="GELU":
+#         return nn.GELU()
+#     elif nonlin=="SiLU":
+#         return nn.SiLU(inplace=True)
+#     elif nonlin=="Mish":
+#         return nn.Mish(inplace=True)
+#     else:
+#         return None
 
 def _inject_trained_lora(
     module: nn.Module,
@@ -521,11 +523,6 @@ class PatchDiffusionPipeline(DiffusionPipeline):
         latents = latents * self.scheduler.init_noise_sigma
         return latents
 
-    def sayhello(self, text:str):
-        print(self)
-        print(text)
-        print(self.unet)
-
     def patch_weights(self, weights: Union[Tuple[str], str]):
         # load safetensors files
         # if multiple, use merge strategy
@@ -540,6 +537,7 @@ class PatchDiffusionPipeline(DiffusionPipeline):
     def patch_embeddings(self, td, md):
         search = f"{md['token_embedding_prefix']}{md['separator']}"
         full = list(filter(lambda k: k.startswith(search) and k.endswith("class"), md.keys()))
+
     @torch.no_grad()
     def patch_text_encoder(self, td, md):
         # Filter modules where LoRA must be injected
