@@ -359,7 +359,7 @@ def set_trainable_parameters(
 def get_trainable_param_dict(
     model: nn.Module,
     validate=True,
-    config=SAVE_CONFIGS["0.1.0"],
+    config=SAFE_CONFIGS["0.1.0"],
 ):
     cf = config
     tensors_dict = {}
