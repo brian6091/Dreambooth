@@ -101,7 +101,7 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--scheduler",
         type=str,
-        default="DDIMScheduler",
+        default="DDPMScheduler",
         help="Scheduler",
     )
     parser.add_argument(
@@ -551,7 +551,7 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--sample_scheduler",
         type=str,
-        default="DDIMScheduler",
+        default="DDPMScheduler",
         help="Sample scheduler",
     )
     parser.add_argument(
