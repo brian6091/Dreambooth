@@ -21,8 +21,9 @@ from lora_diffusion import LoraInjectedLinear
 
 from safetensors.torch import save_file as safe_save
 from safetensors import safe_open
-    
-SAVE_CONFIG = {
+
+
+SAFE_CONFIG = {
     "version": "__0.1.0__",
     "separator": ":",
     "token_embedding_prefix": "token_embedding",
@@ -30,6 +31,7 @@ SAVE_CONFIG = {
     "unet_prefix": "unet",
     "lora_prefix": "lora",
 }
+
 
 def get_tensor_info(tensor):
     info = []
@@ -286,7 +288,8 @@ def get_trainable_param_dict(
                 if nm=="":
                     pass
                     # TODO some modules have no names, maybe moduleList?
-                    #print("NO_MODULE_NAME", nm, type(m), "\t in child", nc, type(c))
+                    if validate:
+                        print("NO_MODULE_NAME for parent", nm, type(m), "\n of child", nc, type(c))
                 else:
                   for np, p in m.named_parameters():
                       if p.requires_grad:
@@ -324,7 +327,7 @@ def save_trainable_parameters(
     unet,
     instance_token=None,
     save_path="./lora.safetensors",
-    config=SAVE_CONFIG,
+    config=SAFE_CONFIG,
 #    dtype?
 ):
     cf = config
