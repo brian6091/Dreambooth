@@ -66,15 +66,15 @@ def get_noise_scheduler(
 ):
     if scheduler=="DPMSolverMultistepScheduler":
         noise_scheduler = DPMSolverMultistepScheduler.from_config(config if config else {})
-    elif args.scheduler=="DDIMScheduler":
+    elif scheduler=="DDIMScheduler":
         noise_scheduler = DDIMScheduler.from_config(config if config else {})
-    elif args.scheduler=="DDPMScheduler":
+    elif scheduler=="DDPMScheduler":
         noise_scheduler = DDPMScheduler.from_config(config if config else {})
-    elif args.scheduler=="LMSDiscreteScheduler":
+    elif scheduler=="LMSDiscreteScheduler":
         noise_scheduler = LMSDiscreteScheduler.from_config(config if config else {})
-    elif args.scheduler=="PNDMScheduler":
+    elif scheduler=="PNDMScheduler":
         noise_scheduler = PNDMScheduler.from_config(config if config else {})
-    elif args.scheduler=="EulerAncestralDiscreteScheduler":
+    elif scheduler=="EulerAncestralDiscreteScheduler":
         noise_scheduler = EulerAncestralDiscreteScheduler.from_config(config if config else {})
     else:
         raise ValueError(
