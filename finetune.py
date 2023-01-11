@@ -312,8 +312,10 @@ def main(args):
         print(optimizer)
     
     # Set up scheduler for training
-    if args.scheduler:
-        noise_scheduler = get_noise_scheduler(args.scheduler, args.scheduler_config)        
+    if args.scheduler and args.scheduler_config:
+        noise_scheduler = get_noise_scheduler(args.scheduler, config=args.scheduler_config)        
+    elif args.scheduler:
+        noise_scheduler = get_noise_scheduler(args.scheduler, model_name_or_path=args.pretrained_model_name_or_path)
     else:
         noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
