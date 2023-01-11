@@ -482,11 +482,11 @@ def main(args):
 
             # Set up scheduler for inference
             if args.sample_scheduler and args.sample_scheduler_config:
-                noise_scheduler = get_noise_scheduler(args.sample_scheduler, config=args.sample_scheduler_config)        
+                sample_scheduler = get_noise_scheduler(args.sample_scheduler, config=args.sample_scheduler_config)        
             elif args.sample_scheduler:
-                noise_scheduler = get_noise_scheduler(args.sample_scheduler, model_name_or_path=args.pretrained_model_name_or_path)
+                sample_scheduler = get_noise_scheduler(args.sample_scheduler, model_name_or_path=args.pretrained_model_name_or_path)
             else:
-                noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+                sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
                 
             pipeline = DiffusionPipeline.from_pretrained(
                 args.pretrained_model_name_or_path,
