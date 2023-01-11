@@ -62,20 +62,39 @@ def print_trainable_parameters(model: nn.Module, file=sys.stdout, tensor_info=Tr
 
 def get_noise_scheduler(
 	scheduler: str,
-	config,
+	config=None,
+    model_name_or_path=None,
 ):
     if scheduler=="DPMSolverMultistepScheduler":
-        noise_scheduler = DPMSolverMultistepScheduler.from_config(config if config else {})
+        if model_name_or_path:
+            noise_scheduler = DPMSolverMultistepScheduler.from_pretrained(model_name_or_path, subfolder="scheduler")
+        else:
+            noise_scheduler = DPMSolverMultistepScheduler.from_config(config if config else {})
     elif scheduler=="DDIMScheduler":
-        noise_scheduler = DDIMScheduler.from_config(config if config else {})
+        if model_name_or_path:
+            noise_scheduler = DDIMScheduler.from_pretrained(model_name_or_path, subfolder="scheduler")
+        else:
+            noise_scheduler = DDIMScheduler.from_config(config if config else {})
     elif scheduler=="DDPMScheduler":
-        noise_scheduler = DDPMScheduler.from_config(config if config else {})
+        if model_name_or_path:
+            noise_scheduler = DDPMScheduler.from_pretrained(model_name_or_path, subfolder="scheduler")
+        else:
+            noise_scheduler = DDPMScheduler.from_config(config if config else {})
     elif scheduler=="LMSDiscreteScheduler":
-        noise_scheduler = LMSDiscreteScheduler.from_config(config if config else {})
+        if model_name_or_path:
+            noise_scheduler = LMSDiscreteScheduler.from_pretrained(model_name_or_path, subfolder="scheduler")
+        else:
+            noise_scheduler = LMSDiscreteScheduler.from_config(config if config else {})
     elif scheduler=="PNDMScheduler":
-        noise_scheduler = PNDMScheduler.from_config(config if config else {})
+        if model_name_or_path:
+            noise_scheduler = PNDMScheduler.from_pretrained(model_name_or_path, subfolder="scheduler")
+        else:
+            noise_scheduler = PNDMScheduler.from_config(config if config else {})
     elif scheduler=="EulerAncestralDiscreteScheduler":
-        noise_scheduler = EulerAncestralDiscreteScheduler.from_config(config if config else {})
+        if model_name_or_path:
+            noise_scheduler = EulerAncestralDiscreteScheduler.from_pretrained(model_name_or_path, subfolder="scheduler")
+        else:
+            noise_scheduler = EulerAncestralDiscreteScheduler.from_config(config if config else {})
     else:
         raise ValueError(
             f"Unknown scheduler: {scheduler}"
