@@ -17,7 +17,14 @@ from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union
 
 import torch
 import torch.nn as nn
-from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler, AutoencoderKL
+from diffusers import (
+    DPMSolverMultistepScheduler,
+    DDIMScheduler, 
+    DDPMScheduler, 
+    LMSDiscreteScheduler, 
+    PNDMScheduler, 
+    EulerAncestralDiscreteScheduler,
+)
 from lora_diffusion import LoraInjectedLinear
 
 from safetensors.torch import save_file as safe_save
