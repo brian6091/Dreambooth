@@ -357,9 +357,10 @@ def save_trainable_parameters(
         md_unet = {f"{cf['unet_prefix']}{cf['separator']}{k}": v for k, v in md_unet.items()}
 
     tensors_dict = {**td_token_embedding, **td_text_encoder, **td_unet}
+    # Safetensors requires metadata to be flat and text only
     metadata = {**cf, **md_token_embedding, **md_text_encoder, **md_unet}
 
-    print(f"Saving weights to {save_path}")
+    print(f"Saving weights with format version {cf['version']} to {save_path}")
     safe_save(tensors_dict, save_path, metadata)
     
 
