@@ -480,16 +480,13 @@ def main(args):
                     subfolder="text_encoder",
                     )
 
-#             if args.sample_scheduler_config:
-#                 sample_scheduler_config = args.sample_scheduler_config
-#             else:
-#                 sample_scheduler_config = {}
-
-#             if args.sample_scheduler=="DPMSolverMultistepScheduler":
-#                 sample_scheduler = DPMSolverMultistepScheduler.from_config(sample_scheduler_config)
-#                 print(sample_scheduler.config)
-#             else:
-#                 sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+            # Set up scheduler for inference
+            if args.sample_scheduler and args.sample_scheduler_config:
+                noise_scheduler = get_noise_scheduler(args.sample_scheduler, config=args.sample_scheduler_config)        
+            elif args.sample_scheduler:
+                noise_scheduler = get_noise_scheduler(args.sample_scheduler, model_name_or_path=args.pretrained_model_name_or_path)
+            else:
+                noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
                 
             pipeline = DiffusionPipeline.from_pretrained(
                 args.pretrained_model_name_or_path,
@@ -499,7 +496,7 @@ def main(args):
                         **extra_args,
                     ),
                 text_encoder=text_enc_model,
-#                 scheduler=sample_scheduler,
+                scheduler=sample_scheduler,
                 vae=AutoencoderKL.from_pretrained(
                     args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
                     subfolder=None if args.pretrained_vae_name_or_path else "vae",
