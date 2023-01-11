@@ -60,6 +60,30 @@ def print_trainable_parameters(model: nn.Module, file=sys.stdout, tensor_info=Tr
                 print(get_tensor_info(p), file=file)
 
 
+def get_noise_scheduler(
+	scheduler: str,
+	config,
+):
+    if scheduler=="DPMSolverMultistepScheduler":
+        noise_scheduler = DPMSolverMultistepScheduler.from_config(config if config else {})
+    elif args.scheduler=="DDIMScheduler":
+        noise_scheduler = DDIMScheduler.from_config(config if config else {})
+    elif args.scheduler=="DDPMScheduler":
+        noise_scheduler = DDPMScheduler.from_config(config if config else {})
+    elif args.scheduler=="LMSDiscreteScheduler":
+        noise_scheduler = LMSDiscreteScheduler.from_config(config if config else {})
+    elif args.scheduler=="PNDMScheduler":
+        noise_scheduler = PNDMScheduler.from_config(config if config else {})
+    elif args.scheduler=="EulerAncestralDiscreteScheduler":
+        noise_scheduler = EulerAncestralDiscreteScheduler.from_config(config if config else {})
+    else:
+        raise ValueError(
+            f"Unknown scheduler: {scheduler}"
+        )        
+	
+    return noise_scheduler
+	
+
 def add_instance_tokens(
     tokenizer,
     text_encoder,
