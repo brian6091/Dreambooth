@@ -342,19 +342,25 @@ def main(args):
     if True:#args.debug: # TODO remove
         print(optimizer)
     
-    if args.scheduler_config:
-        scheduler_config = args.scheduler_config
-    else:
-        scheduler_config = {}
+#     # Setup scheduler for training
+#     if args.scheduler_config:
+#         scheduler_config = args.scheduler_config
+#     else:
+#         scheduler_config = {}
         
-    if args.scheduler=="DPMSolverMultistepScheduler":
-        noise_scheduler = DPMSolverMultistepScheduler.from_config(scheduler_config)
+#     if args.scheduler=="DPMSolverMultistepScheduler":
+#         noise_scheduler = DPMSolverMultistepScheduler.from_config(scheduler_config)
+#         print(noise_scheduler.config)
+#     elif args.scheduler=="DDIMScheduler":
+#         noise_scheduler = DDIMScheduler.from_config(scheduler_config)
+#         print(noise_scheduler.config)
+#     else:
+#         noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+
+    noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+    if True:
+        print(noise_scheduler.__class__.__name__)
         print(noise_scheduler.config)
-    elif args.scheduler=="DDIMScheduler":
-        noise_scheduler = DDIMScheduler.from_config(scheduler_config)
-        print(noise_scheduler.config)
-    else:
-        noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
         
     if noise_scheduler.config.prediction_type not in {"epsilon", "v_prediction"}:
         raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
