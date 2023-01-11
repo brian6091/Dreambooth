@@ -575,6 +575,7 @@ def main(args):
     progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
     progress_bar.set_description("Steps")
     global_step = 0
+    last_save_at_step = 0
     
     if args.add_instance_token:
         orig_embeds_params = accelerator.unwrap_model(text_encoder).get_input_embeddings().weight.data.clone()
@@ -656,6 +657,7 @@ def main(args):
                 
                 if global_step > 0 and not global_step % args.save_interval and global_step >= args.save_min_steps:
                     save_weights(global_step)
+                    last_save_at_step = global_step
                             
             # TODO function get_step_logs(pred_loss, prior_loss, loss, args)
             if args.with_prior_preservation:
@@ -704,7 +706,8 @@ def main(args):
         accelerator.wait_for_everyone()
 
     if accelerator.is_main_process:
-        save_weights(global_step)
+        if global_step > last_save_at_step
+            save_weights(global_step)
     
         if args.push_to_hub:
             repo.push_to_hub(commit_message="End of training", blocking=False, auto_lfs_prune=True)
