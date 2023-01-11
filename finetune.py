@@ -51,6 +51,8 @@ from lora_diffusion import (
 from src.datasets import FinetuneTrainDataset, PromptDataset, collate_fn
 from src.args import parse_args, format_args
 from src.model_utils import (
+    SAFE_CONFIGS,
+    add_instance_tokens,
     find_modules_by_name_or_class,
     set_trainable_parameters,
     _find_children,
@@ -188,38 +190,45 @@ def main(args):
     )
     
     if args.add_instance_token:
-        # TODO: move to model_utils
-        num_added_tokens = tokenizer.add_tokens(args.instance_token)
-        if num_added_tokens == 0:
-            raise ValueError(
-                f"The tokenizer already contains the token {args.instance_token}. Please pass a different"
-                " `instance_token` that is not already in the tokenizer."
-            )
-        else:
-            if args.debug:
-                print(f"{args.instance_token} added to tokenizer.")
+        instance_token_id, initializer_token_id = add_instance_tokens(
+            tokenizer,
+            text_encoder,
+            instance_tokens=args.instance_token,
+            initializer_tokens=args.class_token,
+            debug=True,
+        )
+#         # TODO: move to model_utils
+#         num_added_tokens = tokenizer.add_tokens(args.instance_token)
+#         if num_added_tokens == 0:
+#             raise ValueError(
+#                 f"The tokenizer already contains the token {args.instance_token}. Please pass a different"
+#                 " `instance_token` that is not already in the tokenizer."
+#             )
+#         else:
+#             if args.debug:
+#                 print(f"{args.instance_token} added to tokenizer.")
 
-        # Resize the token embeddings
-        text_encoder.resize_token_embeddings(len(tokenizer))
+#         # Resize the token embeddings
+#         text_encoder.resize_token_embeddings(len(tokenizer))
         
-        # TODO if no class_token, initialize to zero?
-        if args.class_token is not None:
-            # Convert the class_token to ids
-            token_ids = tokenizer.encode(args.class_token, add_special_tokens=False)
-            class_token_id = token_ids[0]
-            if len(token_ids) > 1:
-                raise ValueError("The class token must be a single token.")
+#         # TODO if no class_token, initialize to zero?
+#         if args.class_token is not None:
+#             # Convert the class_token to ids
+#             token_ids = tokenizer.encode(args.class_token, add_special_tokens=False)
+#             class_token_id = token_ids[0]
+#             if len(token_ids) > 1:
+#                 raise ValueError("The class token must be a single token.")
 
-            # Initialise new instance_token embedding with the embedding of the class_token
-            token_embeds = text_encoder.get_input_embeddings().weight.data
-            instance_token_id = tokenizer.convert_tokens_to_ids(args.instance_token)
-            if args.debug:
-                print("Instance weights: ")
-                print(token_embeds[instance_token_id])
-            token_embeds[instance_token_id] = token_embeds[class_token_id]
-            if args.debug:
-                print("Instance weights intialized: ")
-                print(token_embeds[instance_token_id])
+#             # Initialise new instance_token embedding with the embedding of the class_token
+#             token_embeds = text_encoder.get_input_embeddings().weight.data
+#             instance_token_id = tokenizer.convert_tokens_to_ids(args.instance_token)
+#             if args.debug:
+#                 print("Instance weights: ")
+#                 print(token_embeds[instance_token_id])
+#             token_embeds[instance_token_id] = token_embeds[class_token_id]
+#             if args.debug:
+#                 print("Instance weights intialized: ")
+#                 print(token_embeds[instance_token_id])
 
     vae = AutoencoderKL.from_pretrained(        
         args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
