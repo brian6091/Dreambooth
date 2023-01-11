@@ -52,6 +52,7 @@ from src.datasets import FinetuneTrainDataset, PromptDataset, collate_fn
 from src.args import parse_args, format_args
 from src.model_utils import (
     SAFE_CONFIGS,
+    get_noise_scheduler,
     add_instance_tokens,
     find_modules_by_name_or_class,
     set_trainable_parameters,
