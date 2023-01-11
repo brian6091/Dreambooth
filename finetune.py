@@ -195,7 +195,7 @@ def main(args):
             text_encoder,
             instance_tokens=args.instance_token,
             initializer_tokens=args.class_token,
-            debug=True,
+            debug=args.debug,
         )
 #         # TODO: move to model_utils
 #         num_added_tokens = tokenizer.add_tokens(args.instance_token)
