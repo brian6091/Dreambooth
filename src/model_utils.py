@@ -24,18 +24,9 @@ from safetensors.torch import save_file as safe_save
 from safetensors import safe_open
 
 
-# SAFE_CONFIG = {
-#     "version": "__0.1.0__",
-#     "separator": ":",
-#     "token_embedding_prefix": "token_embedding",
-#     "text_encoder_prefix": "text_encoder",
-#     "unet_prefix": "unet",
-#     "lora_prefix": "lora",
-# }
-
-# TODO make frozen
+# TODO make frozen, probably need another dict for how lora is saved in metadata?
 SAFE_CONFIGS = {
-    "0.0.0": {
+    "0.0.0": { # Reserved for lora library
         "version": "__0.0.0__",
         "separator": ":",
         "token_embedding_prefix": "",
