@@ -428,7 +428,7 @@ def get_trainable_param_dict(
     metadata = {}
 
     exclude_params = {"weights", *exclude_params}
-    print("\t\t\t this is what excludes look like", exlcude_params)
+    print("\t\t\t this is what excludes look like", exclude_params)
 
     for nc, c in model.named_children():
         for nm, m in c.named_modules():
