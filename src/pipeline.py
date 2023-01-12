@@ -34,123 +34,15 @@ from lora_diffusion import (
 from safetensors.torch import save_file as safe_save
 from safetensors import safe_open
 
-from .model_utils import load_trained_parameters
-# def load_trained_parameters(
-#     filename,
-#     framework="pt",
-#     device="cpu",
-# ):
-#     metadata = {}
-#     tensors_dict_loaded = {}
-#     with safe_open(filname, framework=framework, device=device) as f:
-#         metadata = f.metadata()
-#         for k in f.keys():
-#             tensors_dict[k] = f.get_tensor(k)
-            
-#     return tensors_dict, metadata
+from .model_utils import (
+    SAFE_CONFIGS,
+    load_trained_parameters,
+    add_instance_tokens,
+    get_nonlin,
+    _inject_trained_lora,
+    get_modules_to_inject_with_parent
+)
 
-from .model_utils import SAFE_CONFIGS
-# SAFE_CONFIG = {
-#     "version": "__0.1.0__",
-#     "separator": ":",
-#     "token_embedding_prefix": "token_embedding",
-#     "text_encoder_prefix": "text_encoder",
-#     "unet_prefix": "unet",
-#     "lora_prefix": "lora",
-# }
-
-from .model_utils import get_nonlin
-# def get_nonlin(nonlin: str):
-#     if nonlin=="ReLU":
-#         return nn.ReLU(inplace=True)
-#     elif nonlin=="GELU":
-#         return nn.GELU()
-#     elif nonlin=="SiLU":
-#         return nn.SiLU(inplace=True)
-#     elif nonlin=="Mish":
-#         return nn.Mish(inplace=True)
-#     else:
-#         return None
-
-from .model_utils import _inject_trained_lora
-# def _inject_trained_lora(
-#     module: nn.Module,
-#     target,
-#     up_weight,
-#     down_weight,
-#     r: int = 4,
-#     scale: float = 1.0,
-#     nonlin: nn.Module = None,
-# ):
-#     """
-#     inject lora for nn.Linear into model.
-#     """
-
-#     # TODO if already LoRAInjected? Replace
-#     if not isinstance(module._modules[target], LoraInjectedLinear):
-#         _child_module = module._modules[target]
-#         weight = _child_module.weight
-#         bias = _child_module.bias
-#         _tmp = LoraInjectedLinear(
-#             _child_module.in_features,
-#             _child_module.out_features,
-#             _child_module.bias is not None,
-#             r=r,
-#             scale=scale,
-#             nonlin=nonlin,
-#             init=None,
-#         )
-        
-#         # Assign pretrained parameters
-#         _tmp.linear.weight = weight
-#         if bias is not None:
-#             _tmp.linear.bias = bias
-
-#         # Switch the module
-#         _tmp.to(_child_module.weight.device).to(_child_module.weight.dtype)
-#         module._modules[target] = _tmp
-
-#         module._modules[target].lora_up.weight = nn.Parameter(
-#             up_weight.type(weight.dtype)
-#         )
-#         module._modules[target].lora_down.weight = nn.Parameter(
-#             down_weight.type(weight.dtype)
-#         )
-#     else:
-#         print(f"skipping {target}")
-
-from .model_utils import get_modules_to_inject_with_parent
-# def get_modules_to_inject_with_parent(
-#     model: nn.Module,
-#     lora_modules,
-# ):
-#     # Parent module names
-#     parent_modules = [n.rsplit('.', 1)[0] for n in lora_modules]
-
-#     for n, m in model.named_modules():
-#         if any(n==c for c in parent_modules):
-#             # Some elements (ModuleLists) will get traversed twice, e.g., attn1, and attn1.to_out
-#             # since to_out is a list of modules. They will get skipped in the injection, so it's
-#             # just a little wasteful, but no harm done...
-#             for _n, _m in m.named_modules():
-#                 if any(f"{n}.{_n}"==c for c in lora_modules):
-#                     # Handle case where child is a ModuleList
-#                     if "." in _n:
-#                         # The name should have two parts
-#                         parts = _n.split(".")
-#                         # Only know how to handle this case
-#                         if (len(parts)) > 2:
-#                             print("unexpected???")
-#                         if not isinstance(m._modules["to_out"], nn.ModuleList):
-#                             print("unexpected???")
-#                         # Reassign the parent 
-#                         m = m._modules[parts[0]]
-#                         n = f"{n}.{parts[0]}"
-#                         # Reassign the child
-#                         _m = m._modules[parts[1]]
-#                         _n = parts[1]
-
-#                     yield n, m, _n, _m
 def search_and_replace_lora(
     model: nn.Module,
     td,
@@ -545,7 +437,17 @@ class PatchDiffusionPipeline(DiffusionPipeline):
         latents = latents * self.scheduler.init_noise_sigma
         return latents
 
-    def patch_pipeline(self, weights: Union[Tuple[str], str], config=SAFE_CONFIGS["0.1.0"]):
+    # overload from_pretrained
+    # given path to safetensors
+    # extract basemodel information
+    # call super().from_pretrained
+    # call patch_pipeline
+    def patch_pipeline(
+        self, 
+        weights: Union[Tuple[str], str],
+        # booleans to skip patching if desired
+        config=SAFE_CONFIGS["0.1.0"]
+    ):
         # load safetensors files
         # if multiple, use merge strategy
         td, md = load_trained_parameters(weights)
@@ -556,60 +458,48 @@ class PatchDiffusionPipeline(DiffusionPipeline):
         patch_unet(td, md, cfg)
 
     def patch_embeddings(self, td, md, cfg):
-        # Filter metadata for added tokens
-        search = f"{md['token_embedding_prefix']}{md['separator']}"
-        full = list(filter(lambda k: k.startswith(search), md.keys()))
-        
-        if len(full) > 0
-            instance_tokens = full[0].split(cfg["separator"])[1]
-            embedding = td[full[0]]
+        if cfg["version"]=="__0.1.0__"
+            # Filter metadata for added tokens
+            search = f"{md['token_embedding_prefix']}{md['separator']}"
+            full = list(filter(lambda k: k.startswith(search), md.keys()))
 
-            print(f"Attempting to add {instance_tokens} to token embedding.")
-            print(f"Tokenizer has length {len(self.tokenizer)}.")
-            print(get_tensor_info(embedding))
-            print(embedding.shape)
-            token_id, _ = add_instance_tokens(
-                self.tokenizer,
-                self.text_encoder,
-                instance_tokens=instance_tokens,
-                embedding=embedding, # 
-                debug=False,
-            )
-            print(f"{instance_tokens} has token id {token_id}.")
-            print(f"Tokenizer now has length {len(self.tokenizer)}.")
-        else:
-            print("No instance tokens to add to token embedding.")
+            if len(full) > 0
+                # TODO handle multiple inserted tokens
+                instance_tokens = full[0].split(cfg["separator"])[1]
+                embedding = td[full[0]]
+
+                print(f"Attempting to add {instance_tokens} to token embedding.")
+                print(f"Tokenizer has length {len(self.tokenizer)}.")
+                print(get_tensor_info(embedding))
+                print(embedding.shape)
+                token_id, _ = add_instance_tokens(
+                    self.tokenizer,
+                    self.text_encoder,
+                    instance_tokens=instance_tokens,
+                    embedding=embedding, # 
+                    debug=False,
+                )
+                print(f"{instance_tokens} has token id {token_id}.")
+                print(f"Tokenizer now has length {len(self.tokenizer)}.")
+            else:
+                print("No instance tokens to add to token embedding.")
 
     @torch.no_grad()
-    def patch_text_encoder(self, td, md):
-        # Filter modules where LoRA must be injected
-        search = f"{md['text_encoder_prefix']}{md['separator']}{md['lora_prefix']}"
-        full = list(filter(lambda k: k.startswith(search) and k.endswith("class"), md.keys()))
-        lora_modules = []
-        for f in full:
-            lora_modules.append(f.split(md['separator'])[2])
+    def patch_text_encoder(self, td, md, cfg):
+        if cfg["version"]=="__0.1.0__"
+            # Filter modules where LoRA must be injected
+            search = f"{md['text_encoder_prefix']}{md['separator']}{md['lora_prefix']}"
+            full = list(filter(lambda k: k.startswith(search) and k.endswith("class"), md.keys()))
+            lora_modules = []
+            for f in full:
+                lora_modules.append(f.split(md['separator'])[2])
 
-        for n, m, _n, _m in get_modules_to_inject_with_parent(self.text_encoder, lora_modules):
-            search = f"{md['unet_prefix']}{md['separator']}{md['lora_prefix']}{md['separator']}{n}.{_n}"
-            params = {k: v for k, v in md.items() if k.startswith(search)}
-            weights = {k: v for k, v in td.items() if k.startswith(search)}
+            search_prefix = f"{md['text_encoder_prefix']}{md['separator']}{md['lora_prefix']}{md['separator']}"
+            search_and_replace_lora(self.text_encoder, td, md, lora_modules, search_prefix)
 
-            _inject_trained_lora(
-                module=m,
-                target=_n,
-                up_weight=weights[f"{search}.lora_up.weight"],
-                down_weight=weights[f"{search}.lora_down.weight"],
-                r=int(params[f"{search}{md['separator']}r"]),
-                scale=float(params[f"{search}{md['separator']}scale"]),
-                nonlin=get_nonlin(params[f"{search}{md['separator']}nonlin"]),
-            )
-
-        search_prefix = f"{md['unet_prefix']}{md['separator']}{md['lora_prefix']}{md['separator']}"
-        search_and_replace_lora(self.text_encoder, td, md, lora_modules, search_prefix)
-           
-        # Find non-LoRA modules to replace
-        # take set exclusion of td keys
-        # self.text_encoder.load_state_dict(td_filtered, strict=False)
+            # Find non-LoRA modules to replace
+            # take set exclusion of td keys
+            # self.text_encoder.load_state_dict(td_filtered, strict=False)
 
     @torch.no_grad()
     def patch_unet(self, td, md):
