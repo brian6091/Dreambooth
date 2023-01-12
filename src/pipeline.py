@@ -525,20 +525,19 @@ class PatchDiffusionPipeline(DiffusionPipeline):
         latents = latents * self.scheduler.init_noise_sigma
         return latents
 
-    def patch_weights(self, weights: Union[Tuple[str], str]):
+    def patch_pipeline(self, weights: Union[Tuple[str], str], config=SAFE_CONFIGS["0.1.0"]):
         # load safetensors files
         # if multiple, use merge strategy
         tensors_dict, metadata = load_trained_parameters(weights)
 
+        patch_embeddings(tensors_dict, metadata)
         patch_text_encoder(tensors_dict, metadata)
         patch_unet(tensors_dict, metadata)
-        # if tokenizer:
-        #   add tokens + embeddings
 
     @torch.no_grad()
     def patch_embeddings(self, td, md):
         search = f"{md['token_embedding_prefix']}{md['separator']}"
-        full = list(filter(lambda k: k.startswith(search) and k.endswith("class"), md.keys()))
+        full = list(filter(lambda k: k.startswith(search), md.keys()))
 
     @torch.no_grad()
     def patch_text_encoder(self, td, md):
@@ -564,6 +563,23 @@ class PatchDiffusionPipeline(DiffusionPipeline):
                 nonlin=get_nonlin(params[f"{search}{md['separator']}nonlin"]),
             )
 
+        search_prefix = f"{md['unet_prefix']}{md['separator']}{md['lora_prefix']}{md['separator']}"
+        inject_trained_lora(self.text_encoder, td, md, lora_modules, search_prefix)
+        def inject_trained_lora(model: nn.Module, td, md, targets, search_prefix):
+            for n, m, _n, _m in get_modules_to_inject_with_parent(model, targets):
+                search = f"{search_prefix}{n}.{_n}"
+                params = {k: v for k, v in md.items() if k.startswith(search)}
+                weights = {k: v for k, v in td.items() if k.startswith(search)}
+
+                _inject_trained_lora(
+                    module=m,
+                    target=_n,
+                    up_weight=weights[f"{search}.lora_up.weight"],
+                    down_weight=weights[f"{search}.lora_down.weight"],
+                    r=int(params[f"{search}{md['separator']}r"]),
+                    scale=float(params[f"{search}{md['separator']}scale"]),
+                    nonlin=get_nonlin(params[f"{search}{md['separator']}nonlin"]),
+                )            
         # Find non-LoRA modules to replace
 
     @torch.no_grad()
