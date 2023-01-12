@@ -663,3 +663,12 @@ def format_args(args):
 
     del d['config']
     return d
+
+# def validate_args(args):
+
+#     try:
+#         import bitsandbytes as bnb
+#     except ImportError:
+#         raise ImportError(
+#             "Please install bitsandbytes to use 8-bit Adam. You can do so by running `pip install bitsandbytes`"
+#         )
