@@ -427,7 +427,7 @@ def get_trainable_param_dict(
     tensors_dict = {}
     metadata = {}
 
-    exclude_params = {"weights", *exclude_params}
+    exclude_params = {"weight", *exclude_params}
     print("\t\t\t this is what excludes look like", exclude_params)
 
     for nc, c in model.named_children():
