@@ -114,7 +114,7 @@ def add_instance_tokens(
     tokenizer,
     text_encoder,
     instance_tokens,
-    initializer_tokens,
+    initializer_tokens=None,
     embedding=None,
     debug=False,
 ):
