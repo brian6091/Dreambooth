@@ -419,6 +419,7 @@ def set_trainable_parameters(
 
 def get_trainable_param_dict(
     model: nn.Module,
+    exclude_params: Set[str] = {},
     validate=True,
     config=SAFE_CONFIGS["0.1.0"],
 ):
@@ -446,8 +447,10 @@ def get_trainable_param_dict(
                     if validate:
                         print("NO_MODULE_NAME for parent", nm, type(m), "\n of child", nc, type(c))
                 else:
-                  for np, p in m.named_parameters():
-                      if p.requires_grad:
+                    for np, p in m.named_parameters():
+                        if p.requires_grad and (np in exclude_params):
+                            print(f"\n Requires_grad True for {np} in module {nm}, but excluded from being saved by request.\n")
+                        if p.requires_grad and (np not in exclude_params):
                           #print(nm, type(m), "\t", np, type(p))
                           tensors_dict[f"{nc}.{nm}.{np}"] = p.cpu().clone()
 
@@ -503,10 +506,13 @@ def save_trainable_parameters(
         td_token_embedding[k] = trained_embeddings.detach().cpu()
         md_token_embedding[k] = str(instance_token_id)
     if text_encoder:
-	# TODO, it is possible that no instance_token was added to the embedding, but that it was still trained.
-	# TODO, more importantly, if instance_token added, all the other embeds are frozen, but the overall embedding.requires_grad is TRUE
-	# make sure to skip save!@
-        td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder)
+        if instance_token:
+            # instance_token added to tokenizer, but all the other embeds are frozen.
+            # The embedding will thus have requires_grad=TRUE, but we do not want to save it
+            td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder, exclude_params = {"token_embedding})
+        else:
+            td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder)
+            
         td_text_encoder = {f"{cf['text_encoder_prefix']}{cf['separator']}{k}": v for k, v in td_text_encoder.items()}
         md_text_encoder = {f"{cf['text_encoder_prefix']}{cf['separator']}{k}": v for k, v in md_text_encoder.items()}
     if unet:
