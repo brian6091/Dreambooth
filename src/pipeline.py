@@ -563,8 +563,8 @@ class PatchDiffusionPipeline(DiffusionPipeline):
         token_id, _ = add_instance_tokens(
             self.tokenizer,
             self.text_encoder,
-            instance_tokens,
-            initializer_tokens=None,
+            instance_tokens=EXTRACT_FROM_MD,
+            embedding=EXTRACT_FROM_TD, # 
             debug=False,
         )
 
