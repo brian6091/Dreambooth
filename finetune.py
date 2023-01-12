@@ -26,7 +26,6 @@ from pathlib import Path
 import inspect
 
 import torch
-import torch.nn.functional as F
 
 from accelerate import Accelerator
 from accelerate.logging import get_logger
