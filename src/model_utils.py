@@ -529,7 +529,7 @@ def load_trained_parameters(
 ):
     metadata = {}
     tensors_dict_loaded = {}
-    with safe_open(filname, framework=framework, device=device) as f:
+    with safe_open(filename, framework=framework, device=device) as f:
         metadata = f.metadata()
         for k in f.keys():
             tensors_dict[k] = f.get_tensor(k)
