@@ -24,7 +24,9 @@ from diffusers import (
     LMSDiscreteScheduler, 
     PNDMScheduler, 
     EulerAncestralDiscreteScheduler,
+    EulerDiscreteScheduler,
 )
+         
 from lora_diffusion import LoraInjectedLinear
 
 from safetensors.torch import save_file as safe_save
@@ -97,6 +99,11 @@ def get_noise_scheduler(
             noise_scheduler = PNDMScheduler.from_pretrained(model_name_or_path, subfolder="scheduler")
         else:
             noise_scheduler = PNDMScheduler.from_config(config if config else {})
+    elif scheduler=="EulerDiscreteScheduler":
+        if model_name_or_path:
+            noise_scheduler = EulerDiscreteScheduler.from_pretrained(model_name_or_path, subfolder="scheduler")
+        else:
+            noise_scheduler = EulerDiscreteScheduler.from_config(config if config else {})
     elif scheduler=="EulerAncestralDiscreteScheduler":
         if model_name_or_path:
             noise_scheduler = EulerAncestralDiscreteScheduler.from_pretrained(model_name_or_path, subfolder="scheduler")
