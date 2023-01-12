@@ -548,25 +548,37 @@ class PatchDiffusionPipeline(DiffusionPipeline):
     def patch_pipeline(self, weights: Union[Tuple[str], str], config=SAFE_CONFIGS["0.1.0"]):
         # load safetensors files
         # if multiple, use merge strategy
-        tensors_dict, metadata = load_trained_parameters(weights)
+        td, md = load_trained_parameters(weights)
+        cfg = SAFE_CONFIGS[md["version"].replace("__","")]
 
-        patch_embeddings(tensors_dict, metadata)
-        patch_text_encoder(tensors_dict, metadata)
-        patch_unet(tensors_dict, metadata)
+        patch_embeddings(td, md, cfg)
+        patch_text_encoder(td, md, cfg)
+        patch_unet(td, md, cfg)
 
-    @torch.no_grad()
-    def patch_embeddings(self, td, md):
+    def patch_embeddings(self, td, md, cfg):
+        # Filter metadata for added tokens
         search = f"{md['token_embedding_prefix']}{md['separator']}"
         full = list(filter(lambda k: k.startswith(search), md.keys()))
         
-        # get token and embed, modify function to accept embed directly
-        token_id, _ = add_instance_tokens(
-            self.tokenizer,
-            self.text_encoder,
-            instance_tokens=EXTRACT_FROM_MD,
-            embedding=EXTRACT_FROM_TD, # 
-            debug=False,
-        )
+        if len(full) > 0
+            instance_tokens = full[0].split(cfg["separator"])[1]
+            embedding = td[full[0]]
+
+            print(f"Attempting to add {instance_tokens} to token embedding.")
+            print(f"Tokenizer has length {len(self.tokenizer)}.")
+            print(get_tensor_info(embedding))
+            print(embedding.shape)
+            token_id, _ = add_instance_tokens(
+                self.tokenizer,
+                self.text_encoder,
+                instance_tokens=instance_tokens,
+                embedding=embedding, # 
+                debug=False,
+            )
+            print(f"{instance_tokens} has token id {token_id}.")
+            print(f"Tokenizer now has length {len(self.tokenizer)}.")
+        else:
+            print("No instance tokens to add to token embedding.")
 
     @torch.no_grad()
     def patch_text_encoder(self, td, md):
