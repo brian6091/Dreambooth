@@ -427,6 +427,8 @@ def get_trainable_param_dict(
     tensors_dict = {}
     metadata = {}
 
+    exclude_params = {"weights", *exclude_params}
+
     for nc, c in model.named_children():
         for nm, m in c.named_modules():
             if isinstance(m, LoraInjectedLinear):
