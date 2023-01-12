@@ -115,7 +115,7 @@ def add_instance_tokens(
     text_encoder,
     instance_tokens,
     initializer_tokens,
-    #initializer_embedding, # can pass directly embedding?
+    embedding=None,
     debug=False,
 ):
     # TODO: multiple tokens
@@ -131,20 +131,27 @@ def add_instance_tokens(
 
     # Resize the token embeddings
     text_encoder.resize_token_embeddings(len(tokenizer))
-
-    # TODO if no class_token, initialize to zero?
+    
+    # TODO should I be disabling grad here?
+    token_embeds = text_encoder.get_input_embeddings().weight.data
+    instance_token_id = tokenizer.convert_tokens_to_ids(instance_tokens)
+    
     initializer_token_id = None
-    if initializer_tokens is not None:
+    if embedding is not None:
+        # TODO check tensor is right format
+        token_embeds[instance_token_id] = embedding
+        
+        if initializer_tokens:
+            print(f"Initializer tokens {intializer_tokens} ignored since an embedding was provided")
+    elif initializer_tokens is not None:
+        # Initialise new instance_token embedding with the embedding of the initializer_token
         # Convert the class_token to ids
         token_ids = tokenizer.encode(initializer_tokens, add_special_tokens=False)
         initializer_token_id = token_ids[0]
         if len(token_ids) > 1:
             raise ValueError("The initializer token must be a single token.")
 
-        # TODO should I be disabling grad here?
-        # Initialise new instance_token embedding with the embedding of the initializer_token
-        token_embeds = text_encoder.get_input_embeddings().weight.data
-        instance_token_id = tokenizer.convert_tokens_to_ids(instance_tokens)
+
 
         if debug:
             print("Instance weights: ")
@@ -156,7 +163,8 @@ def add_instance_tokens(
             print("Instance weights intialized: ")
             print(token_embeds[instance_token_id])
     else:
-        instance_token_id = tokenizer.convert_tokens_to_ids(instance_tokens)
+        pass
+        # TODO if no class_token, initialize to zero?
 
     return instance_token_id, initializer_token_id
 
