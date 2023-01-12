@@ -151,7 +151,27 @@ from .model_utils import get_modules_to_inject_with_parent
 #                         _n = parts[1]
 
 #                     yield n, m, _n, _m
+def search_and_replace_lora(
+    model: nn.Module,
+    td,
+    md,
+    targets,
+    search_prefix
+):
+    for n, m, _n, _m in get_modules_to_inject_with_parent(model, targets):
+        search = f"{search_prefix}{n}.{_n}"
+        params = {k: v for k, v in md.items() if k.startswith(search)}
+        weights = {k: v for k, v in td.items() if k.startswith(search)}
 
+        _inject_trained_lora(
+            module=m,
+            target=_n,
+            up_weight=weights[f"{search}.lora_up.weight"],
+            down_weight=weights[f"{search}.lora_down.weight"],
+            r=int(params[f"{search}{md['separator']}r"]),
+            scale=float(params[f"{search}{md['separator']}scale"]),
+            nonlin=get_nonlin(params[f"{search}{md['separator']}nonlin"]),
+        ) 
 ############################################### TODO move out if possible ###############################################
 
 
@@ -538,6 +558,15 @@ class PatchDiffusionPipeline(DiffusionPipeline):
     def patch_embeddings(self, td, md):
         search = f"{md['token_embedding_prefix']}{md['separator']}"
         full = list(filter(lambda k: k.startswith(search), md.keys()))
+        
+        # get token and embed, modify function to accept embed directly
+        token_id, _ = add_instance_tokens(
+            self.tokenizer,
+            self.text_encoder,
+            instance_tokens,
+            initializer_tokens=None,
+            debug=False,
+        )
 
     @torch.no_grad()
     def patch_text_encoder(self, td, md):
@@ -564,22 +593,8 @@ class PatchDiffusionPipeline(DiffusionPipeline):
             )
 
         search_prefix = f"{md['unet_prefix']}{md['separator']}{md['lora_prefix']}{md['separator']}"
-        inject_trained_lora(self.text_encoder, td, md, lora_modules, search_prefix)
-        def inject_trained_lora(model: nn.Module, td, md, targets, search_prefix):
-            for n, m, _n, _m in get_modules_to_inject_with_parent(model, targets):
-                search = f"{search_prefix}{n}.{_n}"
-                params = {k: v for k, v in md.items() if k.startswith(search)}
-                weights = {k: v for k, v in td.items() if k.startswith(search)}
-
-                _inject_trained_lora(
-                    module=m,
-                    target=_n,
-                    up_weight=weights[f"{search}.lora_up.weight"],
-                    down_weight=weights[f"{search}.lora_down.weight"],
-                    r=int(params[f"{search}{md['separator']}r"]),
-                    scale=float(params[f"{search}{md['separator']}scale"]),
-                    nonlin=get_nonlin(params[f"{search}{md['separator']}nonlin"]),
-                )            
+        search_and_replace_lora(self.text_encoder, td, md, lora_modules, search_prefix)
+           
         # Find non-LoRA modules to replace
 
     @torch.no_grad()
