@@ -115,7 +115,7 @@ def add_instance_tokens(
     text_encoder,
     instance_tokens,
     initializer_tokens,
-	#initializer_embedding, # can pass directly embedding?
+    #initializer_embedding, # can pass directly embedding?
     debug=False,
 ):
     # TODO: multiple tokens
@@ -133,6 +133,7 @@ def add_instance_tokens(
     text_encoder.resize_token_embeddings(len(tokenizer))
 
     # TODO if no class_token, initialize to zero?
+    initializer_token_id = None
     if initializer_tokens is not None:
         # Convert the class_token to ids
         token_ids = tokenizer.encode(initializer_tokens, add_special_tokens=False)
@@ -154,6 +155,8 @@ def add_instance_tokens(
         if debug:
             print("Instance weights intialized: ")
             print(token_embeds[instance_token_id])
+    else:
+        instance_token_id = tokenizer.convert_tokens_to_ids(instance_tokens)
 
     return instance_token_id, initializer_token_id
 
