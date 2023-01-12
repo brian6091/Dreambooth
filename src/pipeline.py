@@ -596,6 +596,8 @@ class PatchDiffusionPipeline(DiffusionPipeline):
         search_and_replace_lora(self.text_encoder, td, md, lora_modules, search_prefix)
            
         # Find non-LoRA modules to replace
+        # take set exclusion of td keys
+        # self.text_encoder.load_state_dict(td_filtered, strict=False)
 
     @torch.no_grad()
     def patch_unet(self, td, md):
@@ -622,7 +624,9 @@ class PatchDiffusionPipeline(DiffusionPipeline):
             )
 
         # Find non-LoRA modules to replace
-
+        # take set exclusion of td keys
+        # self.unet.load_state_dict(td_filtered, strict=False)
+        
     def merge_weights(self):
         print("will merge LoRA components")
 
