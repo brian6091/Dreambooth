@@ -705,7 +705,7 @@ def main(args):
         accelerator.wait_for_everyone()
 
     if accelerator.is_main_process:
-        if global_step > last_save_at_step
+        if global_step > last_save_at_step:
             save_weights(global_step)
     
         if args.push_to_hub:
