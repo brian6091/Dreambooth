@@ -528,13 +528,14 @@ def load_trained_parameters(
     device="cpu",
 ):
     metadata = {}
-    tensors_dict_loaded = {}
+    tensors_dict = {}
     with safe_open(filename, framework=framework, device=device) as f:
         metadata = f.metadata()
         for k in f.keys():
             tensors_dict[k] = f.get_tensor(k)
             
     return tensors_dict, metadata
+	
 	
 # Function below is modified from
 # MIT License
