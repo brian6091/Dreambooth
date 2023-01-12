@@ -513,7 +513,7 @@ def save_trainable_parameters(
             # instance_token added to tokenizer, but all the other embeds are frozen.
             # The embedding will thus have requires_grad=TRUE, but we do not want to save it
             print("\t\t\t I should be getting a dict without token_embedding!!!")
-            td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder, exclude_params = {"token_embedding"})
+            td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder, exclude_params = {"token_embedding.weight"})
         else:
             td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder)
             
