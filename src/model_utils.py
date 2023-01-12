@@ -139,7 +139,6 @@ def add_instance_tokens(
     # Resize the token embeddings
     text_encoder.resize_token_embeddings(len(tokenizer))
     
-    # TODO should I be disabling grad here?
     token_embeds = text_encoder.get_input_embeddings().weight.data
     instance_token_id = tokenizer.convert_tokens_to_ids(instance_tokens)
     
@@ -152,13 +151,10 @@ def add_instance_tokens(
             print(f"Initializer tokens {intializer_tokens} ignored since an embedding was provided")
     elif initializer_tokens is not None:
         # Initialise new instance_token embedding with the embedding of the initializer_token
-        # Convert the class_token to ids
         token_ids = tokenizer.encode(initializer_tokens, add_special_tokens=False)
         initializer_token_id = token_ids[0]
         if len(token_ids) > 1:
             raise ValueError("The initializer token must be a single token.")
-
-
 
         if debug:
             print("Instance weights: ")
@@ -170,8 +166,9 @@ def add_instance_tokens(
             print("Instance weights intialized: ")
             print(token_embeds[instance_token_id])
     else:
-        pass
-        # TODO if no class_token, initialize to zero?
+	print(f"Embedding vector for {instance_tokens} is random.")
+        #pass
+        # TODO if no initializer_token, initialize to zero?
 
     return instance_token_id, initializer_token_id
 
