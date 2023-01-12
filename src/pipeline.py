@@ -494,11 +494,18 @@ class PatchDiffusionPipeline(DiffusionPipeline):
             for f in full:
                 lora_modules.append(f.split(md['separator'])[2])
 
-            search_prefix = f"{md['text_encoder_prefix']}{md['separator']}{md['lora_prefix']}{md['separator']}"
-            search_and_replace_lora(self.text_encoder, td, md, lora_modules, search_prefix)
+            if len(lora_modules)>0:
+                search_prefix = f"{md['text_encoder_prefix']}{md['separator']}{md['lora_prefix']}{md['separator']}"
+                search_and_replace_lora(self.text_encoder, td, md, lora_modules, search_prefix)
 
+            search = f"{md['text_encoder_prefix']}{md['separator']}"
+            full = list(filter(lambda k: k.startswith(search), md.keys()))
+            other_modules = []
+            for f in full:
+                other_modules.append(f.split(md['separator'])[2])
+            
             # Find non-LoRA modules to replace
-            # take set exclusion of td keys
+            other_modules = list(set(other_modules).difference(set(lora_modules)))
             # self.text_encoder.load_state_dict(td_filtered, strict=False)
 
     @torch.no_grad()
