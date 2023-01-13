@@ -426,40 +426,45 @@ def get_trainable_param_dict(
     exclude_params: Set[str] = {},
     validate=True,
     config=SAFE_CONFIGS["0.1.0"],
+    dtype=torch.float32,
 ):
     cf = config
     tensors_dict = {}
     metadata = {}
 
     exclude_params = {"weight", *exclude_params}
-    print("\t\t\t this is what excludes look like", exclude_params)
+    #print("\t\t\t this is what excludes look like", exclude_params)
 
     for nc, c in model.named_children():
         for nm, m in c.named_modules():
             if isinstance(m, LoraInjectedLinear):
+                prefix = f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}"
                 # TODO check for requires_grad, currently assumes that if LoRA exists, it is being trained
-                tensors_dict[f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}.lora_down.weight"] = m.lora_down.weight.cpu().clone()
-                tensors_dict[f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}.lora_up.weight"] = m.lora_up.weight.cpu().clone()
+                tensors_dict[f"{prefix}.lora_down.weight"] = m.lora_down.weight.cpu().clone()
+                tensors_dict[f"{prefix}.lora_up.weight"] = m.lora_up.weight.cpu().clone()
+#                 tensors_dict[f"{prefix}.lora_down.weight"] = m.lora_down.weight.cpu().clone().to(dtype)
+#                 tensors_dict[f"{prefix}.lora_up.weight"] = m.lora_up.weight.cpu().clone().to(dtype)
 		
                 # Only non-diffusers modules will have metadata, which should contain
                 # all the information necessary to reapply to the pretrained model
-                metadata[f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}{cf['separator']}class"] = m.__class__.__name__
-                metadata[f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}{cf['separator']}r"] = str(m.r)
-                metadata[f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}{cf['separator']}scale"] = str(m.scale)
-                metadata[f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}{cf['separator']}nonlin"] = m.nonlin.__class__.__name__
+                metadata[f"{prefix}{cf['separator']}class"] = m.__class__.__name__
+                metadata[f"{prefix}{cf['separator']}r"] = str(m.r)
+                metadata[f"{prefix}{cf['separator']}scale"] = str(m.scale)
+                metadata[f"{prefix}{cf['separator']}nonlin"] = m.nonlin.__class__.__name__
             else:
                 if nm=="":
                     pass
-                    # TODO some modules have no names, maybe moduleList?
+                    # TODO some modules don't have names, maybe moduleList?
                     if validate:
-                        print("NO_MODULE_NAME for parent", nm, type(m), "\n of child", nc, type(c))
+                        print("\tNO_NAME for module", nm, type(m), "\n\t\t child of ", nc, type(c))
                 else:
                     for np, p in m.named_parameters():
                         if p.requires_grad and (np in exclude_params):
-                            print(f"\n Requires_grad True for {np} in module {nm}, but excluded from being saved by request.\n")
+                            print(f"\n Requires_grad True for {np} in module {nm}, but not saved by request.\n")
                         if p.requires_grad and (np not in exclude_params):
-                          print(nm, type(m), "\t", np, type(p))
-                          tensors_dict[f"{nc}.{nm}.{np}"] = p.cpu().clone()
+                            print(nm, type(m), "\t", np, type(p))
+                            tensors_dict[f"{nc}.{nm}.{np}"] = p.cpu().clone()
+#                            tensors_dict[f"{nc}.{nm}.{np}"] = p.cpu().clone().to(dtype)
 
     if validate:
         trainable_params = set()
@@ -471,7 +476,7 @@ def get_trainable_param_dict(
 
         if tensors_dict.keys()==trainable_params:
             print("Copying trainable parameters:")
-            print(f"\t {len(trainable_params)} trainable of {count} total parameters in have been copied to tensors_dict.")
+            print(f"\t {len(trainable_params)} trainable of {count} total parameters copied to tensors_dict.")
 
             get_name = lambda k: k.split(":")[0]
             metadata_names = set()
@@ -496,10 +501,10 @@ def save_trainable_parameters(
 #    dtype?
 ):
     cf = config
-    td_token_embedding = {}
-    md_token_embedding = {}
-    td_text_encoder = {}
-    md_text_encoder = {}
+    td_token = {}
+    md_token = {}
+    td_text = {}
+    md_text = {}
     td_unet = {}
     md_unet = {}
 
@@ -510,27 +515,26 @@ def save_trainable_parameters(
         trained_embeddings = token_embeddings.weight[instance_token_id]
 
         k = f"{cf['token_embedding_prefix']}{cf['separator']}{instance_token}"
-        td_token_embedding[k] = trained_embeddings.detach().cpu()
-        md_token_embedding[k] = str(instance_token_id)
+        td_token[k] = trained_embeddings.detach().cpu()
+        md_token[k] = str(instance_token_id)
     if text_encoder:
         if instance_token:
             # instance_token added to tokenizer, but all the other embeds are frozen.
             # The embedding will thus have requires_grad=TRUE, but we do not want to save it
-            print("\t\t\t I should be getting a dict without token_embedding!!!")
-            td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder, exclude_params = {"token_embedding.weight"})
+            td_text, md_text = get_trainable_param_dict(text_encoder, exclude_params = {"token_embedding.weight"})
         else:
-            td_text_encoder, md_text_encoder = get_trainable_param_dict(text_encoder)
+            td_text, md_text = get_trainable_param_dict(text_encoder)
             
-        td_text_encoder = {f"{cf['text_encoder_prefix']}{cf['separator']}{k}": v for k, v in td_text_encoder.items()}
-        md_text_encoder = {f"{cf['text_encoder_prefix']}{cf['separator']}{k}": v for k, v in md_text_encoder.items()}
+        td_text = {f"{cf['text_encoder_prefix']}{cf['separator']}{k}": v for k, v in td_text.items()}
+        md_text = {f"{cf['text_encoder_prefix']}{cf['separator']}{k}": v for k, v in md_text.items()}
     if unet:
         td_unet, md_unet = get_trainable_param_dict(unet)
         td_unet = {f"{cf['unet_prefix']}{cf['separator']}{k}": v for k, v in td_unet.items()}
         md_unet = {f"{cf['unet_prefix']}{cf['separator']}{k}": v for k, v in md_unet.items()}
 
-    tensors_dict = {**td_token_embedding, **td_text_encoder, **td_unet}
+    tensors_dict = {**td_token, **td_text, **td_unet}
     # Safetensors requires metadata to be flat and text only
-    metadata = {**cf, **md_token_embedding, **md_text_encoder, **md_unet}
+    metadata = {**cf, **md_token, **md_text, **md_unet}
 
     print(f"Saving weights with format version {cf['version']} to {save_path}")
     safe_save(tensors_dict, save_path, metadata)
