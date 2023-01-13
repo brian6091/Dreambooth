@@ -38,11 +38,11 @@ SAFE_CONFIGS = {
     "0.0.0": { # Reserved for lora library
         "version": "__0.0.0__",
         "separator": ":",
-        "token_embedding_prefix": "",
-        "text_encoder_prefix": "",
-        "unet_prefix": "",
-        "lora_prefix": "",
         "token_is_key": "True",
+        "token_identifier": "<embed>",
+        "text_encoder_prefix": "text_encoder",
+        "unet_prefix": "unet",
+        "lora_prefix": "",
         "lora_weight_names": {'down', 'up'},
     },
     "0.1.0": {
