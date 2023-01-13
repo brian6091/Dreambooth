@@ -40,30 +40,9 @@ from .model_utils import (
     add_instance_tokens,
     get_nonlin,
     _inject_trained_lora,
-    get_modules_to_inject_with_parent
+    get_modules_with_parent_to_inject,
+    search_and_replace_lora,
 )
-
-def search_and_replace_lora(
-    model: nn.Module,
-    td,
-    md,
-    targets,
-    search_prefix
-):
-    for n, m, _n, _m in get_modules_to_inject_with_parent(model, targets):
-        search = f"{search_prefix}{n}.{_n}"
-        params = {k: v for k, v in md.items() if k.startswith(search)}
-        weights = {k: v for k, v in td.items() if k.startswith(search)}
-
-        _inject_trained_lora(
-            module=m,
-            target=_n,
-            up_weight=weights[f"{search}.lora_up.weight"],
-            down_weight=weights[f"{search}.lora_down.weight"],
-            r=int(params[f"{search}{md['separator']}r"]),
-            scale=float(params[f"{search}{md['separator']}scale"]),
-            nonlin=get_nonlin(params[f"{search}{md['separator']}nonlin"]),
-        ) 
 ############################################### TODO move out if possible ###############################################
 
 
