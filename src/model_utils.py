@@ -317,14 +317,18 @@ def _inject_trained_lora(
             down_weight.type(weight.dtype)
         )
     else:
-        # TODO if already LoRAInjected? Replace
+        # TODO if already LoRAInjected? Reassign settings and copy weights
         print(f"skipping {target}")
 
 
-def get_modules_to_inject_with_parent(
+def get_modules_with_parent_to_inject(
     model: nn.Module,
     lora_modules,
 ):
+    """
+    Yield modules (and their parents) with fullnames in lora_modules.
+    """
+
     # Parent module names
     parent_modules = [n.rsplit('.', 1)[0] for n in lora_modules]
 
@@ -332,7 +336,7 @@ def get_modules_to_inject_with_parent(
         if any(n==c for c in parent_modules):
             # Some elements (ModuleLists) will get traversed twice, e.g., attn1, and attn1.to_out
             # since to_out is a list of modules. They will get skipped in the injection, so it's
-            # just a little wasteful, but no harm done...
+            # inefficient, but no harm done...
             for _n, _m in m.named_modules():
                 if any(f"{n}.{_n}"==c for c in lora_modules):
                     # Handle case where child is a ModuleList
@@ -342,8 +346,8 @@ def get_modules_to_inject_with_parent(
                         # Only know how to handle this case
                         if (len(parts)) > 2:
                             print("unexpected???")
-                        if not isinstance(m._modules["to_out"], nn.ModuleList):
-                            print("unexpected???")
+                        #if not isinstance(m._modules["to_out"], nn.ModuleList):
+                        #    print("unexpected???")
                         # Reassign the parent 
                         m = m._modules[parts[0]]
                         n = f"{n}.{parts[0]}"
@@ -353,7 +357,31 @@ def get_modules_to_inject_with_parent(
 
                     yield n, m, _n, _m
 
+		
+def search_and_replace_lora(
+    model: nn.Module,
+    td,
+    md,
+    targets,
+    search_prefix
+):
+    for n, m, _n, _m in get_modules_with_parent_to_inject(model, targets):
+        search = f"{search_prefix}{n}.{_n}"
+        # Find corresponding LoRA settings and weights
+        params = {k: v for k, v in md.items() if k.startswith(search)}
+        weights = {k: v for k, v in td.items() if k.startswith(search)}
 
+        _inject_trained_lora(
+            module=m,
+            target=_n,
+            up_weight=weights[f"{search}.lora_up.weight"],
+            down_weight=weights[f"{search}.lora_down.weight"],
+            r=int(params[f"{search}{md['separator']}r"]),
+            scale=float(params[f"{search}{md['separator']}scale"]),
+            nonlin=get_nonlin(params[f"{search}{md['separator']}nonlin"]),
+        ) 
+	
+	
 def get_nonlin(nonlin: str):
     if nonlin=="ReLU":
         return nn.ReLU(inplace=True)
