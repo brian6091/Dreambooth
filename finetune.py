@@ -511,11 +511,8 @@ def main(args):
                 print(pipeline.scheduler.__class__.__name__)
                 print(pipeline.scheduler.config)
         
-            # TODO: for custom diffusion, or generally distinct module training
-            # dump entire checkpoint with all trainable
-            
-            if args.lora_unet_layer!=None or args.lora_unet_layer!=None:
-                
+            if args.lora_text_layer!=None or args.lora_unet_layer!=None:
+                # TODO, this should activate when !ALL is trained, or should be a config flag save_full_model or save_diffusers_format
                 save_trainable_parameters(
                     tokenizer=tokenizer,
                     text_encoder=accelerator.unwrap_model(text_encoder, **extra_args),
