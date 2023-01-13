@@ -43,6 +43,7 @@ SAFE_CONFIGS = {
         "unet_prefix": "",
         "lora_prefix": "",
         "token_is_key": "True",
+        "lora_weight_names": {'down', 'up'},
     },
     "0.1.0": {
         "version": "__0.1.0__",
@@ -232,6 +233,9 @@ def _inject_trainable_lora(
                     nonlin=nonlin,
                     train_off_target=train_off_target,
                 )
+            else:
+                pass
+                # TODO, just set requires_grad true on down/up weights
     else:
         try:
             _child_module = model._modules[target_name]
