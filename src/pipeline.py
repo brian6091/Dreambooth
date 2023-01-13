@@ -503,10 +503,21 @@ class PatchDiffusionPipeline(DiffusionPipeline):
             other_modules = []
             for f in full:
                 other_modules.append(f.split(md['separator'])[2])
-            
+
             # Find non-LoRA modules to replace
-            other_modules = list(set(other_modules).difference(set(lora_modules)))
-            # self.text_encoder.load_state_dict(td_filtered, strict=False)
+            search = f"{md['text_encoder_prefix']}{md['separator']}"
+            full = list(filter(lambda k: k.startswith(search), td.keys()))
+            other_modules = []
+            for f in full:
+                # In general this should catch all non-diffusers modules, not necessarily just LoRA
+                if f.split(md['separator'])[1]!=md['lora_prefix']:
+                    other_modules.append(f)          
+            
+            #other_modules = list(set(other_modules).difference(set(lora_modules)))
+            if len(other_modules)>0:
+                #self.text_encoder.load_state_dict({k: td[key] for k in other_modules}, strict=False)
+                td_other = {k.split(":")[1]: td[k] for k in other_modules}
+                a,b = self.text_encoder.load_state_dict(td_other, strict=False)
 
     @torch.no_grad()
     def patch_unet(self, td, md):
