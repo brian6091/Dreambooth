@@ -73,7 +73,7 @@ def print_trainable_parameters(model: nn.Module, file=sys.stdout, tensor_info=Fa
 
 def get_noise_scheduler(
 	scheduler: str,
-	config=None,
+    config=None,
     model_name_or_path=None,
 ):
     if scheduler=="DPMSolverMultistepScheduler":
@@ -156,7 +156,7 @@ def add_instance_tokens(
         initializer_token_ids = tokenizer.encode(initializer_token, add_special_tokens=False)
 	
         if len(initializer_token_ids) > 1:
-            # Take the mean, does this mean anything?
+            # Take the vector average
             initial_embed = torch.mean(token_embeds[initializer_token_ids,], 0)
         else:
             initial_embed = token_embeds[initializer_token_id]
