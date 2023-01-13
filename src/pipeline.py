@@ -463,7 +463,7 @@ class PatchDiffusionPipeline(DiffusionPipeline):
             search = f"{md['token_embedding_prefix']}{md['separator']}"
             full = list(filter(lambda k: k.startswith(search), md.keys()))
 
-            if len(full) > 0
+            if len(full) > 0:
                 # TODO handle multiple inserted tokens
                 instance_tokens = full[0].split(cfg["separator"])[1]
                 embedding = td[full[0]]
