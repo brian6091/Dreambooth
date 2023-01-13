@@ -548,6 +548,8 @@ def save_trainable_parameters(
     print(f"Saving weights with format version {cf['version']} to {save_path}")
     safe_save(tensors_dict, save_path, metadata)
     
+    return [k for k in tensors_dict.keys()]
+    
 
 def load_trained_parameters(
     filename,
