@@ -122,53 +122,59 @@ def get_noise_scheduler(
 def add_instance_tokens(
     tokenizer,
     text_encoder,
-    instance_tokens,
-    initializer_tokens=None,
+    instance_token,
+    initializer_token=None,
     embedding=None,
     debug=False,
 ):
     # TODO: multiple tokens
-    num_added_tokens = tokenizer.add_tokens(instance_tokens)
+    num_added_tokens = tokenizer.add_tokens(instance_token)
     if num_added_tokens == 0:
         raise ValueError(
-            f"The tokenizer already contains the token {instance_tokens}. Please pass a different"
+            f"The tokenizer already contains the token {instance_token}. Please pass a different"
             " `instance_token` that is not already in the tokenizer."
         )
     else:
         if debug:
-            print(f"{instance_tokens} added to tokenizer.")
+            print(f"{instance_token} added to tokenizer.")
 
     # Resize the token embeddings
     text_encoder.resize_token_embeddings(len(tokenizer))
     
     token_embeds = text_encoder.get_input_embeddings().weight.data
-    instance_token_id = tokenizer.convert_tokens_to_ids(instance_tokens)
+    instance_token_id = tokenizer.convert_tokens_to_ids(instance_token)
     
     initializer_token_id = None
     if embedding is not None:
         # TODO check tensor is right format
         token_embeds[instance_token_id] = embedding
         
-        if initializer_tokens:
-            print(f"Initializer tokens {intializer_tokens} ignored since an embedding was provided")
-    elif initializer_tokens is not None:
+        if initializer_token:
+            print(f"Initializer tokens {intializer_token} ignored since an embedding was provided")
+    elif initializer_token is not None:
         # Initialise new instance_token embedding with the embedding of the initializer_token
-        token_ids = tokenizer.encode(initializer_tokens, add_special_tokens=False)
-        initializer_token_id = token_ids[0]
-        if len(token_ids) > 1:
-            raise ValueError("The initializer token must be a single token.")
+        initializer_token_ids = tokenizer.encode(initializer_token, add_special_tokens=False)
+	
+        if len(initializer_token_ids) > 1:
+            # Take the mean, does this mean anything?
+            initial_embed = torch.mean(token_embeds[initializer_token_ids,], 0)
+        else:
+            initial_embed = token_embeds[initializer_token_id]
+#         initializer_token_id = token_ids[0]
+#         if len(token_ids) > 1:
+#             raise ValueError("The initializer token must be a single token.")
 
         if debug:
             print("Instance weights: ")
             print(token_embeds[instance_token_id])
 
-        token_embeds[instance_token_id] = token_embeds[initializer_token_id]
+        token_embeds[instance_token_id] = initial_embed
 
         if debug:
             print("Instance weights intialized: ")
             print(token_embeds[instance_token_id])
     else:
-        print(f"Embedding vector for {instance_tokens} is random.")
+        print(f"Embedding vector for {instance_token} is random.")
         #pass
         # TODO if no initializer_token, initialize to zero?
 
