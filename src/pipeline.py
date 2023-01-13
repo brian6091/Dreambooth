@@ -470,7 +470,7 @@ class PatchDiffusionPipeline(DiffusionPipeline):
 
                 print(f"Attempting to add {instance_tokens} to token embedding.")
                 print(f"Tokenizer has length {len(self.tokenizer)}.")
-                print(get_tensor_info(embedding))
+                #print(get_tensor_info(embedding))
                 print(embedding.shape)
                 token_id, _ = add_instance_tokens(
                     self.tokenizer,
