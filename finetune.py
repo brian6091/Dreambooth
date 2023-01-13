@@ -93,8 +93,8 @@ def main(args):
     )    
     
     # https://huggingface.co/docs/diffusers/optimization/fp16
-#     if args.enable_autotuner:
-#         torch.backends.cudnn.benchmark = True
+    if args.enable_autotuner:
+        torch.backends.cudnn.benchmark = True
     if args.allow_tf32:
         torch.backends.cuda.matmul.allow_tf32 = True
         
