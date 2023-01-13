@@ -204,7 +204,7 @@ def parse_args(input_args=None):
         help="Whether to add instance token to tokenizer dictionary",
     )
     parser.add_argument(
-        "--initializer_prompt",
+        "--initializer_token",
         type=none_or_str,
         default=None,
         help="Token or prompt to initialize when adding instance token",
