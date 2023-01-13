@@ -513,7 +513,8 @@ def main(args):
         
             if args.lora_text_layer!=None or args.lora_unet_layer!=None:
                 # TODO, this should activate when !ALL is trained, or should be a config flag save_full_model or save_diffusers_format
-                save_trainable_parameters(
+                # TODO optionally dump out keys to text file
+                saved_keys = save_trainable_parameters(
                     tokenizer=tokenizer,
                     text_encoder=accelerator.unwrap_model(text_encoder, **extra_args),
                     unet=accelerator.unwrap_model(
@@ -524,7 +525,6 @@ def main(args):
                     save_path=os.path.join(save_dir, f"{step}_trained_parameters.safetensors"),
                 )
                 
-                # already monkeypatched, but could change alpha? TODO: add save_lora_alpha
                 tune_lora_scale(pipeline.unet, args.lora_unet_scale)
                 tune_lora_scale(pipeline.text_encoder, args.lora_text_scale)
             else:
