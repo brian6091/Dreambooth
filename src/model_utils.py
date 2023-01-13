@@ -160,9 +160,6 @@ def add_instance_tokens(
             initial_embed = torch.mean(token_embeds[initializer_token_ids,], 0)
         else:
             initial_embed = token_embeds[initializer_token_id]
-#         initializer_token_id = token_ids[0]
-#         if len(token_ids) > 1:
-#             raise ValueError("The initializer token must be a single token.")
 
         if debug:
             print("Instance weights: ")
