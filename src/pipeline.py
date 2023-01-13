@@ -484,7 +484,6 @@ class PatchDiffusionPipeline(DiffusionPipeline):
             else:
                 print("No instance tokens to add to token embedding.")
 
-    @torch.no_grad()
     def patch_text_encoder(self, td, md, cfg):
         if cfg["version"]=="__0.1.0__":
             # Filter modules where LoRA must be injected
@@ -498,12 +497,6 @@ class PatchDiffusionPipeline(DiffusionPipeline):
                 search_prefix = f"{md['text_encoder_prefix']}{md['separator']}{md['lora_prefix']}{md['separator']}"
                 search_and_replace_lora(self.text_encoder, td, md, lora_modules, search_prefix)
 
-            search = f"{md['text_encoder_prefix']}{md['separator']}"
-            full = list(filter(lambda k: k.startswith(search), md.keys()))
-            other_modules = []
-            for f in full:
-                other_modules.append(f.split(md['separator'])[2])
-
             # Find non-LoRA modules to replace
             search = f"{md['text_encoder_prefix']}{md['separator']}"
             full = list(filter(lambda k: k.startswith(search), td.keys()))
@@ -515,37 +508,35 @@ class PatchDiffusionPipeline(DiffusionPipeline):
             
             #other_modules = list(set(other_modules).difference(set(lora_modules)))
             if len(other_modules)>0:
-                #self.text_encoder.load_state_dict({k: td[key] for k in other_modules}, strict=False)
                 td_other = {k.split(":")[1]: td[k] for k in other_modules}
                 a,b = self.text_encoder.load_state_dict(td_other, strict=False)
 
-    @torch.no_grad()
-    def patch_unet(self, td, md):
-        # Filter modules where LoRA must be injected
-        search = f"{md['unet_prefix']}{md['separator']}{md['lora_prefix']}"
-        full = list(filter(lambda k: k.startswith(search) and k.endswith("class"), md.keys()))
-        lora_modules = []
-        for f in full:
-            lora_modules.append(f.split(md['separator'])[2])
+    def patch_unet(self, td, md, cfg):
+        if cfg["version"]=="__0.1.0__":
+            # Filter modules where LoRA must be injected
+            search = f"{md['unet_prefix']}{md['separator']}{md['lora_prefix']}"
+            full = list(filter(lambda k: k.startswith(search) and k.endswith("class"), md.keys()))
+            lora_modules = []
+            for f in full:
+                lora_modules.append(f.split(md['separator'])[2])
 
-        for n, m, _n, _m in get_modules_to_inject_with_parent(self.unet, lora_modules):
-            search = f"{md['unet_prefix']}{md['separator']}{md['lora_prefix']}{md['separator']}{n}.{_n}"
-            params = {k: v for k, v in md.items() if k.startswith(search)}
-            weights = {k: v for k, v in td.items() if k.startswith(search)}
+            if len(lora_modules)>0:
+                search_prefix = f"{md['unet_prefix']}{md['separator']}{md['lora_prefix']}{md['separator']}"
+                search_and_replace_lora(self.unet, td, md, lora_modules, search_prefix)
 
-            _inject_trained_lora(
-                module=m,
-                target=_n,
-                up_weight=weights[f"{search}.lora_up.weight"],
-                down_weight=weights[f"{search}.lora_down.weight"],
-                r=int(params[f"{search}{md['separator']}r"]),
-                scale=float(params[f"{search}{md['separator']}scale"]),
-                nonlin=get_nonlin(params[f"{search}{md['separator']}nonlin"]),
-            )
-
-        # Find non-LoRA modules to replace
-        # take set exclusion of td keys
-        # self.unet.load_state_dict(td_filtered, strict=False)
+            # Find non-LoRA modules to replace
+            search = f"{md['unet_prefix']}{md['separator']}"
+            full = list(filter(lambda k: k.startswith(search), td.keys()))
+            other_modules = []
+            for f in full:
+                # In general this should catch all non-diffusers modules, not necessarily just LoRA
+                if f.split(md['separator'])[1]!=md['lora_prefix']:
+                    other_modules.append(f)          
+            
+            #other_modules = list(set(other_modules).difference(set(lora_modules)))
+            if len(other_modules)>0:
+                td_other = {k.split(":")[1]: td[k] for k in other_modules}
+                a,b = self.unet.load_state_dict(td_other, strict=False)
         
     def merge_weights(self):
         print("will merge LoRA components")
