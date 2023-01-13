@@ -465,21 +465,21 @@ class PatchDiffusionPipeline(DiffusionPipeline):
 
             if len(full) > 0:
                 # TODO handle multiple inserted tokens
-                instance_tokens = full[0].split(cfg["separator"])[1]
+                instance_token = full[0].split(cfg["separator"])[1]
                 embedding = td[full[0]]
 
-                print(f"Attempting to add {instance_tokens} to token embedding.")
+                print(f"Attempting to add {instance_token} to token embedding.")
                 print(f"Tokenizer has length {len(self.tokenizer)}.")
                 #print(get_tensor_info(embedding))
                 print(embedding.shape)
                 token_id, _ = add_instance_tokens(
                     self.tokenizer,
                     self.text_encoder,
-                    instance_tokens=instance_tokens,
+                    instance_token=instance_token,
                     embedding=embedding, # 
                     debug=False,
                 )
-                print(f"{instance_tokens} has token id {token_id}.")
+                print(f"{instance_token} has token id {token_id}.")
                 print(f"Tokenizer now has length {len(self.tokenizer)}.")
             else:
                 print("No instance tokens to add to token embedding.")
