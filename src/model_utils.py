@@ -430,7 +430,7 @@ def get_trainable_param_dict(
     config=SAFE_CONFIGS["0.1.0"],
     dtype=torch.float32,
 ):
-    cf = config
+    cf = config.copy()
     tensors_dict = {}
     metadata = {}
 
@@ -501,7 +501,7 @@ def save_trainable_parameters(
     config=SAFE_CONFIGS["0.1.0"],
 #    dtype?
 ):
-    cf = config
+    cf = config.copy()
     td_token = {}
     md_token = {}
     td_text = {}
