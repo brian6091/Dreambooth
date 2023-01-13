@@ -436,13 +436,14 @@ def get_trainable_param_dict(
 
     exclude_params = {"weight", *exclude_params}
 
+    saved = []
     for nc, c in model.named_children():
         for nm, m in c.named_modules():
             if isinstance(m, LoraInjectedLinear):
                 # Store module metadata
                 # Only non-diffusers modules will have metadata, which should contain
                 # all the information necessary to reapply to the pretrained model
-                prefix = f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}"		
+                prefix = f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}"       
                 metadata[f"{prefix}{cf['separator']}class"] = m.__class__.__name__
                 metadata[f"{prefix}{cf['separator']}r"] = str(m.r)
                 metadata[f"{prefix}{cf['separator']}scale"] = str(m.scale)
@@ -463,9 +464,12 @@ def get_trainable_param_dict(
                             k = f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}.{np}"
                         else:
                             k = f"{nc}.{nm}.{np}"
-                        print(f"\t saving with key: {k}")
-                        tensors_dict[k] = p.cpu().clone()
-                        #tensors_dict[k] = p.cpu().clone().to(dtype)
+
+                        if k not in saved:
+                            print(f"\t saving with key: {k}")
+                            saved.append(k)
+                            tensors_dict[k] = p.cpu().clone()
+                            #tensors_dict[k] = p.cpu().clone().to(dtype)
                         
     if validate:
         trainable_params = set()
