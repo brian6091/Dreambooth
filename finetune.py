@@ -199,8 +199,8 @@ def main(args):
         instance_token_id, initializer_token_id = add_instance_tokens(
             tokenizer,
             text_encoder,
-            instance_tokens=args.instance_token,
-            initializer_tokens=args.class_token,
+            instance_token=args.instance_token,
+            initializer_token=args.initializer_token,
             debug=args.debug,
         )
 
