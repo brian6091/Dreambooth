@@ -72,7 +72,7 @@ def print_trainable_parameters(model: nn.Module, file=sys.stdout, tensor_info=Fa
 
 
 def get_noise_scheduler(
-	scheduler: str,
+    scheduler: str,
     config=None,
     model_name_or_path=None,
 ):
@@ -251,14 +251,7 @@ def _inject_trainable_lora(
                 nonlin=nonlin,
                 init=None,
             )
-            
-#             print(target_name)
-#             print(_tmp.alpha)
-#             print(_tmp.r)
-#             print(_tmp.scale)
-#             print(_tmp.nonlin)
-#             print(_tmp)
-            
+                      
             # Assign pretrained parameters
             _tmp.linear.weight = weight
             if bias is not None:
@@ -432,6 +425,7 @@ def get_trainable_param_dict(
     validate=True,
     config=SAFE_CONFIGS["0.1.0"],
     dtype=torch.float32,
+    debug=False,
 ):
     cf = config.copy()
     tensors_dict = {}
@@ -454,21 +448,21 @@ def get_trainable_param_dict(
             if nm=="":
                 pass
                 # TODO some modules don't have names, maybe moduleList?
-                if validate:
+                if debug:
                     print("\tNO_NAME for module", nm, type(m), "\n\t\t child of ", nc, type(c))
             else:
                 for np, p in m.named_parameters():
                     if p.requires_grad and (np in exclude_params):
                         print(f"\n Requires_grad True for {np} in module {nm}, but not saved by request.\n")
                     if p.requires_grad and (np not in exclude_params):
-                        #print(nm, type(m), "\t", np, type(p))
                         if any(x in np for x in cf["lora_weight_names"]):
                             k = f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}.{np}"
                         else:
                             k = f"{nc}.{nm}.{np}"
 
                         if k not in saved:
-                            print(f"\t saving with key: {k}")
+                            if debug:
+                                print(f"\t saving with key: {k}")
                             saved.append(k)
                             tensors_dict[k] = p.cpu().clone()
                             #tensors_dict[k] = p.cpu().clone().to(dtype)
