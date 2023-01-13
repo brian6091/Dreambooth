@@ -452,8 +452,9 @@ def get_trainable_param_dict(
                     print("\tNO_NAME for module", nm, type(m), "\n\t\t child of ", nc, type(c))
             else:
                 for np, p in m.named_parameters():
-                    if p.requires_grad and (np in exclude_params):
-                        print(f"\n Requires_grad True for {np} in module {nm}, but not saved by request.\n")
+                    if debug:
+                        if p.requires_grad and (np in exclude_params):
+                            print(f"Requires_grad is True for {np} in module {nm}, but not saved by request.")
                     if p.requires_grad and (np not in exclude_params):
                         if any(x in np for x in cf["lora_weight_names"]):
                             k = f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}.{np}"
