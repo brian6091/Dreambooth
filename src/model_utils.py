@@ -464,8 +464,8 @@ def get_trainable_param_dict(
                             if debug:
                                 print(f"\t saving with key: {k}")
                             saved.append(k)
-                            tensors_dict[k] = p.cpu().clone()
-                            #tensors_dict[k] = p.cpu().clone().to(dtype)
+                            #tensors_dict[k] = p.cpu().clone()
+                            tensors_dict[k] = p.cpu().clone().to(dtype=torch.float16)
                         
     if validate:
         trainable_params = set()
@@ -522,8 +522,7 @@ def save_trainable_parameters(
         if instance_token:
             # instance_token added to tokenizer, but all the other embeds are frozen.
             # The embedding will thus have requires_grad=TRUE, but we do not want to save it
-#             td_text, md_text = get_trainable_param_dict(text_encoder, exclude_params = {"token_embedding.weight"})
-            td_text, md_text = get_trainable_param_dict(text_encoder)
+            td_text, md_text = get_trainable_param_dict(text_encoder, exclude_params = {"token_embedding.weight"})
         else:
             td_text, md_text = get_trainable_param_dict(text_encoder)
             
