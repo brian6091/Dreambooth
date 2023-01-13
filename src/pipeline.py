@@ -458,7 +458,7 @@ class PatchDiffusionPipeline(DiffusionPipeline):
         patch_unet(td, md, cfg)
 
     def patch_embeddings(self, td, md, cfg):
-        if cfg["version"]=="__0.1.0__"
+        if cfg["version"]=="__0.1.0__":
             # Filter metadata for added tokens
             search = f"{md['token_embedding_prefix']}{md['separator']}"
             full = list(filter(lambda k: k.startswith(search), md.keys()))
@@ -486,7 +486,7 @@ class PatchDiffusionPipeline(DiffusionPipeline):
 
     @torch.no_grad()
     def patch_text_encoder(self, td, md, cfg):
-        if cfg["version"]=="__0.1.0__"
+        if cfg["version"]=="__0.1.0__":
             # Filter modules where LoRA must be injected
             search = f"{md['text_encoder_prefix']}{md['separator']}{md['lora_prefix']}"
             full = list(filter(lambda k: k.startswith(search) and k.endswith("class"), md.keys()))
