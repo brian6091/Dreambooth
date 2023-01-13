@@ -440,7 +440,6 @@ def get_trainable_param_dict(
     for nc, c in model.named_children():
         for nm, m in c.named_modules():
             if isinstance(m, LoraInjectedLinear):
-                # Store module metadata
                 # Only non-diffusers modules will have metadata, which should contain
                 # all the information necessary to reapply to the pretrained model
                 prefix = f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}"       
@@ -459,7 +458,7 @@ def get_trainable_param_dict(
                     if p.requires_grad and (np in exclude_params):
                         print(f"\n Requires_grad True for {np} in module {nm}, but not saved by request.\n")
                     if p.requires_grad and (np not in exclude_params):
-                        print(nm, type(m), "\t", np, type(p))
+                        #print(nm, type(m), "\t", np, type(p))
                         if any(x in np for x in cf["lora_weight_names"]):
                             k = f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}.{np}"
                         else:
