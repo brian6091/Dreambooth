@@ -51,8 +51,10 @@ SAFE_CONFIGS = {
         "text_encoder_prefix": "text_encoder",
         "unet_prefix": "unet",
         "lora_prefix": "lora",
+        "lora_weight_names": {'lora_down', 'lora_up'},
     }
 }
+
 
 def get_tensor_info(tensor):
     info = []
@@ -433,39 +435,38 @@ def get_trainable_param_dict(
     metadata = {}
 
     exclude_params = {"weight", *exclude_params}
-    #print("\t\t\t this is what excludes look like", exclude_params)
 
     for nc, c in model.named_children():
         for nm, m in c.named_modules():
             if isinstance(m, LoraInjectedLinear):
-                prefix = f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}"
-                # TODO check for requires_grad, currently assumes that if LoRA exists, it is being trained
-                tensors_dict[f"{prefix}.lora_down.weight"] = m.lora_down.weight.cpu().clone()
-                tensors_dict[f"{prefix}.lora_up.weight"] = m.lora_up.weight.cpu().clone()
-#                 tensors_dict[f"{prefix}.lora_down.weight"] = m.lora_down.weight.cpu().clone().to(dtype)
-#                 tensors_dict[f"{prefix}.lora_up.weight"] = m.lora_up.weight.cpu().clone().to(dtype)
-		
+                # Store module metadata
                 # Only non-diffusers modules will have metadata, which should contain
                 # all the information necessary to reapply to the pretrained model
+                prefix = f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}"		
                 metadata[f"{prefix}{cf['separator']}class"] = m.__class__.__name__
                 metadata[f"{prefix}{cf['separator']}r"] = str(m.r)
                 metadata[f"{prefix}{cf['separator']}scale"] = str(m.scale)
                 metadata[f"{prefix}{cf['separator']}nonlin"] = m.nonlin.__class__.__name__
-            else:
-                if nm=="":
-                    pass
-                    # TODO some modules don't have names, maybe moduleList?
-                    if validate:
-                        print("\tNO_NAME for module", nm, type(m), "\n\t\t child of ", nc, type(c))
-                else:
-                    for np, p in m.named_parameters():
-                        if p.requires_grad and (np in exclude_params):
-                            print(f"\n Requires_grad True for {np} in module {nm}, but not saved by request.\n")
-                        if p.requires_grad and (np not in exclude_params):
-                            print(nm, type(m), "\t", np, type(p))
-                            tensors_dict[f"{nc}.{nm}.{np}"] = p.cpu().clone()
-#                            tensors_dict[f"{nc}.{nm}.{np}"] = p.cpu().clone().to(dtype)
 
+            if nm=="":
+                pass
+                # TODO some modules don't have names, maybe moduleList?
+                if validate:
+                    print("\tNO_NAME for module", nm, type(m), "\n\t\t child of ", nc, type(c))
+            else:
+                for np, p in m.named_parameters():
+                    if p.requires_grad and (np in exclude_params):
+                        print(f"\n Requires_grad True for {np} in module {nm}, but not saved by request.\n")
+                    if p.requires_grad and (np not in exclude_params):
+                        print(nm, type(m), "\t", np, type(p))
+                        if any(x in np for x in cf["lora_weight_names"])
+                            k = f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}.{np}"
+                        else:
+                            k = f"{nc}.{nm}.{np}"
+                        print(f"\t saving with key: {k}")
+                        tensors_dict[k] = p.cpu().clone()
+                        #tensors_dict[k] = p.cpu().clone().to(dtype)
+                        
     if validate:
         trainable_params = set()
         count = 0
