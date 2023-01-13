@@ -459,7 +459,7 @@ def get_trainable_param_dict(
                         print(f"\n Requires_grad True for {np} in module {nm}, but not saved by request.\n")
                     if p.requires_grad and (np not in exclude_params):
                         print(nm, type(m), "\t", np, type(p))
-                        if any(x in np for x in cf["lora_weight_names"])
+                        if any(x in np for x in cf["lora_weight_names"]):
                             k = f"{cf['lora_prefix']}{cf['separator']}{nc}.{nm}.{np}"
                         else:
                             k = f"{nc}.{nm}.{np}"
