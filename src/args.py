@@ -197,12 +197,20 @@ def parse_args(input_args=None):
         help="Nonlinearity for LoRA in text encoder.",
     )
     
+    
     parser.add_argument(
         "--add_instance_token",
         action="store_true",
         help="Whether to add instance token to tokenizer dictionary",
     )
-
+    parser.add_argument(
+        "--initializer_prompt",
+        type=none_or_str,
+        default=None,
+        help="Token or prompt to initialize when adding instance token",
+    )
+    
+    
     parser.add_argument(
         "--instance_token",
         type=str,
