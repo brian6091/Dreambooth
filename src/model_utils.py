@@ -597,7 +597,7 @@ def save_trainable_parameters(
     tensors_dict = {**td_token, **td_text, **td_unet}
 
     # Safetensors requires metadata to be flat and text only
-    if cf["version"]=="0.1.0":
+    if cf["version"]=="__0.1.0__":
         del cf["lora_weight_names"]
     metadata = {**cf, **md_token, **md_text, **md_unet}
 
