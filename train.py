@@ -960,7 +960,7 @@ def main(args):
 
             if args.save_sample_prompt is not None:
                 pipeline = pipeline.to(accelerator.device)
-                if args.enable_xformers and is_xformers_available():
+                if is_xformers_available():
                     pipeline.enable_xformers_memory_efficient_attention()
                     
                 save_sample_prompt = args.save_sample_prompt
