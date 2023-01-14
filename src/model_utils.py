@@ -16,6 +16,7 @@ import sys
 from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union, Iterable
 
 from functools import reduce
+import traceback
 
 import torch
 import torch.nn as nn
@@ -459,20 +460,18 @@ def set_trainable_parameters(
                     for _c, _f, _n, _m in find_modules_by_name_or_class(
                         m, target=target_submodule
                     ):
-                        # print(n, _c, _f, _n)
-                        __m = get_module_by_name(model, f"{n}.{_f}".rsplit(".", 1)[0])
-                        # x = f"{n}.{_f}"
-                        # print(x)
-                        # print(x.rsplit(".", 1)[0])
-                        # # print(__m)
-                        _inject_trainable_lora(
-                            __m,
-                            target_name=_n,
-                            r=lora_rank,
-                            scale=lora_scale,
-                            nonlin=get_nonlin(lora_nonlin),
-                            train_off_target=lora_train_off_target,
-                            )
+                        try:
+                            parent = get_module_by_name(model, f"{n}.{_f}".rsplit(".", 1)[0])
+                            _inject_trainable_lora(
+                                parent,
+                                target_name=_n,
+                                r=lora_rank,
+                                scale=lora_scale,
+                                nonlin=get_nonlin(lora_nonlin),
+                                train_off_target=lora_train_off_target,
+                                )
+                        except Exception:
+                            traceback.print_exc()
                             
 
 
