@@ -217,6 +217,7 @@ def _inject_trainable_lora(
     scale: float = 1.0,
     nonlin: nn.Module = None,
     train_off_target: Set[str] = None,
+    # layer: Set[str] = {'Linear'},
 ):
     """
     inject lora for nn.Linear into model.
@@ -224,7 +225,7 @@ def _inject_trainable_lora(
 
     if target_name==None:
         for p, n, m in _find_children(model):
-            if not isinstance(p, LoraInjectedLinear):
+            if not isinstance(p, LoraInjectedLinear): # TODO catch Conv2
                 _inject_trainable_lora(
                     p,
                     target_name=n,
@@ -241,8 +242,10 @@ def _inject_trainable_lora(
             _child_module = model._modules[target_name]
         except:
             print(f"{target_name} not in module")
-            # TODO traverse children, bail at leaf?
+            # TODO traverse children, bail at leaf? maybe better to do in set_trainable_parameters
             return
+        
+        # TODO check class in layer (e.g., Linear or Conv2
 
         if _child_module.__class__.__name__ == "Linear":
             weight = _child_module.weight
@@ -256,6 +259,7 @@ def _inject_trainable_lora(
                 nonlin=nonlin,
                 init=None,
             )
+            # elif _child_module.__class__.__name__ == "Conv2":
                       
             # Assign pretrained parameters
             _tmp.linear.weight = weight
@@ -410,9 +414,13 @@ def set_trainable_parameters(
     lora_layer: Set[str] = None,
     lora_train_off_target: Set[str] = None,
 ):
+    # TODO, targets can come in as Lists also? as well las Set[set]
+    # All lora parameters as well? replicate if not a Set[val] to match len(target)
 
     if target_module_or_class is not None:
         if "ALL" in target_module_or_class:
+            # TODO, ALL should work with lora_layer, should traverse everything and apply to all valid?
+            # or maybe user needs to give the top level model name or class
             # Shorcut to training everything
             model.requires_grad_(True)
         else:
@@ -425,6 +433,9 @@ def set_trainable_parameters(
                         _m.requires_grad_(True)
                     else:
                         # Inject LoRA into all valid children
+                        # TODO stops here, but should traverse all children
+                        # if class in children not in lora_layer (e.g., Linear or Conv2)
+                        #   call set_trainable_parameters with model=child
                         _inject_trainable_lora(
                             _m,
                             target_name=None,
