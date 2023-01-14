@@ -1095,7 +1095,7 @@ def main(args):
                 logs["lr"] = lr_scheduler.get_last_lr()[0]
             else:
                 logs["lr/unet"] = lr_scheduler.get_last_lr()[0]
-                if args.train_text_encoder
+                if args.train_text_encoder:
                     logs["lr/text"] = lr_scheduler.get_last_lr()[1]
                 
             if args.log_gpu:
