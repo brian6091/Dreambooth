@@ -241,6 +241,7 @@ def _inject_trainable_lora(
             _child_module = model._modules[target_name]
         except:
             print(f"{target_name} not in module")
+            # TODO traverse children, bail at leaf?
             return
 
         if _child_module.__class__.__name__ == "Linear":
