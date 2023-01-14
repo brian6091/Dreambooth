@@ -953,28 +953,16 @@ def main(args):
                             print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
                             print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
                             break
-                del pipeline
-                pipeline = StableDiffusionPipeline.from_pretrained(
-                    args.pretrained_model_name_or_path,
-                    text_encoder=CLIPTextModel.from_pretrained(
-                        args.pretrained_model_name_or_path, 
-                        subfolder="text_encoder", 
-                        revision=args.revision
-                    ),
-                    vae=AutoencoderKL.from_pretrained(
-                        args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
-                        subfolder=None if args.pretrained_vae_name_or_path else "vae",
-                        revision=None if args.pretrained_vae_name_or_path else args.revision,
-                    ),
-                    safety_checker=None,
-                    torch_dtype=torch.float16,
-                    revision=args.revision,
-                )
+
                 #tune_lora_scale(pipeline.unet, 1.00)
             else:
                 pipeline.save_pretrained(save_dir)
 
             if args.save_sample_prompt is not None:
+                pipeline = pipeline.to(accelerator.device)
+                if args.enable_xformers and is_xformers_available():
+                    pipeline.enable_xformers_memory_efficient_attention()
+                    
                 save_sample_prompt = args.save_sample_prompt
                 save_sample_prompt = list(map(str.strip, save_sample_prompt.split('//')))
                 pipeline = pipeline.to(accelerator.device)
