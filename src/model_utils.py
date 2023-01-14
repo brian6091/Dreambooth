@@ -13,7 +13,9 @@
 #    limitations under the License.
 #
 import sys
-from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union
+from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union, Iterable
+
+from functools import reduce
 
 import torch
 import torch.nn as nn
@@ -151,37 +153,43 @@ def add_instance_tokens(
         token_embeds[instance_token_id] = embedding
         
         if initializer_token:
-            print(f"Initializer tokens {intializer_token} ignored since an embedding was provided")
+            print(f"Initializer tokens {initializer_token} ignored since an embedding was provided")
     elif initializer_token is not None:
         # Initialise new instance_token embedding with the embedding of the initializer_token
-        initializer_token_ids = tokenizer.encode(initializer_token, add_special_tokens=False)
+        initializer_token_id = tokenizer.encode(initializer_token, add_special_tokens=False)
 	
-        if len(initializer_token_ids) > 1:
+        if len(initializer_token_id) > 1:
             # Take the vector average
-            initial_embed = torch.mean(token_embeds[initializer_token_ids,], 0)
+            initial_embed = torch.mean(token_embeds[initializer_token_id,], 0)
         else:
             initial_embed = token_embeds[initializer_token_id]
 
         if debug:
-            print("Instance weights: ")
-            print(token_embeds[instance_token_id])
+            print("Instance weights: \n", token_embeds[instance_token_id])
 
         token_embeds[instance_token_id] = initial_embed
 
         if debug:
-            print("Instance weights intialized: ")
-            print(token_embeds[instance_token_id])
+            print("Instance weights intialized: \n", token_embeds[instance_token_id])
     else:
-        print(f"Embedding vector for {instance_token} is random.")
-        #pass
-        # TODO if no initializer_token, initialize to zero?
+        print(f"Embedding vector for {instance_token} has random initialization.")
+        # TODO option to specify different initialization?
 
     return instance_token_id, initializer_token_id
 
 
+# https://discuss.pytorch.org/t/how-to-access-to-a-layer-by-module-name/83797/7
+def get_module_by_name(
+    module: nn.Module,
+    fullname
+  ):
+    names = fullname.split(sep='.')
+    return reduce(getattr, names, module)
+
+  
 def find_modules_by_name_or_class(
     model: nn.Module,
-    target: Set[str],
+    target: Iterable[str],
 ):
     for fullname, module in model.named_modules():
         *path, name = fullname.split(".")
@@ -216,7 +224,7 @@ def _inject_trainable_lora(
     r: int = 4,
     scale: float = 1.0,
     nonlin: nn.Module = None,
-    train_off_target: Set[str] = None,
+    train_off_target: Iterable[str] = None,
     # layer: Set[str] = {'Linear'},
 ):
     """
@@ -242,11 +250,9 @@ def _inject_trainable_lora(
             _child_module = model._modules[target_name]
         except:
             print(f"{target_name} not in module")
-            # TODO traverse children, bail at leaf? maybe better to do in set_trainable_parameters
             return
         
         # TODO check class in layer (e.g., Linear or Conv2
-
         if _child_module.__class__.__name__ == "Linear":
             weight = _child_module.weight
             bias = _child_module.bias
@@ -259,7 +265,6 @@ def _inject_trainable_lora(
                 nonlin=nonlin,
                 init=None,
             )
-            # elif _child_module.__class__.__name__ == "Conv2":
                       
             # Assign pretrained parameters
             _tmp.linear.weight = weight
@@ -271,7 +276,18 @@ def _inject_trainable_lora(
             model._modules[target_name] = _tmp
 
             model._modules[target_name].lora_up.weight.requires_grad = True
-            model._modules[target_name].lora_down.weight.requires_grad = True            
+            model._modules[target_name].lora_down.weight.requires_grad = True
+        elif isinstance(_child_module, nn.ModuleList):
+            for p, n, m in _find_children(_child_module):
+                if not isinstance(p, LoraInjectedLinear): # TODO catch Conv2
+                    _inject_trainable_lora(
+                        p,
+                        target_name=n,
+                        r=r,
+                        scale=scale,
+                        nonlin=nonlin,
+                        train_off_target=train_off_target,
+                    )
         else:
             print(f"Cannot inject LoRA into {_child_module.__class__.__name__}")
             if train_off_target!=None:
@@ -327,7 +343,7 @@ def _inject_trained_lora(
         )
     else:
         # TODO if already LoRAInjected? Reassign settings and copy weights
-        print(f"skipping {target}")
+        print(f"Skipping {target}")
 
 
 def get_modules_with_parent_to_inject(
@@ -406,38 +422,33 @@ def get_nonlin(nonlin: str):
 
 def set_trainable_parameters(
     model: nn.Module,
-    target_module_or_class: Set[str],
-    target_submodule: Set[str],
+    target_module_or_class: Iterable[str],
+    target_submodule: Iterable[str],
     lora_rank: int = 4,
     lora_scale: float = 1.0,
     lora_nonlin: str = None,
-    lora_layer: Set[str] = None,
-    lora_train_off_target: Set[str] = None,
+    lora_layer: Iterable[str] = None,
+    lora_train_off_target: Iterable[str] = None,
 ):
-    # TODO, targets can come in as Lists also? as well las Set[set]
-    # All lora parameters as well? replicate if not a Set[val] to match len(target)
+    # TODO, should lora parameters come in as iterables? 
+    # replicate if not a Set[val] to match len(target), but match to which target?
+    # Think this would need a dictionary
 
     if target_module_or_class is not None:
         if "ALL" in target_module_or_class:
-            # TODO, ALL should work with lora_layer, should traverse everything and apply to all valid?
-            # or maybe user needs to give the top level model name or class
-            # Shorcut to training everything
             model.requires_grad_(True)
         else:
-            for _c, _f, _n, _m in find_modules_by_name_or_class(
+            for c, f, n, m in find_modules_by_name_or_class(
                 model, target=target_module_or_class
             ):
                 if target_submodule is None:
                     if lora_layer is None:
                         # Train everything in module
-                        _m.requires_grad_(True)
+                        m.requires_grad_(True)
                     else:
                         # Inject LoRA into all valid children
-                        # TODO stops here, but should traverse all children
-                        # if class in children not in lora_layer (e.g., Linear or Conv2)
-                        #   call set_trainable_parameters with model=child
                         _inject_trainable_lora(
-                            _m,
+                            m,
                             target_name=None,
                             r=lora_rank,
                             scale=lora_scale,
@@ -445,30 +456,32 @@ def set_trainable_parameters(
                             train_off_target=lora_train_off_target,
                             )       
                 else:
-                    for __c, __f, __n, __m in find_modules_by_name_or_class(
-                        _m, target=target_submodule
+                    for _c, _f, _n, _m in find_modules_by_name_or_class(
+                        m, target=target_submodule
                     ):
-                        if lora_layer is None:
-                            # Train everything in submodule
-                            __m.requires_grad_(True)
-                        else:
-                            # Inject LoRA into all valid children
-                            _inject_trainable_lora(
-                                _m,
-                                target_name=__n,
-                                r=lora_rank,
-                                scale=lora_scale,
-                                nonlin=get_nonlin(lora_nonlin),
-                                train_off_target=lora_train_off_target,
-                                )
+                        # print(n, _c, _f, _n)
+                        __m = get_module_by_name(model, f"{n}.{_f}".rsplit(".", 1)[0])
+                        # x = f"{n}.{_f}"
+                        # print(x)
+                        # print(x.rsplit(".", 1)[0])
+                        # # print(__m)
+                        _inject_trainable_lora(
+                            __m,
+                            target_name=_n,
+                            r=lora_rank,
+                            scale=lora_scale,
+                            nonlin=get_nonlin(lora_nonlin),
+                            train_off_target=lora_train_off_target,
+                            )
+                            
 
 
 def get_trainable_param_dict(
     model: nn.Module,
-    exclude_params: Set[str] = {},
+    exclude_params: Iterable[str] = {},
     validate=True,
     config=SAFE_CONFIGS["0.1.0"],
-    dtype=torch.float32,
+    torch_dtype=torch.float32,
     debug=False,
 ):
     cf = config.copy()
@@ -491,7 +504,7 @@ def get_trainable_param_dict(
 
             if nm=="":
                 pass
-                # TODO some modules don't have names, maybe moduleList?
+                # TODO why some modules don't have names, maybe moduleList?
                 if debug:
                     print("\tNO_NAME for module", nm, type(m), "\n\t\t child of ", nc, type(c))
             else:
@@ -510,7 +523,7 @@ def get_trainable_param_dict(
                                 print(f"\t saving with key: {k}")
                             saved.append(k)
                             #tensors_dict[k] = p.cpu().clone()
-                            tensors_dict[k] = p.cpu().clone().to(dtype=torch.float16)
+                            tensors_dict[k] = p.cpu().clone().to(dtype=torch_dtype)
                         
     if validate:
         trainable_params = set()
@@ -544,7 +557,7 @@ def save_trainable_parameters(
     instance_token=None,
     save_path="./lora.safetensors",
     config=SAFE_CONFIGS["0.1.0"],
-#    dtype?
+    torch_dtype=torch.float32,
 ):
     cf = config.copy()
     td_token = {}
@@ -561,29 +574,32 @@ def save_trainable_parameters(
         trained_embeddings = token_embeddings.weight[instance_token_id]
 
         k = f"{cf['token_embedding_prefix']}{cf['separator']}{instance_token}"
-        td_token[k] = trained_embeddings.detach().cpu()
+        td_token[k] = trained_embeddings.cpu().clone().to(dtype=torch_dtype)
         md_token[k] = str(instance_token_id)
     if text_encoder:
         if instance_token:
             # instance_token added to tokenizer, but all the other embeds are frozen.
             # The embedding will thus have requires_grad=TRUE, but we do not want to save it
-            td_text, md_text = get_trainable_param_dict(text_encoder, exclude_params = {"token_embedding.weight"})
+            td_text, md_text = get_trainable_param_dict(
+                text_encoder, 
+                exclude_params = {"token_embedding.weight"},
+                torch_dtype=torch_dtype,
+                )
         else:
-            td_text, md_text = get_trainable_param_dict(text_encoder)
+            td_text, md_text = get_trainable_param_dict(text_encoder, torch_dtype=torch_dtype)
             
         td_text = {f"{cf['text_encoder_prefix']}{cf['separator']}{k}": v for k, v in td_text.items()}
         md_text = {f"{cf['text_encoder_prefix']}{cf['separator']}{k}": v for k, v in md_text.items()}
     if unet:
-        td_unet, md_unet = get_trainable_param_dict(unet)
+        td_unet, md_unet = get_trainable_param_dict(unet, torch_dtype=torch_dtype)
         td_unet = {f"{cf['unet_prefix']}{cf['separator']}{k}": v for k, v in td_unet.items()}
         md_unet = {f"{cf['unet_prefix']}{cf['separator']}{k}": v for k, v in md_unet.items()}
 
     tensors_dict = {**td_token, **td_text, **td_unet}
+
     # Safetensors requires metadata to be flat and text only
-#     if cf["version"]=="0.1.0":
-#         # TODO, this should generally apply to any config to make it safetensors compatible
-#         cf["lora_weight_names"] = str(cf["lora_weight_names"])
-    del cf["lora_weight_names"]
+    if cf["version"]=="0.1.0":
+        del cf["lora_weight_names"]
     metadata = {**cf, **md_token, **md_text, **md_unet}
 
     print(f"Saving weights with format version {cf['version']} to {save_path}")
