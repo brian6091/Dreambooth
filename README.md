@@ -3,7 +3,7 @@
 
 Run [Dreambooth](https://arxiv.org/abs/2208.12242) or [Low-rank Adaptation (LoRA)](https://github.com/cloneofsimo/lora) from the same notebook:
 
-<a target="_blank" href="https://colab.research.google.com/github/brian6091/Dreambooth/blob/main/FineTuning_colab.ipynb">
+<a target="_blank" href="https://colab.research.google.com/github/brian6091/Dreambooth/blob/v0.0.1/FineTuning_colab.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" height="28px" width="162px" alt="Open In Colab"/>
 </a>
 
