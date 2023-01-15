@@ -361,9 +361,7 @@ def search_and_replace_lora(
         weights = {k: v for k, v in td.items() if k.startswith(search)}
         
         # Get the parent module
-        *nm,_n = n.rsplit(".",1)
-        nm = nm[0]
-        m = get_module_by_name(pipe2.text_encoder, nm)
+        m = get_module_by_name(pipe2.text_encoder, n.rsplit(".", 1)[0])
         
         _inject_trained_lora(
             module=m,
@@ -439,6 +437,7 @@ def set_trainable_parameters(
                                 train_off_target=lora_train_off_target,
                                 )
                         except Exception:
+                            # Submodule not found
                             traceback.print_exc()
                             
 
