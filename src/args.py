@@ -42,7 +42,6 @@ def none_or_set(val):
 
 def as_literal(val):
     if val!=None:
-        print(type(val), val)
         return ast.literal_eval(val)
 
 def parse_args(input_args=None):
