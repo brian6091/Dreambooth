@@ -40,7 +40,6 @@ from .model_utils import (
     add_instance_tokens,
     get_nonlin,
     _inject_trained_lora,
-    get_modules_with_parent_to_inject,
     search_and_replace_lora,
 )
 ############################################### TODO move out if possible ###############################################
