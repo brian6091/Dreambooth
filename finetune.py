@@ -78,7 +78,15 @@ def main(args):
     logging_dir = Path(args.output_dir, args.logging_dir)
 
     # TODO: CHECK FATAL ERRORS (e.g., no training, etc)
-    # TODO: check instance and class (if given) path existence    
+    # TODO: check instance and class (if given) path existence
+    if args.tracker=="wandb":
+        is_wandb_available = False
+        try:
+            import wandb
+            is_wandb_available = True
+        except:
+            printf("Wandb not installed.")
+            
     if args.with_prior_preservation:
         if args.class_data_dir is None:
             raise ValueError("You must specify a data directory for class images.")
@@ -88,7 +96,7 @@ def main(args):
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         mixed_precision=args.mixed_precision,
-        log_with="wandb",
+        log_with=args.tracker,
         logging_dir=logging_dir,
     )    
     
@@ -444,10 +452,8 @@ def main(args):
 
     # Initialize the trackers (automatically on the main process)
     if accelerator.is_main_process:
-        #accelerator.init_trackers("dreambooth")
         accelerator.init_trackers(
             args.tracker_descriptor,
-            config={"num_epochs": 5},
             init_kwargs=args.tracker_init_kwargs,
         )
         
@@ -566,6 +572,9 @@ def main(args):
                         all_images.extend(images)
                         
                     grid = image_grid(all_images, rows=args.save_n_sample, cols=len(sample_prompt))
+                    if args.sample_to_tracker:
+                        if args.tracker=="wandb" and is_wandb_available:
+                            accelerator.log({"samples":[wandb.Image(grid, caption="test")]}, step=step)
                     grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
                     
                 del pipeline
