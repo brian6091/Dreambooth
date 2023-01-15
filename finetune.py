@@ -447,7 +447,7 @@ def main(args):
         #accelerator.init_trackers("dreambooth")
         accelerator.init_trackers(
             args.tracker_descriptor,
-            config=vars(args),
+            config={"num_epochs": 5},
             init_kwargs=args.tracker_init_kwargs,
         )
         
