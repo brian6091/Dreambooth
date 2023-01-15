@@ -511,6 +511,12 @@ def parse_args(input_args=None):
     )
     
     parser.add_argument(
+        "--tracker",
+        type=str,
+        default="wandb",
+        help="Which tracker (wandb, tensorboard).",
+    )
+    parser.add_argument(
         "--tracker_descriptor",
         type=str,
         default="finetune",
@@ -522,6 +528,11 @@ def parse_args(input_args=None):
         default=None,
         help="Dictionary to configure trackers",
         )
+    parser.add_argument(
+        "--sample_to_tracker",
+        action="store_true",
+        help="Send intermediate samples to tracker.",
+    )
     
     parser.add_argument(
         "--save_n_sample",
