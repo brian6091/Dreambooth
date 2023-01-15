@@ -19,6 +19,7 @@ import os
 import configargparse
 import yaml
 import ast
+import json
 
 def none_or_str(val):
     if not val or (val=='None'):
@@ -39,14 +40,10 @@ def none_or_set(val):
     if val!=None:
         return set(val)
 
-# https://stackoverflow.com/a/42355279
-class StoreDictKeyPair(configargparse.Action):
-     def __call__(self, parser, namespace, values, option_string=None):
-         my_dict = {}
-         for kv in values.split(";"):
-             k,v = kv.split("=")
-             my_dict[k] = ast.literal_eval(v)
-         setattr(namespace, self.dest, my_dict)
+def as_literal(val):
+    if val!=None:
+        print(type(val), val)
+        return ast.literal_eval(val)
 
 def parse_args(input_args=None):
     parser = configargparse.ArgParser(
@@ -106,9 +103,8 @@ def parse_args(input_args=None):
     )
     parser.add_argument(
         "--scheduler_config",
-        dest="scheduler_config",
-        action=StoreDictKeyPair,
-        metavar="KEY1=VAL1;KEY2=VAL2...",
+        type=as_literal,
+        default=None,
         help="Scheduler parameters as semi-colon separated string",
         )
     
@@ -377,7 +373,8 @@ def parse_args(input_args=None):
         type=int, default=4,
         help="Batch size (per device) for the training dataloader.",
     )
-    parser.add_argument("--num_train_epochs",
+    parser.add_argument(
+        "--num_train_epochs",
         type=int,
         default=1,
     )
@@ -428,9 +425,7 @@ def parse_args(input_args=None):
     )
     parser.add_argument(
         "--optimizer_params",
-        dest="optimizer_params",
-        action=StoreDictKeyPair,
-        metavar="KEY1=VAL1;KEY2=VAL2...",
+        type=as_literal,
         help="Optimizer parameters as semi-colon separated string",
         )
 
@@ -448,7 +443,7 @@ def parse_args(input_args=None):
         default="constant",
         help=(
             'The scheduler type to use. Choose between ["linear", "cosine", "cosine_with_restarts", "polynomial",'
-            ' "constant", "constant_with_warmup"]'
+            ' "constant", "constant_with_warmup", "explore_exploit"]'
         ),
     )
     
@@ -485,37 +480,21 @@ def parse_args(input_args=None):
     
     parser.add_argument(
         "--lr_scheduler_params",
-        dest="lr_scheduler_params",
-        action=StoreDictKeyPair,
-        metavar="KEY1=VAL1;KEY2=VAL2...",
-        help="Learning rate scheduler parameters as semi-colon separated string",
-        )
+        type=as_literal,
+        help="Learning rate scheduler parameters as dictionary",
+    )
     
     parser.add_argument(
         "--use_ema",
         action="store_true",
         help="Whether to use EMA model.",
     )
-    parser.add_argument("--ema_inv_gamma",
-        type=float,
-        default=1.0,
-        help="The inverse gamma parameter for the EMA model.",
+    parser.add_argument(
+        "--ema_params",
+        type=as_literal,
+        help="Learning rate scheduler parameters as dictionary",
     )
-    parser.add_argument("--ema_power",
-        type=float,
-        default=3 / 4,
-        help="Exponential factor of EMA warmup.",
-    )
-    parser.add_argument("--ema_min_value",
-        type=float,
-        default=0.0,
-        help="The minimum EMA decay rate.",
-    )
-    parser.add_argument("--ema_max_value",
-        type=float,
-        default=0.9999,
-        help="The maximum EMA decay rate.",
-    )
+
 
     parser.add_argument(
         "--output_dir",
@@ -528,8 +507,7 @@ def parse_args(input_args=None):
         type=str,
         default="logs",
         help=(
-            "[TensorBoard](https://www.tensorflow.org/tensorboard) log directory. Will default to"
-            " *output_dir/runs/**CURRENT_DATETIME_HOSTNAME***."
+            "Log directory. Defaults to *output_dir/runs/**CURRENT_DATETIME_HOSTNAME***."
         ),
     )
     
@@ -537,7 +515,7 @@ def parse_args(input_args=None):
         "--save_n_sample",
         type=int,
         default=4,
-        help="The number of samples to save.",
+        help="The number of samples images to save.",
     )
     parser.add_argument(
         "--save_interval",
@@ -569,10 +547,8 @@ def parse_args(input_args=None):
     )
     parser.add_argument(
         "--sample_scheduler_config",
-        dest="sample_scheduler_config",
-        action=StoreDictKeyPair,
-        metavar="KEY1=VAL1;KEY2=VAL2...",
-        help="Sample scheduler parameters as semi-colon separated string",
+        type=as_literal,
+        help="Sample scheduler parameters as dictionary.",
         )
     parser.add_argument(
         "--sample_prompt",
@@ -641,6 +617,7 @@ def parse_args(input_args=None):
         help="Some exra verbosity."
     )
 
+
     if input_args is not None:
         args = parser.parse_args(input_args)
     else:
@@ -668,11 +645,7 @@ def format_args(args):
       if isinstance(d[keys], set):
           d[keys] = list(d[keys])
       elif isinstance(d[keys], dict):
-          tmp = []
-          d2 = d[keys]
-          for k in d2:
-              tmp.append(k+"="+str(d2[k]))
-          d[keys] = ';'.join(tmp)
+          d[keys] = json.dumps(d[keys])
 
     del d['config']
     return d
