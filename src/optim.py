@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-from typing import Tuple, Union
+from typing import Tuple, Union, Iterable
 
 import math
 
@@ -148,10 +148,10 @@ def group_parameters(unet,
     
 def get_explore_exploit_schedule_with_warmup(
     optimizer: Optimizer,
-    start_step: Union[Tuple[int], int],
-    num_warmup_steps: Union[Tuple[int], int],
-    num_explore_steps: Union[Tuple[int], int],
-    num_total_steps: Union[Tuple[int], int],
+    start_step: Union[Iterable[int], int],
+    num_warmup_steps: Union[Iterable[int], int],
+    num_explore_steps: Union[Iterable[int], int],
+    num_total_steps: Union[Iterable[int], int],
     last_epoch: int = -1
 ):
     """
