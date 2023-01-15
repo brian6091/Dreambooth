@@ -444,8 +444,13 @@ def main(args):
 
     # Initialize the trackers (automatically on the main process)
     if accelerator.is_main_process:
-        accelerator.init_trackers("dreambooth")
-
+        #accelerator.init_trackers("dreambooth")
+        accelerator.init_trackers(
+            args.tracker_descriptor,
+            config=vars(args),
+            init_kwargs=args.tracker_init_kwargs,
+        )
+        
     print("***** Running training *****")
     print(f"  Num examples = {len(train_dataset)}")
     print(f"  Num batches each epoch = {len(train_dataloader)}")
