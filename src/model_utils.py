@@ -346,43 +346,6 @@ def _inject_trained_lora(
         # TODO if already LoRAInjected? Reassign settings and copy weights
         print(f"Skipping {target}")
 
-
-def get_modules_with_parent_to_inject(
-    model: nn.Module,
-    lora_modules,
-):
-    """
-    Yield modules (and their parents) with fullnames in lora_modules.
-    """
-
-    # Parent module names
-    parent_modules = [n.rsplit('.', 1)[0] for n in lora_modules]
-
-    for n, m in model.named_modules():
-        if any(n==c for c in parent_modules):
-            # Some elements (ModuleLists) will get traversed twice, e.g., attn1, and attn1.to_out
-            # since to_out is a list of modules. They will get skipped in the injection, so it's
-            # inefficient, but no harm done...
-            for _n, _m in m.named_modules():
-                if any(f"{n}.{_n}"==c for c in lora_modules):
-                    # Handle case where child is a ModuleList
-                    if "." in _n:
-                        # The name should have two parts
-                        parts = _n.split(".")
-                        # Only know how to handle this case
-                        if (len(parts)) > 2:
-                            print("unexpected???")
-                        #if not isinstance(m._modules["to_out"], nn.ModuleList):
-                        #    print("unexpected???")
-                        # Reassign the parent 
-                        m = m._modules[parts[0]]
-                        n = f"{n}.{parts[0]}"
-                        # Reassign the child
-                        _m = m._modules[parts[1]]
-                        _n = parts[1]
-
-                    yield n, m, _n, _m
-
 		
 def search_and_replace_lora(
     model: nn.Module,
@@ -391,12 +354,17 @@ def search_and_replace_lora(
     targets,
     search_prefix
 ):
-    for n, m, _n, _m in get_modules_with_parent_to_inject(model, targets):
-        search = f"{search_prefix}{n}.{_n}"
+    for n in targets:
         # Find corresponding LoRA settings and weights
+        search = f"{search_prefix}{n}"
         params = {k: v for k, v in md.items() if k.startswith(search)}
         weights = {k: v for k, v in td.items() if k.startswith(search)}
-
+        
+        # Get the parent module
+        *nm,_n = n.rsplit(".",1)
+        nm = nm[0]
+        m = get_module_by_name(pipe2.text_encoder, nm)
+        
         _inject_trained_lora(
             module=m,
             target=_n,
