@@ -511,6 +511,19 @@ def parse_args(input_args=None):
     )
     
     parser.add_argument(
+        "--tracker_descriptor",
+        type=str,
+        default="finetune",
+        help="Description of run.",
+    )
+    parser.add_argument(
+        "--tracker_init_kwargs",
+        type=as_literal,
+        default=None,
+        help="Dictionary to configure trackers",
+        )
+    
+    parser.add_argument(
         "--save_n_sample",
         type=int,
         default=4,
