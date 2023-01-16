@@ -690,7 +690,7 @@ def main(args):
                         os.makedirs(sample_dir, exist_ok=True)
                         grid.save(os.path.join(sample_dir, f"{global_step}.jpg"), quality=90, optimize=True)
 
-                        if args.sample_to_tracker and tracker=="wandb" and is_wandb_available():
+                        if args.sample_to_tracker and args.tracker=="wandb" and is_wandb_available():
                             #from wandb import Image
                             accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=global_step)
                     
