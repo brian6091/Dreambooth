@@ -36,12 +36,12 @@ def get_intermediate_samples(
     sample_prompt = sample_prompt.replace("{}", instance_token)
     sample_prompt = list(map(str.strip, sample_prompt.split('//')))
 
-    pipeline = pipeline.to(accelerator.device)
-    # TODO, one of these slows inference a lot... make params sample_enable_attention_slicing, sample_enable_vae_slicing, sample_enable_xformers
-    #pipeline.enable_attention_slicing()
-    #pipeline.enable_vae_slicing()
-    if enable_xformers and is_xformers_available():
-        pipeline.enable_xformers_memory_efficient_attention()
+#     pipeline = pipeline.to(accelerator.device)
+#     # TODO, one of these slows inference a lot... make params sample_enable_attention_slicing, sample_enable_vae_slicing, sample_enable_xformers
+#     #pipeline.enable_attention_slicing()
+#     #pipeline.enable_vae_slicing()
+#     if enable_xformers and is_xformers_available():
+#         pipeline.enable_xformers_memory_efficient_attention()
 
     g_cuda = torch.Generator(device=accelerator.device).manual_seed(sample_seed)
     pipeline.set_progress_bar_config(disable=True)
