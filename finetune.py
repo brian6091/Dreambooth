@@ -752,6 +752,13 @@ def main(args):
                         print(pipeline.scheduler.config)
 
                     if args.save_n_sample>0:
+                        pipeline = pipeline.to(accelerator.device)
+                        # TODO, one of these slows inference a lot... make params sample_enable_attention_slicing, sample_enable_vae_slicing, sample_enable_xformers
+                        #pipeline.enable_attention_slicing()
+                        #pipeline.enable_vae_slicing()
+                        if args.enable_xformers and is_xformers_available():
+                            pipeline.enable_xformers_memory_efficient_attention()
+                            
                         data_table = get_intermediate_samples(
                             accelerator=accelerator,
                             pipeline=pipeline,
