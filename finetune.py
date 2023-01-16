@@ -595,56 +595,7 @@ def main(args):
                     save_weights(global_step)
                     
                     save_dir = os.path.join(args.output_dir, f"{global_step}")
-                    if not os.path.exists(save_dir):
-                        os.makedirs(save_dir)
-
-#                     # https://github.com/huggingface/diffusers/issues/1566
-#                     # TODO move this up, rename extra_args > accelerator_unwrap_extra_args
-#                     accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
-#                         inspect.signature(accelerator.unwrap_model).parameters.keys()
-#                     )
-#                     extra_args = (
-#                         {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
-#                     )
-
-#                     if train_text_encoder or train_token_embedding:
-#                         text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
-#                     else:
-#                         text_enc_model = CLIPTextModel.from_pretrained(
-#                             args.pretrained_model_name_or_path,
-#                             subfolder="text_encoder",
-#                             )
-
-#                     # Set up scheduler for inference
-#                     if args.sample_scheduler and args.sample_scheduler_config:
-#                         sample_scheduler = get_noise_scheduler(args.sample_scheduler, config=args.sample_scheduler_config)        
-#                     elif args.sample_scheduler:
-#                         sample_scheduler = get_noise_scheduler(args.sample_scheduler, model_name_or_path=args.pretrained_model_name_or_path)
-#                     else:
-#                         sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
-
-#                     pipeline = DiffusionPipeline.from_pretrained(
-#                         args.pretrained_model_name_or_path,
-#                         tokenizer=tokenizer,
-#                         unet=accelerator.unwrap_model(
-#                                 ema_unet.averaged_model if args.use_ema else unet,
-#                                 **extra_args,
-#                             ),
-#                         text_encoder=text_enc_model,
-#                         scheduler=sample_scheduler,
-#                         vae=AutoencoderKL.from_pretrained(
-#                             args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
-#                             subfolder=None if args.pretrained_vae_name_or_path else "vae",
-#                             revision=None if args.pretrained_vae_name_or_path else args.revision,
-#                         ),
-#                         safety_checker=None,
-#                         requires_safety_checker=None,
-#                         torch_dtype=torch.float16, # TODO option to save in fp32?
-#                         revision=args.revision,
-#                     )
-#                     if args.debug:
-#                         print(pipeline.scheduler.__class__.__name__)
-#                         print(pipeline.scheduler.config)
+                    os.makedirs(save_dir, exist_ok=True)
 
                     pipeline = get_pipeline(
                         accelerator=accelerator,
@@ -691,7 +642,6 @@ def main(args):
                         grid.save(os.path.join(sample_dir, f"{global_step}.jpg"), quality=90, optimize=True)
 
                         if args.sample_to_tracker and args.tracker=="wandb" and is_wandb_available():
-                            #from wandb import Image
                             accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=global_step)
                     
                     del pipeline
@@ -750,8 +700,6 @@ def main(args):
     if accelerator.is_main_process:
         if args.sample_to_tracker:
             if args.tracker=="wandb" and is_wandb_available():
-                print("Trying to send data_table")
-                print(data_table)
                 accelerator.log({"samples": data_table}, step=step)
                 
         if global_step > last_save_at_step:
