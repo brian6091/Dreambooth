@@ -2,7 +2,7 @@ import os
 import torch
 from tqdm.auto import tqdm
 
-import wandb
+#import wandb
 
 from accelerate.utils import (
     LoggerType,
@@ -27,10 +27,11 @@ def get_intermediate_samples(
     sample_seed,
     save_n_sample,
     save_dir,
-    sample_to_tracker,
+    sample_to_tracker, # remove this, rely on tracker !=none
     tracker,
     data_table,
     step,
+    # save_locally
 ):
     sample_prompt = sample_prompt.replace("{}", instance_token)
     sample_prompt = list(map(str.strip, sample_prompt.split('//')))
@@ -55,7 +56,7 @@ def get_intermediate_samples(
             if sample_to_tracker:
                 if tracker=="wandb" and is_wandb_available():
                     for prompt_id, im in enumerate(images):
-                        data_table.add_data(step, prompt_id, sample_prompt[j], sample_guidance_scale,
+                        data_table.add_data(step, prompt_id, sample_prompt[prompt_id], sample_guidance_scale,
                                            sample_seed, sample_id, wandb.Image(im))
 
         grid = image_grid(all_images, rows=save_n_sample, cols=len(sample_prompt))
