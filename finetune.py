@@ -689,6 +689,7 @@ def main(args):
                         grid.save(os.path.join(sample_dir, f"{global_step}.jpg"), quality=90, optimize=True)
 
                         if tracker=="wandb" and is_wandb_available():
+                            #from wandb import Image
                             accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=global_step)
                     
                     del pipeline
