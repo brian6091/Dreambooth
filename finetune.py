@@ -699,7 +699,7 @@ def main(args):
                 if global_step > 0 and not global_step % args.save_interval and global_step >= args.save_min_steps:
                     save_weights(global_step)
                     
-                    save_dir = os.path.join(args.output_dir, f"{step}")
+                    save_dir = os.path.join(args.output_dir, f"{global_step}")
                     if not os.path.exists(save_dir):
                         os.makedirs(save_dir)
 
@@ -773,7 +773,7 @@ def main(args):
                             sample_to_tracker=args.sample_to_tracker,
                             tracker=args.tracker,
                             data_table=data_table,
-                            step=step,
+                            step=global_step,
                             )
                         
                     del pipeline
