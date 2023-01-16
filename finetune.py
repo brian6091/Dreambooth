@@ -329,7 +329,7 @@ def main(args):
     else:
         noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
-    if True:#args.debug: # TODO remove
+    if args.debug:
         print(noise_scheduler.__class__.__name__)
         print(noise_scheduler.config)
         
@@ -639,7 +639,7 @@ def main(args):
                         torch_dtype=torch.float16, # TODO option to save in fp32?
                         revision=args.revision,
                     )
-                    if True:#args.debug: # TODO remove
+                    if args.debug:
                         print(pipeline.scheduler.__class__.__name__)
                         print(pipeline.scheduler.config)
 
@@ -722,9 +722,6 @@ def main(args):
 
                             
     if accelerator.is_main_process:
-#         print("Trying to send data_table")
-#         print(data_table)
-#         accelerator.log({"samples": data_table}, step=step)
         if args.sample_to_tracker:
             if args.tracker=="wandb" and is_wandb_available():
                 print("Trying to send data_table")
