@@ -651,7 +651,7 @@ def main(args):
                         if args.enable_xformers and is_xformers_available():
                             pipeline.enable_xformers_memory_efficient_attention()
                             
-                        data_table = get_intermediate_samples(
+                        grid, data_table = get_intermediate_samples(
                             accelerator=accelerator,
                             pipeline=pipeline,
                             instance_token=args.instance_token,
@@ -667,7 +667,12 @@ def main(args):
                             data_table=data_table,
                             step=global_step,
                             )
-                        
+                    
+                        # TODO save_local parameter
+                        sample_dir = os.path.join(save_dir, "samples")
+                        os.makedirs(sample_dir, exist_ok=True)
+                        grid.save(os.path.join(sample_dir, f"{global_step}.jpg"), quality=90, optimize=True)
+                    
                     del pipeline
                     if torch.cuda.is_available():
                         torch.cuda.empty_cache()
