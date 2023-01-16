@@ -102,8 +102,6 @@ def main(args):
         log_with=args.tracker,
         logging_dir=logging_dir,
     )
-    #print(accelerator)
-    #print(dir(accelerator))
     
     # https://huggingface.co/docs/diffusers/optimization/fp16
     if args.enable_autotuner:
@@ -547,53 +545,70 @@ def main(args):
                 pipeline.save_pretrained(save_dir)
 
             if args.save_n_sample>0:
-                nonlocal data_table
-                sample_prompt = args.sample_prompt.replace("{}", args.instance_token)
-                sample_prompt = list(map(str.strip, sample_prompt.split('//')))
+                data_table = get_intermediate_samples(
+                    accelerator=accelerator,
+                    pipeline=pipeline,
+                    instance_token=args.instance_token,
+                    sample_prompt=args.sample_prompt,
+                    sample_negative_prompt=args.sample_negative_prompt,
+                    sample_guidance_scale=args.sample_guidance_scale,
+                    sample_infer_steps=args.sample_infer_steps,
+                    sample_seed=args.sample_seed if args.sample_seed!=None else args.seed,
+                    save_n_sample=args.save_n_sample,
+                    save_dir=save_dir,
+                    sample_to_tracker=args.sample_to_tracker,
+                    tracker=args.tracker,
+                    data_table=data_table,
+                    step=step,
+                    )
+
+#                 nonlocal data_table
+#                 sample_prompt = args.sample_prompt.replace("{}", args.instance_token)
+#                 sample_prompt = list(map(str.strip, sample_prompt.split('//')))
                 
-                pipeline = pipeline.to(accelerator.device)
-                # TODO, one of these slows inference a lot... make params sample_enable_attention_slicing, sample_enable_vae_slicing, sample_enable_xformers
-                #pipeline.enable_attention_slicing()
-                #pipeline.enable_vae_slicing()
-                if args.enable_xformers and is_xformers_available():
-                    pipeline.enable_xformers_memory_efficient_attention()
+#                 pipeline = pipeline.to(accelerator.device)
+#                 # TODO, one of these slows inference a lot... make params sample_enable_attention_slicing, sample_enable_vae_slicing, sample_enable_xformers
+#                 #pipeline.enable_attention_slicing()
+#                 #pipeline.enable_vae_slicing()
+#                 if args.enable_xformers and is_xformers_available():
+#                     pipeline.enable_xformers_memory_efficient_attention()
                 
-                g_cuda = torch.Generator(device=accelerator.device).manual_seed(
-                    args.sample_seed if args.sample_seed!=None else args.seed,
-                )
-                pipeline.set_progress_bar_config(disable=True)
-                sample_dir = os.path.join(save_dir, "samples")
-                os.makedirs(sample_dir, exist_ok=True)
+#                 g_cuda = torch.Generator(device=accelerator.device).manual_seed(
+#                     args.sample_seed if args.sample_seed!=None else args.seed,
+#                 )
+#                 pipeline.set_progress_bar_config(disable=True)
+#                 sample_dir = os.path.join(save_dir, "samples")
+#                 os.makedirs(sample_dir, exist_ok=True)
                 
-                with torch.autocast("cuda"), torch.inference_mode():
-                    all_images = []
-                    for i in tqdm(range(args.save_n_sample), desc="Generating samples"):
-                        images = pipeline(
-                            sample_prompt,
-                            negative_prompt=[args.sample_negative_prompt]*len(sample_prompt),
-                            guidance_scale=args.sample_guidance_scale,
-                            num_inference_steps=args.sample_infer_steps,
-                            generator=g_cuda
-                        ).images
-                        all_images.extend(images)
+#                 with torch.autocast("cuda"), torch.inference_mode():
+#                     all_images = []
+#                     for i in tqdm(range(args.save_n_sample), desc="Generating samples"):
+#                         images = pipeline(
+#                             sample_prompt,
+#                             negative_prompt=[args.sample_negative_prompt]*len(sample_prompt),
+#                             guidance_scale=args.sample_guidance_scale,
+#                             num_inference_steps=args.sample_infer_steps,
+#                             generator=g_cuda
+#                         ).images
+#                         all_images.extend(images)
                         
-                        if args.sample_to_tracker:
-                            if args.tracker=="wandb" and is_wandb_available:
-                                for j, im in enumerate(images):
-                                    data_table.add_data(step, j, sample_prompt[j], args.sample_guidance_scale,
-                                                       args.sample_seed if args.sample_seed!=None else args.seed,
-                                                       wandb.Image(im))
+#                         if args.sample_to_tracker:
+#                             if args.tracker=="wandb" and is_wandb_available:
+#                                 for j, im in enumerate(images):
+#                                     data_table.add_data(step, j, sample_prompt[j], args.sample_guidance_scale,
+#                                                        args.sample_seed if args.sample_seed!=None else args.seed,
+#                                                        wandb.Image(im))
                         
-                    grid = image_grid(all_images, rows=args.save_n_sample, cols=len(sample_prompt))
-                    if args.sample_to_tracker:
-                        if args.tracker=="wandb" and is_wandb_available:
-                            #accelerator.log({"samples": data_table}, step=step)
-                            accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=step)
-                    grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
+#                     grid = image_grid(all_images, rows=args.save_n_sample, cols=len(sample_prompt))
+#                     if args.sample_to_tracker:
+#                         if args.tracker=="wandb" and is_wandb_available:
+#                             #accelerator.log({"samples": data_table}, step=step)
+#                             accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=step)
+#                     grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
                     
-                del pipeline
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
+#                 del pipeline
+#                 if torch.cuda.is_available():
+#                     torch.cuda.empty_cache()
             print(f"[*] Weights saved at {save_dir}")
 
     # Only show the progress bar once on each machine.
