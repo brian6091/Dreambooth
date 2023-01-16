@@ -29,7 +29,15 @@ import torch
 
 from accelerate import Accelerator
 from accelerate.logging import get_logger
-from accelerate.utils import set_seed
+from accelerate.utils import (
+    set_seed,
+    LoggerType,
+    is_aim_available,
+    is_comet_ml_available,
+    is_mlflow_available,
+    is_tensorboard_available,
+    is_wandb_available,
+)
 from diffusers import AutoencoderKL, DiffusionPipeline, UNet2DConditionModel, DDPMScheduler
 from diffusers.optimization import get_scheduler
 from diffusers.training_utils import EMAModel, enable_full_determinism
@@ -80,16 +88,6 @@ def main(args):
 
     # TODO: CHECK FATAL ERRORS (e.g., no training, etc)
     # TODO: check instance and class (if given) path existence
-    is_wandb_available = False
-    if args.tracker=="wandb":
-        try:
-            import wandb
-            is_wandb_available = True
-        except:
-            printf("Wandb not installed.")
-            
-    if is_wandb_available and args.save_n_sample > 0:
-        data_table = wandb.Table(columns=["step", "prompt_id", "prompt", "cfg", "seed", "image"])
             
     if args.with_prior_preservation:
         if args.class_data_dir is None:
@@ -461,6 +459,9 @@ def main(args):
             init_kwargs=args.tracker_init_kwargs,
         )
         
+        if is_wandb_available() and args.save_n_sample > 0:
+            data_table = wandb.Table(columns=["step", "prompt_id", "prompt", "cfg", "seed", "sample", "image"])
+        
     print("***** Running training *****")
     print(f"  Num examples = {len(train_dataset)}")
     print(f"  Num batches each epoch = {len(train_dataloader)}")
@@ -486,45 +487,6 @@ def main(args):
             extra_args = (
                 {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
             )
-                    
-#             if train_text_encoder or train_token_embedding:
-#                 text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
-#             else:
-#                 text_enc_model = CLIPTextModel.from_pretrained(
-#                     args.pretrained_model_name_or_path,
-#                     subfolder="text_encoder",
-#                     )
-
-#             # Set up scheduler for inference
-#             if args.sample_scheduler and args.sample_scheduler_config:
-#                 sample_scheduler = get_noise_scheduler(args.sample_scheduler, config=args.sample_scheduler_config)        
-#             elif args.sample_scheduler:
-#                 sample_scheduler = get_noise_scheduler(args.sample_scheduler, model_name_or_path=args.pretrained_model_name_or_path)
-#             else:
-#                 sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
-                
-#             pipeline = DiffusionPipeline.from_pretrained(
-#                 args.pretrained_model_name_or_path,
-#                 tokenizer=tokenizer,
-#                 unet=accelerator.unwrap_model(
-#                         ema_unet.averaged_model if args.use_ema else unet,
-#                         **extra_args,
-#                     ),
-#                 text_encoder=text_enc_model,
-#                 scheduler=sample_scheduler,
-#                 vae=AutoencoderKL.from_pretrained(
-#                     args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
-#                     subfolder=None if args.pretrained_vae_name_or_path else "vae",
-#                     revision=None if args.pretrained_vae_name_or_path else args.revision,
-#                 ),
-#                 safety_checker=None,
-#                 requires_safety_checker=None,
-#                 torch_dtype=torch.float16, # TODO option to save in fp32?
-#                 revision=args.revision,
-#             )
-#             if True:#args.debug: # TODO remove
-#                 print(pipeline.scheduler.__class__.__name__)
-#                 print(pipeline.scheduler.config)
         
             if args.lora_text_layer!=None or args.lora_unet_layer!=None:
                 # TODO, this should activate when !ALL is trained, or should be a config flag save_full_model or save_diffusers_format
@@ -540,76 +502,6 @@ def main(args):
                     save_path=os.path.join(save_dir, f"{step}_trained_parameters.safetensors"),
                 )
                 
-#                 tune_lora_scale(pipeline.unet, args.lora_unet_scale)
-#                 tune_lora_scale(pipeline.text_encoder, args.lora_text_scale)
-#             else:
-#                 pipeline.save_pretrained(save_dir)
-
-#             if args.save_n_sample>0:
-#                 data_table = get_intermediate_samples(
-#                     accelerator=accelerator,
-#                     pipeline=pipeline,
-#                     instance_token=args.instance_token,
-#                     sample_prompt=args.sample_prompt,
-#                     sample_negative_prompt=args.sample_negative_prompt,
-#                     sample_guidance_scale=args.sample_guidance_scale,
-#                     sample_infer_steps=args.sample_infer_steps,
-#                     sample_seed=args.sample_seed if args.sample_seed!=None else args.seed,
-#                     save_n_sample=args.save_n_sample,
-#                     save_dir=save_dir,
-#                     sample_to_tracker=args.sample_to_tracker,
-#                     tracker=args.tracker,
-#                     data_table=data_table,
-#                     step=step,
-#                     )
-
-#                 nonlocal data_table
-#                 sample_prompt = args.sample_prompt.replace("{}", args.instance_token)
-#                 sample_prompt = list(map(str.strip, sample_prompt.split('//')))
-                
-#                 pipeline = pipeline.to(accelerator.device)
-#                 # TODO, one of these slows inference a lot... make params sample_enable_attention_slicing, sample_enable_vae_slicing, sample_enable_xformers
-#                 #pipeline.enable_attention_slicing()
-#                 #pipeline.enable_vae_slicing()
-#                 if args.enable_xformers and is_xformers_available():
-#                     pipeline.enable_xformers_memory_efficient_attention()
-                
-#                 g_cuda = torch.Generator(device=accelerator.device).manual_seed(
-#                     args.sample_seed if args.sample_seed!=None else args.seed,
-#                 )
-#                 pipeline.set_progress_bar_config(disable=True)
-#                 sample_dir = os.path.join(save_dir, "samples")
-#                 os.makedirs(sample_dir, exist_ok=True)
-                
-#                 with torch.autocast("cuda"), torch.inference_mode():
-#                     all_images = []
-#                     for i in tqdm(range(args.save_n_sample), desc="Generating samples"):
-#                         images = pipeline(
-#                             sample_prompt,
-#                             negative_prompt=[args.sample_negative_prompt]*len(sample_prompt),
-#                             guidance_scale=args.sample_guidance_scale,
-#                             num_inference_steps=args.sample_infer_steps,
-#                             generator=g_cuda
-#                         ).images
-#                         all_images.extend(images)
-                        
-#                         if args.sample_to_tracker:
-#                             if args.tracker=="wandb" and is_wandb_available:
-#                                 for j, im in enumerate(images):
-#                                     data_table.add_data(step, j, sample_prompt[j], args.sample_guidance_scale,
-#                                                        args.sample_seed if args.sample_seed!=None else args.seed,
-#                                                        wandb.Image(im))
-                        
-#                     grid = image_grid(all_images, rows=args.save_n_sample, cols=len(sample_prompt))
-#                     if args.sample_to_tracker:
-#                         if args.tracker=="wandb" and is_wandb_available:
-#                             #accelerator.log({"samples": data_table}, step=step)
-#                             accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=step)
-#                     grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
-                    
-#                 del pipeline
-#                 if torch.cuda.is_available():
-#                     torch.cuda.empty_cache()
             print(f"[*] Weights saved at {save_dir}")
 
     # Only show the progress bar once on each machine.
@@ -753,7 +645,7 @@ def main(args):
 
                     if args.save_n_sample>0:
                         pipeline = pipeline.to(accelerator.device)
-                        # TODO, one of these slows inference a lot... make params sample_enable_attention_slicing, sample_enable_vae_slicing, sample_enable_xformers
+                        # TODO, one of these slows inference a lot... 
                         #pipeline.enable_attention_slicing()
                         #pipeline.enable_vae_slicing()
                         if args.enable_xformers and is_xformers_available():
@@ -824,25 +716,20 @@ def main(args):
             accelerator.log(logs, step=global_step)
 
             if global_step >= args.max_train_steps:
-#                 if args.sample_to_tracker:
-#                     if args.tracker=="wandb" and is_wandb_available:
-#                         print("Trying to send data_table")
-#                         print(data_table)
-#                         accelerator.log({"samples": data_table}, step=step)
                 break
             
         accelerator.wait_for_everyone()
 
                             
     if accelerator.is_main_process:
-        print("Trying to send data_table")
-        print(data_table)
-        accelerator.log({"samples": data_table}, step=step)
-#         if args.sample_to_tracker:
-#             if args.tracker=="wandb" and is_wandb_available:
-#                 print("Trying to send data_table")
-#                 print(data_table)
-#                 accelerator.log({"samples": data_table}, step=step)
+#         print("Trying to send data_table")
+#         print(data_table)
+#         accelerator.log({"samples": data_table}, step=step)
+        if args.sample_to_tracker:
+            if args.tracker=="wandb" and is_wandb_available():
+                print("Trying to send data_table")
+                print(data_table)
+                accelerator.log({"samples": data_table}, step=step)
                 
         if global_step > last_save_at_step:
             save_weights(global_step)
