@@ -68,6 +68,7 @@ from src.model_utils import (
     count_parameters,
     print_trainable_parameters,
     get_tensor_info,
+    get_pipeline,
     save_trainable_parameters,
 )
 from src.optim import (
