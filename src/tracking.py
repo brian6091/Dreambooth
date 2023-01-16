@@ -65,6 +65,6 @@ def get_intermediate_samples(
             if tracker=="wandb" and is_wandb_available():
                 accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=step)
         
-        grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
+        #grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
 
-    return data_table
+    return grid, data_table
