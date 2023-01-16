@@ -461,6 +461,7 @@ def main(args):
             args.tracker_descriptor,
             init_kwargs=args.tracker_init_kwargs,
         )
+        print(accelerator.trackers)
         
     print("***** Running training *****")
     print(f"  Num examples = {len(train_dataset)}")
