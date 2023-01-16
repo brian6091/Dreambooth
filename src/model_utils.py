@@ -159,9 +159,9 @@ def get_pipeline(
 
     # Set up scheduler for inference
     if sample_scheduler_name and sample_scheduler_config:
-        sample_scheduler = get_noise_scheduler(sample_scheduler, config=sample_scheduler_config)        
+        sample_scheduler = get_noise_scheduler(sample_scheduler_name, config=sample_scheduler_config)        
     elif args.sample_scheduler:
-        sample_scheduler = get_noise_scheduler(sample_scheduler, model_name_or_path=pretrained_model_name_or_path)
+        sample_scheduler = get_noise_scheduler(sample_scheduler_name, model_name_or_path=pretrained_model_name_or_path)
     else:
         sample_scheduler = DDPMScheduler.from_pretrained(pretrained_model_name_or_path, subfolder="scheduler")
 
