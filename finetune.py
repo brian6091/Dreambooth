@@ -672,6 +672,9 @@ def main(args):
                         sample_dir = os.path.join(save_dir, "samples")
                         os.makedirs(sample_dir, exist_ok=True)
                         grid.save(os.path.join(sample_dir, f"{global_step}.jpg"), quality=90, optimize=True)
+
+                        if tracker=="wandb" and is_wandb_available():
+                            accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=global_step)
                     
                     del pipeline
                     if torch.cuda.is_available():
