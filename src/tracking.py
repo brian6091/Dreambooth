@@ -25,7 +25,7 @@ def get_intermediate_samples(
 	sample_guidance_scale,
 	sample_infer_steps,
 	sample_seed,
-  save_n_sample,
+    save_n_sample,
 	save_dir,
 	sample_to_tracker,
 	tracker,
