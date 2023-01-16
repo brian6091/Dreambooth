@@ -953,31 +953,18 @@ def main(args):
                             print("First Text Encoder Layer's Up Weight is now : ", _up.weight.data)
                             print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
                             break
-                del pipeline
-                pipeline = StableDiffusionPipeline.from_pretrained(
-                    args.pretrained_model_name_or_path,
-                    text_encoder=CLIPTextModel.from_pretrained(
-                        args.pretrained_model_name_or_path, 
-                        subfolder="text_encoder", 
-                        revision=args.revision
-                    ),
-                    vae=AutoencoderKL.from_pretrained(
-                        args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
-                        subfolder=None if args.pretrained_vae_name_or_path else "vae",
-                        revision=None if args.pretrained_vae_name_or_path else args.revision,
-                    ),
-                    safety_checker=None,
-                    torch_dtype=torch.float16,
-                    revision=args.revision,
-                )
-                monkeypatch_lora(pipeline.unet, torch.load(os.path.join(save_dir, "lora_unet.pt")))
-                if args.train_text_encoder:
-                    monkeypatch_lora(pipeline.text_encoder, torch.load(os.path.join(save_dir, "lora_text_encoder.pt")), target_replace_module=["CLIPAttention"])
-                tune_lora_scale(pipeline.unet, 1.00)
+
+                # No arguments yet, leave at defaults for now
+                #tune_lora_scale(pipeline.text_encoder, 1.00)
+                #tune_lora_scale(pipeline.unet, 1.00)
             else:
                 pipeline.save_pretrained(save_dir)
 
             if args.save_sample_prompt is not None:
+                pipeline = pipeline.to(accelerator.device)
+                if is_xformers_available():
+                    pipeline.enable_xformers_memory_efficient_attention()
+                    
                 save_sample_prompt = args.save_sample_prompt
                 save_sample_prompt = list(map(str.strip, save_sample_prompt.split('//')))
                 pipeline = pipeline.to(accelerator.device)
@@ -1097,6 +1084,7 @@ def main(args):
                 logs["lr/text"] = lr_scheduler.get_last_lr()[1]
             else:
                 logs["lr"] = lr_scheduler.get_last_lr()[0]
+
                 
             if args.log_gpu:
                 logs["GPU"] = get_gpu_memory_map()[0]
