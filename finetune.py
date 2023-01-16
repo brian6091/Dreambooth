@@ -726,13 +726,13 @@ def main(args):
             accelerator.log(logs, step=global_step)
 
             if global_step >= args.max_train_steps:
+                if args.sample_to_tracker:
+                    if args.tracker=="wandb" and is_wandb_available:
+                        accelerator.log({"samples": data_table}, step=step)
                 break
             
         accelerator.wait_for_everyone()
 
-    if args.sample_to_tracker:
-        if args.tracker=="wandb" and is_wandb_available:
-            accelerator.log({"samples": data_table}, step=step)
                             
     if accelerator.is_main_process:
         if global_step > last_save_at_step:
