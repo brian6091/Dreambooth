@@ -102,8 +102,8 @@ def main(args):
         log_with=args.tracker,
         logging_dir=logging_dir,
     )
-    print(accelerator)
-    print(dir(accelerator))
+    #print(accelerator)
+    #print(dir(accelerator))
     
     # https://huggingface.co/docs/diffusers/optimization/fp16
     if args.enable_autotuner:
@@ -461,7 +461,7 @@ def main(args):
             args.tracker_descriptor,
             init_kwargs=args.tracker_init_kwargs,
         )
-        print(accelerator.trackers)
+        #print(accelerator.trackers)
         
     print("***** Running training *****")
     print(f"  Num examples = {len(train_dataset)}")
@@ -582,7 +582,7 @@ def main(args):
                                 for j, im in enumerate(images):
                                     data_table.add_data(step, j, sample_prompt[j], args.sample_guidance_scale,
                                                        args.sample_seed if args.sample_seed!=None else args.seed,
-                                                       im)
+                                                       wandb.Image(im))
                         
                     grid = image_grid(all_images, rows=args.save_n_sample, cols=len(sample_prompt))
                     if args.sample_to_tracker:
