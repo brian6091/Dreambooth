@@ -459,8 +459,10 @@ def main(args):
             init_kwargs=args.tracker_init_kwargs,
         )
         
-        if is_wandb_available() and args.save_n_sample > 0:
-            data_table = wandb.Table(columns=["step", "prompt_id", "prompt", "cfg", "seed", "sample", "image"])
+        if is_wandb_available():
+            import wandb
+            if args.save_n_sample > 0:
+                data_table = wandb.Table(columns=["step", "prompt_id", "prompt", "cfg", "seed", "sample", "image"])
         
     print("***** Running training *****")
     print(f"  Num examples = {len(train_dataset)}")
