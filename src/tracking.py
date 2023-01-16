@@ -38,8 +38,8 @@ def get_intermediate_samples(
 
     g_cuda = torch.Generator(device=accelerator.device).manual_seed(sample_seed)
     pipeline.set_progress_bar_config(disable=True)
-    sample_dir = os.path.join(save_dir, "samples")
-    os.makedirs(sample_dir, exist_ok=True)
+    #sample_dir = os.path.join(save_dir, "samples")
+    #os.makedirs(sample_dir, exist_ok=True)
 
     with torch.autocast("cuda"), torch.inference_mode():
         all_images = []
