@@ -68,6 +68,7 @@ from src.optim import (
     group_parameters,
     get_explore_exploit_schedule_with_warmup,
 )
+from src.tracking import get_intermediate_samples
 from src.utils import image_grid, get_full_repo_name, get_gpu_memory_map
 
 
