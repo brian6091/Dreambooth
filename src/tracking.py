@@ -32,16 +32,8 @@ def get_intermediate_samples(
     data_table,
     step,
 ):
-
     sample_prompt = sample_prompt.replace("{}", instance_token)
     sample_prompt = list(map(str.strip, sample_prompt.split('//')))
-
-#     pipeline = pipeline.to(accelerator.device)
-#     # TODO, one of these slows inference a lot... make params sample_enable_attention_slicing, sample_enable_vae_slicing, sample_enable_xformers
-#     #pipeline.enable_attention_slicing()
-#     #pipeline.enable_vae_slicing()
-#     if enable_xformers and is_xformers_available():
-#         pipeline.enable_xformers_memory_efficient_attention()
 
     g_cuda = torch.Generator(device=accelerator.device).manual_seed(sample_seed)
     pipeline.set_progress_bar_config(disable=True)
@@ -68,10 +60,8 @@ def get_intermediate_samples(
 
         grid = image_grid(all_images, rows=save_n_sample, cols=len(sample_prompt))
         if sample_to_tracker:
-            if tracker=="wandb":# and is_wandb_available:
-                #accelerator.log({"samples": data_table}, step=step)
+            if tracker=="wandb" and is_wandb_available():
                 accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=step)
         grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
-
 
     return data_table
