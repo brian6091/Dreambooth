@@ -15,6 +15,7 @@
 import sys
 from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union, Iterable
 
+import inspect
 from functools import reduce
 import traceback
 
@@ -29,11 +30,14 @@ from diffusers import (
     EulerAncestralDiscreteScheduler,
     EulerDiscreteScheduler,
 )
-         
+from diffusers import AutoencoderKL, DiffusionPipeline, UNet2DConditionModel, DDPMScheduler
+from transformers import CLIPTextModel, AutoTokenizer
+
 from lora_diffusion import LoraInjectedLinear
 
 from safetensors.torch import save_file as safe_save
 from safetensors import safe_open
+
 
 
 # TODO make frozen, probably need another dict for how lora is saved in metadata?
@@ -122,6 +126,68 @@ def get_noise_scheduler(
 	
     return noise_scheduler
 	
+
+def get_pipeline(
+    accelerator,
+    tokenizer,
+    text_encoder,
+    unet,
+    train_token_embedding,
+    train_text_encoder,
+    train_unet, # TODO, correctly handle when unet not trained alos EMA
+    pretrained_model_name_or_path,
+    pretrained_vae_name_or_path,
+    sample_scheduler_name,
+    sample_scheduler_config,
+    revision,
+):
+    # https://github.com/huggingface/diffusers/issues/1566
+    accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
+        inspect.signature(accelerator.unwrap_model).parameters.keys()
+    )
+    extra_args = (
+        {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
+    )
+
+    if train_text_encoder or train_token_embedding:
+        text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
+    else:
+        text_enc_model = CLIPTextModel.from_pretrained(
+            args.pretrained_model_name_or_path,
+            subfolder="text_encoder",
+            )
+
+    # Set up scheduler for inference
+    if sample_scheduler_name and sample_scheduler_config:
+        sample_scheduler = get_noise_scheduler(sample_scheduler, config=sample_scheduler_config)        
+    elif args.sample_scheduler:
+        sample_scheduler = get_noise_scheduler(sample_scheduler, model_name_or_path=pretrained_model_name_or_path)
+    else:
+        sample_scheduler = DDPMScheduler.from_pretrained(pretrained_model_name_or_path, subfolder="scheduler")
+
+    pipeline = DiffusionPipeline.from_pretrained(
+        pretrained_model_name_or_path,
+        tokenizer=tokenizer,
+        unet=accelerator.unwrap_model(unet, **extra_args),
+        text_encoder=text_enc_model,
+        scheduler=sample_scheduler,
+        vae=AutoencoderKL.from_pretrained(
+            pretrained_vae_name_or_path or pretrained_model_name_or_path,
+            subfolder=None if pretrained_vae_name_or_path else "vae",
+            revision=None if pretrained_vae_name_or_path else revision,
+        ),
+        safety_checker=None,
+        requires_safety_checker=None,
+        torch_dtype=torch.float16, # TODO option to save in fp32?
+        revision=revision,
+    )
+
+    if True:#args.debug:
+        print(pipeline.scheduler.__class__.__name__)
+        print(pipeline.scheduler.config)
+
+    return pipeline
+
 
 def add_instance_tokens(
     tokenizer,
