@@ -102,8 +102,8 @@ def main(args):
         log_with=args.tracker,
         logging_dir=logging_dir,
     )
-    print(accelerator)
-    print(accelerator.trackers)
+#     print(accelerator)
+#     print(accelerator.trackers)
     
     # https://huggingface.co/docs/diffusers/optimization/fp16
     if args.enable_autotuner:
@@ -586,7 +586,8 @@ def main(args):
                     grid = image_grid(all_images, rows=args.save_n_sample, cols=len(sample_prompt))
                     if args.sample_to_tracker:
                         if args.tracker=="wandb" and is_wandb_available:
-                            accelerator.log({"samples":[wandb.Image(grid, caption="test")]}, step=step)
+                            accelerator.log({"samples": data_table}, step=step)
+                            accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=step)
                     grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
                     
                 del pipeline
