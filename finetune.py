@@ -461,7 +461,6 @@ def main(args):
             args.tracker_descriptor,
             init_kwargs=args.tracker_init_kwargs,
         )
-        #print(accelerator.trackers)
         
     print("***** Running training *****")
     print(f"  Num examples = {len(train_dataset)}")
@@ -728,6 +727,8 @@ def main(args):
             if global_step >= args.max_train_steps:
                 if args.sample_to_tracker:
                     if args.tracker=="wandb" and is_wandb_available:
+                        print("Trying to send data_table")
+                        print(data_table)
                         accelerator.log({"samples": data_table}, step=step)
                 break
             
