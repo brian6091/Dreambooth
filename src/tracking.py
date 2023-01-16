@@ -42,7 +42,7 @@ def get_intermediate_samples(
 
     with torch.autocast("cuda"), torch.inference_mode():
         all_images = []
-        for i in tqdm(range(save_n_sample), desc="Generating samples"):
+        for sample_id in tqdm(range(save_n_sample), desc="Generating samples"):
             images = pipeline(
                 sample_prompt,
                 negative_prompt=[sample_negative_prompt]*len(sample_prompt),
@@ -54,14 +54,16 @@ def get_intermediate_samples(
 
             if sample_to_tracker:
                 if tracker=="wandb" and is_wandb_available():
-                    for j, im in enumerate(images):
-                        data_table.add_data(step, j, sample_prompt[j], sample_guidance_scale,
-                                           sample_seed, wandb.Image(im))
+                    for prompt_id, im in enumerate(images):
+                        data_table.add_data(step, prompt_id, sample_prompt[j], sample_guidance_scale,
+                                           sample_seed, sample_id, wandb.Image(im))
 
         grid = image_grid(all_images, rows=save_n_sample, cols=len(sample_prompt))
+        
         if sample_to_tracker:
             if tracker=="wandb" and is_wandb_available():
                 accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=step)
+        
         grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
 
     return data_table
