@@ -954,6 +954,8 @@ def main(args):
                             print("First Text Encoder Layer's Down Weight is now : ", _down.weight.data)
                             break
 
+                # No arguments yet, leave at defaults for now
+                #tune_lora_scale(pipeline.text_encoder, 1.00)
                 #tune_lora_scale(pipeline.unet, 1.00)
             else:
                 pipeline.save_pretrained(save_dir)
@@ -1077,12 +1079,12 @@ def main(args):
             else:
                 logs = {"Loss/pred": loss.detach().item()}
 
-            if args.learning_rate_text is None:
-                logs["lr"] = lr_scheduler.get_last_lr()[0]
-            else:
+            if args.train_text_encoder:
                 logs["lr/unet"] = lr_scheduler.get_last_lr()[0]
-                if args.train_text_encoder:
-                    logs["lr/text"] = lr_scheduler.get_last_lr()[1]
+                logs["lr/text"] = lr_scheduler.get_last_lr()[1]
+            else:
+                logs["lr"] = lr_scheduler.get_last_lr()[0]
+
                 
             if args.log_gpu:
                 logs["GPU"] = get_gpu_memory_map()[0]
