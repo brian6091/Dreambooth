@@ -547,6 +547,7 @@ def main(args):
                 pipeline.save_pretrained(save_dir)
 
             if args.save_n_sample>0:
+                nonlocal data_table
                 sample_prompt = args.sample_prompt.replace("{}", args.instance_token)
                 sample_prompt = list(map(str.strip, sample_prompt.split('//')))
                 
