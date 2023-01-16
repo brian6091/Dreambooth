@@ -102,7 +102,7 @@ def main(args):
         log_with=args.tracker,
         logging_dir=logging_dir,
     )
-#     print(accelerator)
+    print(accelerator)
 #     print(accelerator.trackers)
     
     # https://huggingface.co/docs/diffusers/optimization/fp16
