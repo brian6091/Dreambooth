@@ -487,44 +487,44 @@ def main(args):
                 {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
             )
                     
-            if train_text_encoder or train_token_embedding:
-                text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
-            else:
-                text_enc_model = CLIPTextModel.from_pretrained(
-                    args.pretrained_model_name_or_path,
-                    subfolder="text_encoder",
-                    )
+#             if train_text_encoder or train_token_embedding:
+#                 text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
+#             else:
+#                 text_enc_model = CLIPTextModel.from_pretrained(
+#                     args.pretrained_model_name_or_path,
+#                     subfolder="text_encoder",
+#                     )
 
-            # Set up scheduler for inference
-            if args.sample_scheduler and args.sample_scheduler_config:
-                sample_scheduler = get_noise_scheduler(args.sample_scheduler, config=args.sample_scheduler_config)        
-            elif args.sample_scheduler:
-                sample_scheduler = get_noise_scheduler(args.sample_scheduler, model_name_or_path=args.pretrained_model_name_or_path)
-            else:
-                sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+#             # Set up scheduler for inference
+#             if args.sample_scheduler and args.sample_scheduler_config:
+#                 sample_scheduler = get_noise_scheduler(args.sample_scheduler, config=args.sample_scheduler_config)        
+#             elif args.sample_scheduler:
+#                 sample_scheduler = get_noise_scheduler(args.sample_scheduler, model_name_or_path=args.pretrained_model_name_or_path)
+#             else:
+#                 sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
                 
-            pipeline = DiffusionPipeline.from_pretrained(
-                args.pretrained_model_name_or_path,
-                tokenizer=tokenizer,
-                unet=accelerator.unwrap_model(
-                        ema_unet.averaged_model if args.use_ema else unet,
-                        **extra_args,
-                    ),
-                text_encoder=text_enc_model,
-                scheduler=sample_scheduler,
-                vae=AutoencoderKL.from_pretrained(
-                    args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
-                    subfolder=None if args.pretrained_vae_name_or_path else "vae",
-                    revision=None if args.pretrained_vae_name_or_path else args.revision,
-                ),
-                safety_checker=None,
-                requires_safety_checker=None,
-                torch_dtype=torch.float16, # TODO option to save in fp32?
-                revision=args.revision,
-            )
-            if True:#args.debug: # TODO remove
-                print(pipeline.scheduler.__class__.__name__)
-                print(pipeline.scheduler.config)
+#             pipeline = DiffusionPipeline.from_pretrained(
+#                 args.pretrained_model_name_or_path,
+#                 tokenizer=tokenizer,
+#                 unet=accelerator.unwrap_model(
+#                         ema_unet.averaged_model if args.use_ema else unet,
+#                         **extra_args,
+#                     ),
+#                 text_encoder=text_enc_model,
+#                 scheduler=sample_scheduler,
+#                 vae=AutoencoderKL.from_pretrained(
+#                     args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
+#                     subfolder=None if args.pretrained_vae_name_or_path else "vae",
+#                     revision=None if args.pretrained_vae_name_or_path else args.revision,
+#                 ),
+#                 safety_checker=None,
+#                 requires_safety_checker=None,
+#                 torch_dtype=torch.float16, # TODO option to save in fp32?
+#                 revision=args.revision,
+#             )
+#             if True:#args.debug: # TODO remove
+#                 print(pipeline.scheduler.__class__.__name__)
+#                 print(pipeline.scheduler.config)
         
             if args.lora_text_layer!=None or args.lora_unet_layer!=None:
                 # TODO, this should activate when !ALL is trained, or should be a config flag save_full_model or save_diffusers_format
@@ -540,28 +540,28 @@ def main(args):
                     save_path=os.path.join(save_dir, f"{step}_trained_parameters.safetensors"),
                 )
                 
-                tune_lora_scale(pipeline.unet, args.lora_unet_scale)
-                tune_lora_scale(pipeline.text_encoder, args.lora_text_scale)
-            else:
-                pipeline.save_pretrained(save_dir)
+#                 tune_lora_scale(pipeline.unet, args.lora_unet_scale)
+#                 tune_lora_scale(pipeline.text_encoder, args.lora_text_scale)
+#             else:
+#                 pipeline.save_pretrained(save_dir)
 
-            if args.save_n_sample>0:
-                data_table = get_intermediate_samples(
-                    accelerator=accelerator,
-                    pipeline=pipeline,
-                    instance_token=args.instance_token,
-                    sample_prompt=args.sample_prompt,
-                    sample_negative_prompt=args.sample_negative_prompt,
-                    sample_guidance_scale=args.sample_guidance_scale,
-                    sample_infer_steps=args.sample_infer_steps,
-                    sample_seed=args.sample_seed if args.sample_seed!=None else args.seed,
-                    save_n_sample=args.save_n_sample,
-                    save_dir=save_dir,
-                    sample_to_tracker=args.sample_to_tracker,
-                    tracker=args.tracker,
-                    data_table=data_table,
-                    step=step,
-                    )
+#             if args.save_n_sample>0:
+#                 data_table = get_intermediate_samples(
+#                     accelerator=accelerator,
+#                     pipeline=pipeline,
+#                     instance_token=args.instance_token,
+#                     sample_prompt=args.sample_prompt,
+#                     sample_negative_prompt=args.sample_negative_prompt,
+#                     sample_guidance_scale=args.sample_guidance_scale,
+#                     sample_infer_steps=args.sample_infer_steps,
+#                     sample_seed=args.sample_seed if args.sample_seed!=None else args.seed,
+#                     save_n_sample=args.save_n_sample,
+#                     save_dir=save_dir,
+#                     sample_to_tracker=args.sample_to_tracker,
+#                     tracker=args.tracker,
+#                     data_table=data_table,
+#                     step=step,
+#                     )
 
 #                 nonlocal data_table
 #                 sample_prompt = args.sample_prompt.replace("{}", args.instance_token)
@@ -698,6 +698,81 @@ def main(args):
                 
                 if global_step > 0 and not global_step % args.save_interval and global_step >= args.save_min_steps:
                     save_weights(global_step)
+                    
+                    save_dir = os.path.join(args.output_dir, f"{step}")
+                    if not os.path.exists(save_dir):
+                        os.makedirs(save_dir)
+
+                    # https://github.com/huggingface/diffusers/issues/1566
+                    # TODO move this up, rename extra_args > accelerator_unwrap_extra_args
+                    accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
+                        inspect.signature(accelerator.unwrap_model).parameters.keys()
+                    )
+                    extra_args = (
+                        {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
+                    )
+
+                    if train_text_encoder or train_token_embedding:
+                        text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
+                    else:
+                        text_enc_model = CLIPTextModel.from_pretrained(
+                            args.pretrained_model_name_or_path,
+                            subfolder="text_encoder",
+                            )
+
+                    # Set up scheduler for inference
+                    if args.sample_scheduler and args.sample_scheduler_config:
+                        sample_scheduler = get_noise_scheduler(args.sample_scheduler, config=args.sample_scheduler_config)        
+                    elif args.sample_scheduler:
+                        sample_scheduler = get_noise_scheduler(args.sample_scheduler, model_name_or_path=args.pretrained_model_name_or_path)
+                    else:
+                        sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+
+                    pipeline = DiffusionPipeline.from_pretrained(
+                        args.pretrained_model_name_or_path,
+                        tokenizer=tokenizer,
+                        unet=accelerator.unwrap_model(
+                                ema_unet.averaged_model if args.use_ema else unet,
+                                **extra_args,
+                            ),
+                        text_encoder=text_enc_model,
+                        scheduler=sample_scheduler,
+                        vae=AutoencoderKL.from_pretrained(
+                            args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
+                            subfolder=None if args.pretrained_vae_name_or_path else "vae",
+                            revision=None if args.pretrained_vae_name_or_path else args.revision,
+                        ),
+                        safety_checker=None,
+                        requires_safety_checker=None,
+                        torch_dtype=torch.float16, # TODO option to save in fp32?
+                        revision=args.revision,
+                    )
+                    if True:#args.debug: # TODO remove
+                        print(pipeline.scheduler.__class__.__name__)
+                        print(pipeline.scheduler.config)
+
+                    if args.save_n_sample>0:
+                        data_table = get_intermediate_samples(
+                            accelerator=accelerator,
+                            pipeline=pipeline,
+                            instance_token=args.instance_token,
+                            sample_prompt=args.sample_prompt,
+                            sample_negative_prompt=args.sample_negative_prompt,
+                            sample_guidance_scale=args.sample_guidance_scale,
+                            sample_infer_steps=args.sample_infer_steps,
+                            sample_seed=args.sample_seed if args.sample_seed!=None else args.seed,
+                            save_n_sample=args.save_n_sample,
+                            save_dir=save_dir,
+                            sample_to_tracker=args.sample_to_tracker,
+                            tracker=args.tracker,
+                            data_table=data_table,
+                            step=step,
+                            )
+                        
+                    del pipeline
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+
                     last_save_at_step = global_step
                             
             # TODO function get_step_logs(pred_loss, prior_loss, loss, args)
