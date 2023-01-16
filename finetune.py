@@ -587,7 +587,7 @@ def main(args):
                     grid = image_grid(all_images, rows=args.save_n_sample, cols=len(sample_prompt))
                     if args.sample_to_tracker:
                         if args.tracker=="wandb" and is_wandb_available:
-                            accelerator.log({"samples": data_table}, step=step)
+                            #accelerator.log({"samples": data_table}, step=step)
                             accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=step)
                     grid.save(os.path.join(sample_dir, f"{step}.jpg"), quality=90, optimize=True)
                     
@@ -730,6 +730,10 @@ def main(args):
             
         accelerator.wait_for_everyone()
 
+    if args.sample_to_tracker:
+        if args.tracker=="wandb" and is_wandb_available:
+            accelerator.log({"samples": data_table}, step=step)
+                            
     if accelerator.is_main_process:
         if global_step > last_save_at_step:
             save_weights(global_step)
