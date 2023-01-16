@@ -103,7 +103,7 @@ def main(args):
         logging_dir=logging_dir,
     )
     print(accelerator)
-#     print(accelerator.trackers)
+    print(dir(accelerator))
     
     # https://huggingface.co/docs/diffusers/optimization/fp16
     if args.enable_autotuner:
