@@ -101,7 +101,9 @@ def main(args):
         mixed_precision=args.mixed_precision,
         log_with=args.tracker,
         logging_dir=logging_dir,
-    )    
+    )
+    print(accelerator)
+    print(accelerator.trackers)
     
     # https://huggingface.co/docs/diffusers/optimization/fp16
     if args.enable_autotuner:
