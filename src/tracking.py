@@ -54,9 +54,10 @@ def get_intermediate_samples(
             all_images.extend(images)
 
             if data_table and tracker=="wandb" and is_wandb_available():
+                from wandb import Image
                 for prompt_id, im in enumerate(images):
                     data_table.add_data(step, prompt_id, sample_prompt[prompt_id], sample_guidance_scale,
-                                       sample_seed, sample_id, wandb.Image(im))
+                                       sample_seed, sample_id, Image(im))
 
         grid = image_grid(all_images, rows=save_n_sample, cols=len(sample_prompt))
         
