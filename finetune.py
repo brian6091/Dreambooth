@@ -79,13 +79,16 @@ def main(args):
 
     # TODO: CHECK FATAL ERRORS (e.g., no training, etc)
     # TODO: check instance and class (if given) path existence
+    is_wandb_available = False
     if args.tracker=="wandb":
-        is_wandb_available = False
         try:
             import wandb
             is_wandb_available = True
         except:
             printf("Wandb not installed.")
+            
+    if is_wandb_available and args.save_n_sample > 0:
+        data_table = wandb.Table(columns=["step", "prompt_id", "prompt", "cfg", "seed", "image"])
             
     if args.with_prior_preservation:
         if args.class_data_dir is None:
@@ -570,6 +573,13 @@ def main(args):
                             generator=g_cuda
                         ).images
                         all_images.extend(images)
+                        
+                        if args.sample_to_tracker:
+                            if args.tracker=="wandb" and is_wandb_available:
+                                for j, im in enumerate(images):
+                                    data_table.add_data(step, j, sample_prompt[j], args.sample_guidance_scale,
+                                                       args.sample_seed if args.sample_seed!=None else args.seed,
+                                                       im)
                         
                     grid = image_grid(all_images, rows=args.save_n_sample, cols=len(sample_prompt))
                     if args.sample_to_tracker:
