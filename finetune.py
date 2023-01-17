@@ -466,7 +466,7 @@ def main(args):
             if args.tracker_watch:
                 #wandb_run = accelerator.get_tracker("wandb")
                 #wandb.watch()
-                #wandb.watch((text_encoder, unet), log="all", log_freq=10)
+                wandb.watch((text_encoder, unet), log="all", log_freq=10)
                 
             if args.save_n_sample > 0:
                 data_table = wandb.Table(columns=["step", "prompt_id", "prompt", "cfg", "seed", "sample", "image"])
