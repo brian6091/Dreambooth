@@ -457,7 +457,7 @@ def main(args):
     if accelerator.is_main_process:
         accelerator.init_trackers(
             args.tracker_descriptor,
-            config=args.__dict__.copy(),
+            #config=args.__dict__.copy(),
             init_kwargs=args.tracker_init_kwargs,
         )
         
