@@ -238,6 +238,7 @@ def main(args):
                              lora_rank=args.lora_unet_rank,
                              lora_scale=args.lora_unet_scale,
                              lora_nonlin=args.lora_unet_nonlin,
+                             lora_init=args.lora_unet_init,
                              lora_train_off_target=args.lora_unet_train_off_target)
         
     text_encoder.requires_grad_(False)
@@ -248,6 +249,7 @@ def main(args):
                              lora_rank=args.lora_text_rank,
                              lora_scale=args.lora_text_scale,
                              lora_nonlin=args.lora_text_nonlin,
+                             lora_init=args.lora_text_init,
                              lora_train_off_target=args.lora_text_train_off_target)
 
     if args.save_parameter_summary:
