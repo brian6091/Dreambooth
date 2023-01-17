@@ -35,7 +35,7 @@ def get_intermediate_samples(
     g_cuda = torch.Generator(device=accelerator.device).manual_seed(sample_seed)
     pipeline.set_progress_bar_config(disable=True)
 
-    with torch.autocast("cuda"), torch.inference_mode():
+    with torch.inference_mode():
         all_images = []
         for sample_id in tqdm(range(save_n_sample), desc="Generating samples"):
             images = pipeline(
