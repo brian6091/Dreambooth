@@ -39,7 +39,6 @@ from safetensors.torch import save_file as safe_save
 from safetensors import safe_open
 
 
-
 # TODO make frozen, probably need another dict for how lora is saved in metadata?
 SAFE_CONFIGS = {
     "0.0.0": { # Reserved for lora library
@@ -134,7 +133,7 @@ def get_pipeline(
     unet,
     train_token_embedding,
     train_text_encoder,
-    train_unet, # TODO, correctly handle when unet not trained alos EMA
+    train_unet, # TODO, correctly handle when unet not trained also EMA
     pretrained_model_name_or_path,
     pretrained_vae_name_or_path,
     sample_scheduler_name,
