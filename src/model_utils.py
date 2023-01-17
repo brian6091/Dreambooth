@@ -354,7 +354,7 @@ def _inject_trainable_lora(
                         r=r,
                         scale=scale,
                         nonlin=nonlin,
-                        init=init
+                        init=init,
                         train_off_target=train_off_target,
                     )
         else:
