@@ -290,6 +290,7 @@ def _inject_trainable_lora(
     r: int = 4,
     scale: float = 1.0,
     nonlin: nn.Module = None,
+    init: str = None,
     train_off_target: Iterable[str] = None,
     # layer: Set[str] = {'Linear'},
 ):
@@ -306,6 +307,7 @@ def _inject_trainable_lora(
                     r=r,
                     scale=scale,
                     nonlin=nonlin,
+                    init=init,
                     train_off_target=train_off_target,
                 )
             else:
@@ -329,7 +331,7 @@ def _inject_trainable_lora(
                 r=r,
                 scale=scale,
                 nonlin=nonlin,
-                init=None,
+                init=init,
             )
                       
             # Assign pretrained parameters
@@ -352,6 +354,7 @@ def _inject_trainable_lora(
                         r=r,
                         scale=scale,
                         nonlin=nonlin,
+                        init=init
                         train_off_target=train_off_target,
                     )
         else:
@@ -459,6 +462,7 @@ def set_trainable_parameters(
     lora_rank: int = 4,
     lora_scale: float = 1.0,
     lora_nonlin: str = None,
+    lora_init: str = None,
     lora_layer: Iterable[str] = None,
     lora_train_off_target: Iterable[str] = None,
 ):
@@ -485,6 +489,7 @@ def set_trainable_parameters(
                             r=lora_rank,
                             scale=lora_scale,
                             nonlin=get_nonlin(lora_nonlin),
+                            init=lora_init,
                             train_off_target=lora_train_off_target,
                             )       
                 else:
@@ -499,6 +504,7 @@ def set_trainable_parameters(
                                 r=lora_rank,
                                 scale=lora_scale,
                                 nonlin=get_nonlin(lora_nonlin),
+                                init=lora_init,
                                 train_off_target=lora_train_off_target,
                                 )
                         except Exception:
