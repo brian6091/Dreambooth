@@ -160,6 +160,12 @@ def parse_args(input_args=None):
         default=None,
         help="Nonlinearity for LoRA in Unet.",
     )
+    parser.add_argument(
+        "--lora_unet_init",
+        type=none_or_str,
+        default=None,
+        help="Weight initialization scheme for LoRA weights (default = normal(0, 1/r).",
+    )
     
     parser.add_argument(
         "--lora_text_layer",
@@ -191,7 +197,12 @@ def parse_args(input_args=None):
         default=None,
         help="Nonlinearity for LoRA in text encoder.",
     )
-    
+    parser.add_argument(
+        "--lora_text_init",
+        type=none_or_str,
+        default=None,
+        help="Weight initialization scheme for LoRA weights (default = normal(0, 1/r).",
+    )    
     
     parser.add_argument(
         "--add_instance_token",
