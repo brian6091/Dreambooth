@@ -467,9 +467,10 @@ def main(args):
             if args.tracker_watch:
                 #wandb_run = accelerator.get_tracker("wandb")
                 #wandb.watch()
-                #wandb.watch((text_encoder, unet), log="all", log_freq=10)
-                test_module = get_module_by_name(unet, "down_blocks.0.attentions.0.transformer_blocks.0.attn1.to_q")
-                wandb.watch(test_module, log="all", log_freq=10)
+                #wandb.watch((text_encoder, unet), log="all", log_freq=10)               
+                test_module1 = get_module_by_name(unet, "down_blocks.0.attentions.0.transformer_blocks.0.ff.net.2")
+                test_module2 = get_module_by_name(unet, "up_blocks.3.attentions.2.transformer_blocks.0.ff.net.2")
+                wandb.watch([test_module1, test_module2], log="all", log_freq=10)
                 
             if args.save_n_sample > 0:
                 data_table = wandb.Table(columns=["step", "prompt_id", "prompt", "cfg", "seed", "sample", "image"])
@@ -629,7 +630,6 @@ def main(args):
                         if args.enable_xformers and is_xformers_available():
                             pipeline.enable_xformers_memory_efficient_attention()
                             
-                        #wandb.unwatch(test_module)
                         grid, data_table = get_intermediate_samples(
                             accelerator=accelerator,
                             pipeline=pipeline,
@@ -645,7 +645,7 @@ def main(args):
                             data_table=data_table,
                             step=global_step,
                             )
-                        #wandb.watch(test_module, log="all", log_freq=10)
+
                         # TODO save_local parameter
                         sample_dir = os.path.join(save_dir, "samples")
                         os.makedirs(sample_dir, exist_ok=True)
