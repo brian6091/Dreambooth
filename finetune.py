@@ -629,7 +629,7 @@ def main(args):
                         if args.enable_xformers and is_xformers_available():
                             pipeline.enable_xformers_memory_efficient_attention()
                             
-                        wandb.unwatch(test_module)
+                        #wandb.unwatch(test_module)
                         grid, data_table = get_intermediate_samples(
                             accelerator=accelerator,
                             pipeline=pipeline,
@@ -645,7 +645,7 @@ def main(args):
                             data_table=data_table,
                             step=global_step,
                             )
-                        wandb.watch(test_module, log="all", log_freq=10)
+                        #wandb.watch(test_module, log="all", log_freq=10)
                         # TODO save_local parameter
                         sample_dir = os.path.join(save_dir, "samples")
                         os.makedirs(sample_dir, exist_ok=True)
