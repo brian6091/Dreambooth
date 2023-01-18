@@ -648,7 +648,12 @@ def main(args):
                         sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
                     pipeline = get_pipeline(
-                        vae=vae,
+                        vae=AutoencoderKL.from_pretrained(
+                            args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
+                            subfolder=None if args.pretrained_vae_name_or_path else "vae",
+                            revision=None if args.pretrained_vae_name_or_path else args.revision,
+                            torch_dtype=torch_dtype,
+                        ),
                         tokenizer=tokenizer,
                         text_encoder=accelerator.unwrap_model(text_encoder, **unwrap_args) \
                             if (train_text_encoder or train_token_embedding) else text_encoder,
