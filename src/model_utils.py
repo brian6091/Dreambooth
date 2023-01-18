@@ -218,6 +218,7 @@ def get_pipeline(
             text_encoder=text_encoder,
             unet=unet,
             scheduler=scheduler,
+            feature_extractor=None,
             safety_checker=None,
             requires_safety_checker=None,
         )
