@@ -67,7 +67,7 @@ from src.model_utils import (
     _inject_trainable_lora,
     count_parameters,
     print_trainable_parameters,
-    get_tensor_info,
+    #get_tensor_info,
     get_pipeline,
     get_module_by_name,
     save_trainable_parameters,
@@ -110,8 +110,17 @@ def main(args):
     if args.allow_tf32:
         torch.backends.cuda.matmul.allow_tf32 = True
         
-    # Handle the repository creation
+    if args.seed is not None:
+        if args.enable_full_determinism:
+            enable_full_determinism(args.seed)
+        else:
+            set_seed(args.seed)
+            
+    if args.debug:
+        torch.set_printoptions(precision=10)
+
     if accelerator.is_main_process:
+        # Handle the repository creation
         if args.push_to_hub:
             if args.hub_model_id is None:
                 repo_name = get_full_repo_name(Path(args.output_dir).name, token=args.hub_token)
@@ -124,21 +133,17 @@ def main(args):
                     gitignore.write("step_*\n")
                 if "epoch_*" not in gitignore:
                     gitignore.write("epoch_*\n")
-        elif args.output_dir is not None:
+        
+        # TODO clean up saving and sample generation to account for when there is no output_dir
+        # e.g., everything is pushed to tracker or hub?
+        if args.output_dir is not None:
             os.makedirs(args.output_dir, exist_ok=True)
             
         with open(os.path.join(args.output_dir, "args.yaml"), "w") as f:
             yaml.dump(format_args(args), f, indent=2, sort_keys=False)            
             
-    if args.seed is not None:
-        if args.enable_full_determinism:
-            enable_full_determinism(args.seed)
-        else:
-            set_seed(args.seed)
-            
-    if args.debug:
-        torch.set_printoptions(precision=10)
-
+    # TODO move to function or at least use get_pipeline, move under main process above
+    # Put after component loading, so that we can at least use the components to make pipeline
     if args.with_prior_preservation:
         class_images_dir = Path(args.class_data_dir)
         if not class_images_dir.exists():
@@ -294,7 +299,7 @@ def main(args):
     if train_unet and args.enable_xformers and is_xformers_available():
         try:
             unet.enable_xformers_memory_efficient_attention()
-            # TODO for vae also?
+            # TODO vae.enable_xformers_memory_efficient_attention() is inherited?
         except Exception as e:
             logger.warning(
                 "Could not enable memory efficient attention. Make sure xformers is installed"
@@ -437,11 +442,19 @@ def main(args):
         text_encoder.to(accelerator.device, dtype=weight_dtype)
         text_encoder.eval()
 
+    # https://github.com/huggingface/diffusers/issues/1566
+    accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
+        inspect.signature(accelerator.unwrap_model).parameters.keys()
+    )
+    unwrap_args = (
+        {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
+    )
+
     # Create EMA for the unet.
     if args.use_ema and train_unet:
         ema_unet = EMAModel(
-            accelerator.unwrap_model(unet), # TODO update to fp32_wrapper
-            inv_gamma=args.ema_inv_gamma, 
+            accelerator.unwrap_model(unet, **unwrap_args),
+            inv_gamma=args.ema_inv_gamma, # TODO dictionary inputs
             power=args.ema_power, 
             min_value=args.ema_min_value,
             max_value=args.ema_max_value
@@ -494,24 +507,24 @@ def main(args):
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
 
-            # https://github.com/huggingface/diffusers/issues/1566
-            # TODO move this up, rename extra_args > accelerator_unwrap_extra_args
-            accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
-                inspect.signature(accelerator.unwrap_model).parameters.keys()
-            )
-            extra_args = (
-                {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
-            )
+#             # https://github.com/huggingface/diffusers/issues/1566
+#             # TODO move this up, rename extra_args > accelerator_unwrap_extra_args
+#             accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
+#                 inspect.signature(accelerator.unwrap_model).parameters.keys()
+#             )
+#             extra_args = (
+#                 {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
+#             )
         
             if args.lora_text_layer!=None or args.lora_unet_layer!=None:
                 # TODO, this should activate when !ALL is trained, or should be a config flag save_full_model or save_diffusers_format
                 # TODO optionally dump out keys to text file
                 saved_keys = save_trainable_parameters(
                     tokenizer=tokenizer,
-                    text_encoder=accelerator.unwrap_model(text_encoder, **extra_args),
+                    text_encoder=accelerator.unwrap_model(text_encoder, **unwrap_args),
                     unet=accelerator.unwrap_model(
                             ema_unet.averaged_model if args.use_ema else unet,
-                            **extra_args,
+                            **unwrap_args,
                         ),
                     instance_token=args.instance_token if args.add_instance_token else None,
                     save_path=os.path.join(save_dir, f"{step}_trained_parameters.safetensors"),
@@ -525,8 +538,10 @@ def main(args):
     global_step = 0
     last_save_at_step = 0
     
+    # TODO add sampling from base model step=0,
+    
     if args.add_instance_token:
-        orig_embeds_params = accelerator.unwrap_model(text_encoder).get_input_embeddings().weight.data.clone()
+        orig_embeds_params = accelerator.unwrap_model(text_encoder, **unwrap_args).get_input_embeddings().weight.data.clone()
 
     for epoch in range(args.num_train_epochs):
         if train_unet:
@@ -594,7 +609,7 @@ def main(args):
                     # Re-insert original embedding weights for everything except the newly added token(s)
                     index_no_updates = torch.arange(len(tokenizer)) != instance_token_id
                     with torch.no_grad():
-                        accelerator.unwrap_model(text_encoder).get_input_embeddings().weight[
+                        accelerator.unwrap_model(text_encoder, **unwrap_args).get_input_embeddings().weight[
                             index_no_updates
                         ] = orig_embeds_params[index_no_updates]
                 
@@ -609,23 +624,41 @@ def main(args):
                     save_dir = os.path.join(args.output_dir, f"{global_step}")
                     os.makedirs(save_dir, exist_ok=True)
 
+#                     pipeline = get_pipeline(
+#                         accelerator=accelerator,
+#                         tokenizer=tokenizer,
+#                         text_encoder=text_encoder,
+#                         unet=unet,
+#                         train_token_embedding=train_token_embedding,
+#                         train_text_encoder=train_text_encoder,
+#                         train_unet=train_unet,
+#                         pretrained_model_name_or_path=args.pretrained_model_name_or_path,
+#                         pretrained_vae_name_or_path=args.pretrained_vae_name_or_path,
+#                         sample_scheduler_name=args.sample_scheduler,
+#                         sample_scheduler_config=args.sample_scheduler_config,
+#                         revision=args.revision,
+#                     )
+                    # Set up scheduler for inference
+                    sample_scheduler = None
+                    if args.sample_scheduler and args.sample_scheduler_config:
+                        sample_scheduler = get_noise_scheduler(args.sample_scheduler, config=args.sample_scheduler_config)        
+                    elif args.sample_scheduler:
+                        sample_scheduler = get_noise_scheduler(args.sample_scheduler, model_name_or_path=args.pretrained_model_name_or_path)
+                    else:
+                        sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+
                     pipeline = get_pipeline(
-                        accelerator=accelerator,
+                        vae=vae,
                         tokenizer=tokenizer,
-                        text_encoder=text_encoder,
-                        unet=unet,
-                        train_token_embedding=train_token_embedding,
-                        train_text_encoder=train_text_encoder,
-                        train_unet=train_unet,
-                        pretrained_model_name_or_path=args.pretrained_model_name_or_path,
-                        pretrained_vae_name_or_path=args.pretrained_vae_name_or_path,
-                        sample_scheduler_name=args.sample_scheduler,
-                        sample_scheduler_config=args.sample_scheduler_config,
-                        revision=args.revision,
+                        text_encoder=accelerator.unwrap_model(text_encoder, **unwrap_args) \
+                            if (train_text_encoder or train_token_embedding) else text_encoder,
+                        unet=accelerator.unwrap_model(unet, **unwrap_args) if train_unet else unet,
+                        scheduler=sample_scheduler or noise_scheduler,
+                        debug=False,
                     )
-    
+                    
                     if args.save_n_sample>0:
-                        pipeline = pipeline.to(accelerator.device)
+                        pipeline = pipeline.to(accelerator.device) # Nessecary? everything is on device already
                         # TODO, one of these slows inference a lot... 
                         #pipeline.enable_attention_slicing()
                         #pipeline.enable_vae_slicing()
