@@ -211,7 +211,7 @@ def get_pipeline(
 #     else:
 #         error? 
         
-    if all(vae, tokenizer, text_encoder, unet, scheduler):
+    if all((vae, tokenizer, text_encoder, unet, scheduler)):
         pipeline = StableDiffusionPipeline(
             vae=vae,
             tokenizer=tokenizer,
