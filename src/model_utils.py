@@ -259,7 +259,7 @@ def find_modules_by_name_or_class(
 ):
     for fullname, module in model.named_modules():
         *path, name = fullname.split(".")
-        if (module.__class__.__name__ in target) or (name in target):
+        if (module.__class__.__name__ in target) or (name in target) or (fullname in target):
             yield module.__class__.__name__, fullname, name, module
             
 
@@ -358,7 +358,7 @@ def _inject_trainable_lora(
                         train_off_target=train_off_target,
                     )
         else:
-            print(f"Cannot inject LoRA into {_child_module.__class__.__name__}")
+            print(f"Cannot inject LoRA into {_child_module.__class__.__name__} with {target_name}")
             if train_off_target!=None:
                 if _child_module.__class__.__name__ in train_off_target:
                     print(f"But {_child_module.__class__.__name__} was enabled by request")
@@ -497,10 +497,11 @@ def set_trainable_parameters(
                         m, target=target_submodule
                     ):
                         try:
-                            parent = get_module_by_name(model, f"{n}.{_f}".rsplit(".", 1)[0])
+                            parent_name, child_name = f"{f}.{_f}".fullname.rsplit(".", 1)
+                            parent = get_module_by_name(model, parent_name)
                             _inject_trainable_lora(
                                 parent,
-                                target_name=_n,
+                                target_name=child_name,
                                 r=lora_rank,
                                 scale=lora_scale,
                                 nonlin=get_nonlin(lora_nonlin),
