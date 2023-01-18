@@ -559,7 +559,7 @@ def set_trainable_parameters(
                         m, target=target_submodule
                     ):
                         try:
-                            parent_name, child_name = f"{f}.{_f}".fullname.rsplit(".", 1)
+                            parent_name, child_name = f"{f}.{_f}".rsplit(".", 1)
                             parent = get_module_by_name(model, parent_name)
                             _inject_trainable_lora(
                                 parent,
