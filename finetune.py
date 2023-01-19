@@ -624,20 +624,6 @@ def main(args):
                     save_dir = os.path.join(args.output_dir, f"{global_step}")
                     os.makedirs(save_dir, exist_ok=True)
 
-#                     pipeline = get_pipeline(
-#                         accelerator=accelerator,
-#                         tokenizer=tokenizer,
-#                         text_encoder=text_encoder,
-#                         unet=unet,
-#                         train_token_embedding=train_token_embedding,
-#                         train_text_encoder=train_text_encoder,
-#                         train_unet=train_unet,
-#                         pretrained_model_name_or_path=args.pretrained_model_name_or_path,
-#                         pretrained_vae_name_or_path=args.pretrained_vae_name_or_path,
-#                         sample_scheduler_name=args.sample_scheduler,
-#                         sample_scheduler_config=args.sample_scheduler_config,
-#                         revision=args.revision,
-#                     )
                     # Set up scheduler for inference
                     sample_scheduler = None
                     if args.sample_scheduler and args.sample_scheduler_config:
@@ -662,6 +648,10 @@ def main(args):
                     )
                     
                     if args.save_n_sample>0:
+                        if args.lora_text_layer!=None or args.lora_unet_layer!=None::
+                            tune_lora_scale(pipeline.unet, args.lora_unet_scale)
+                            tune_lora_scale(pipeline.text_encoder, args.lora_text_scale)
+                        
                         pipeline = pipeline.to(accelerator.device) # Nessecary? everything is on device already
                         # TODO, one of these slows inference a lot... 
                         #pipeline.enable_attention_slicing()
