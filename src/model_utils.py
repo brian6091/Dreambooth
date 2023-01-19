@@ -198,19 +198,9 @@ def get_pipeline(
     unet=None,
     scheduler=None,
     revision=None,
-    torch_dtype=torch.float16,
+    torch_dtype=torch.float16, # TODO
     debug=False,
-):
-#     if scheduler_name and scheduler_config:
-#         noise_scheduler = get_noise_scheduler(scheduler_name, config=scheduler_config)        
-#     elif scheduler_name and pretrained_model_name_or_path:
-#         noise_scheduler = get_noise_scheduler(scheduler_name, model_name_or_path=pretrained_model_name_or_path)
-#     elif pretrained_model_name_or_path:
-#         # Perhaps
-#         noise_scheduler = DDPMScheduler.from_pretrained(pretrained_model_name_or_path, subfolder="scheduler")
-#     else:
-#         error? 
-        
+):      
     if all((vae, tokenizer, text_encoder, unet, scheduler)):
         pipeline = StableDiffusionPipeline(
             vae=vae,
@@ -223,14 +213,6 @@ def get_pipeline(
             requires_safety_checker=None,
         )
     elif pretrained_model_name_or_path:
-#         if not vae:
-#             vae = AutoencoderKL.from_pretrained(
-#                 pretrained_vae_name_or_path or pretrained_model_name_or_path,
-#                 subfolder=None if pretrained_vae_name_or_path else "vae",
-#                 revision=None if pretrained_vae_name_or_path else revision,
-#                 torch_dtype=torch_dtype,
-#             )
-            
         d = {"vae": vae, "tokenizer": tokenizer, "text_encoder": text_encoder, "unet": unet, "scheduler": scheduler}
         kwargs = {k: v for k,v in d.items() if v}
         
@@ -407,7 +389,7 @@ def _inject_trainable_lora(
             model._modules[target_name] = _tmp
 
             model._modules[target_name].lora_up.weight.requires_grad = True
-            model._modules[target_name].lora_down.weight.requires_grad = True
+            model._modules[target_name].lora_down.weight.requires_grad = False
         elif isinstance(_child_module, nn.ModuleList):
             for p, n, m in _find_children(_child_module):
                 if not isinstance(p, LoraInjectedLinear): # TODO catch Conv2
