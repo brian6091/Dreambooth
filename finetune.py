@@ -480,7 +480,8 @@ def main(args):
         if is_wandb_available():
             import wandb
             if args.tracker_watch:
-                #wandb_run = accelerator.get_tracker("wandb")
+                # TODO paramter list of components to watch, otherwise all
+                # need also log_freq and type as  parameters
                 #wandb.watch()
                 #wandb.watch((text_encoder, unet), log="all", log_freq=10)               
                 test_module1 = get_module_by_name(unet, "down_blocks.0.attentions.0.transformer_blocks.0.ff.net.2")
@@ -506,15 +507,6 @@ def main(args):
             save_dir = os.path.join(args.output_dir, f"{step}")
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
-
-#             # https://github.com/huggingface/diffusers/issues/1566
-#             # TODO move this up, rename extra_args > accelerator_unwrap_extra_args
-#             accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
-#                 inspect.signature(accelerator.unwrap_model).parameters.keys()
-#             )
-#             extra_args = (
-#                 {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
-#             )
         
             if args.lora_text_layer!=None or args.lora_unet_layer!=None:
                 # TODO, this should activate when !ALL is trained, or should be a config flag save_full_model or save_diffusers_format
@@ -631,6 +623,7 @@ def main(args):
                     elif args.sample_scheduler:
                         sample_scheduler = get_noise_scheduler(args.sample_scheduler, model_name_or_path=args.pretrained_model_name_or_path)
                     else:
+                        # TODO skip, as below we set sample_scheduler=noise_scheduler
                         sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
                     pipeline = get_pipeline(
