@@ -641,7 +641,7 @@ def main(args):
                     )
                     
                     if args.save_n_sample>0:
-                        if args.lora_text_layer!=None or args.lora_unet_layer!=None::
+                        if args.lora_text_layer!=None or args.lora_unet_layer!=None:
                             tune_lora_scale(pipeline.unet, args.lora_unet_scale)
                             tune_lora_scale(pipeline.text_encoder, args.lora_text_scale)
                         
