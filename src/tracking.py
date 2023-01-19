@@ -32,7 +32,7 @@ def get_intermediate_samples(
     prompt = prompt.replace("{}", instance_token)
     prompt = list(map(str.strip, prompt.split('//')))
 
-    g_cuda = torch.Generator(device=device).manual_seed(sample_seed)
+    g_cuda = torch.Generator(device=device).manual_seed(seed)
     pipeline.set_progress_bar_config(disable=True)
 
     with torch.inference_mode():
