@@ -653,14 +653,14 @@ def main(args):
                             pipeline.enable_xformers_memory_efficient_attention()
                             
                         grid, data_table = get_intermediate_samples(
-                            accelerator=accelerator,
                             pipeline=pipeline,
+                            device=accelerator.device,
                             instance_token=args.instance_token,
-                            sample_prompt=args.sample_prompt,
-                            sample_negative_prompt=args.sample_negative_prompt,
-                            sample_guidance_scale=args.sample_guidance_scale,
-                            sample_infer_steps=args.sample_infer_steps,
-                            sample_seed=args.sample_seed if args.sample_seed!=None else args.seed,
+                            prompt=args.sample_prompt,
+                            negative_prompt=args.sample_negative_prompt,
+                            guidance_scale=args.sample_guidance_scale,
+                            infer_steps=args.sample_infer_steps,
+                            seed=args.sample_seed if args.sample_seed!=None else args.seed,
                             save_n_sample=args.save_n_sample,
                             save_dir=save_dir,
                             tracker=args.tracker,
