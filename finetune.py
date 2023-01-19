@@ -48,10 +48,10 @@ from tqdm.auto import tqdm
 from transformers import CLIPTextModel, AutoTokenizer
 
 from lora_diffusion import (
-    inject_trainable_lora,
-    save_lora_weight,
-    extract_lora_ups_down,
-    monkeypatch_lora,
+    #inject_trainable_lora,
+    #save_lora_weight,
+    #extract_lora_ups_down,
+    #monkeypatch_lora,
     tune_lora_scale,
 )
 
@@ -61,10 +61,10 @@ from src.model_utils import (
     SAFE_CONFIGS,
     get_noise_scheduler,
     add_instance_tokens,
-    find_modules_by_name_or_class,
+    #find_modules_by_name_or_class,
     set_trainable_parameters,
-    _find_children,
-    _inject_trainable_lora,
+    #_find_children,
+    #_inject_trainable_lora,
     count_parameters,
     print_trainable_parameters,
     #get_tensor_info,
