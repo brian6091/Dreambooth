@@ -126,69 +126,6 @@ def get_noise_scheduler(
     return noise_scheduler
 	
 
-# def get_pipeline(
-#     accelerator,
-#     tokenizer,
-#     text_encoder,
-#     unet,
-#     train_token_embedding,
-#     train_text_encoder,
-#     train_unet, # TODO, correctly handle when unet not trained also EMA
-#     pretrained_model_name_or_path: str = None,
-#     pretrained_vae_name_or_path: str = None,
-#     scheduler_name: str = None,
-#     scheduler_config=None,
-#     revision=None,
-#     torch_dtype=torch.float16,
-#     debug=False,
-# ):
-#     # https://github.com/huggingface/diffusers/issues/1566
-#     accepts_keep_fp32_wrapper = "keep_fp32_wrapper" in set(
-#         inspect.signature(accelerator.unwrap_model).parameters.keys()
-#     )
-#     extra_args = (
-#         {"keep_fp32_wrapper": True} if accepts_keep_fp32_wrapper else {}
-#     )
-
-# #     if train_text_encoder or train_token_embedding:
-# #         text_enc_model = accelerator.unwrap_model(text_encoder, **extra_args)
-# #     else:
-# #         text_enc_model = CLIPTextModel.from_pretrained(
-# #             args.pretrained_model_name_or_path,
-# #             subfolder="text_encoder",
-# #             )
-
-#     # Set up scheduler for inference
-#     if scheduler_name and scheduler_config:
-#         noise_scheduler = get_noise_scheduler(scheduler_name, config=scheduler_config)        
-#     elif scheduler_name:
-#         noise_scheduler = get_noise_scheduler(scheduler_name, model_name_or_path=pretrained_model_name_or_path)
-#     else:
-#         noise_scheduler = DDPMScheduler.from_pretrained(pretrained_model_name_or_path, subfolder="scheduler")
-
-#     pipeline = DiffusionPipeline.from_pretrained(
-#         pretrained_model_name_or_path,
-#         tokenizer=tokenizer,
-#         unet=accelerator.unwrap_model(unet, **extra_args) if train_unet else unet,
-#         text_encoder=accelerator.unwrap_model(text_encoder, **extra_args) if (train_text_encoder or train_token_embedding) else text_encoder,
-#         scheduler=noise_scheduler,
-#         vae=AutoencoderKL.from_pretrained(
-#             pretrained_vae_name_or_path or pretrained_model_name_or_path,
-#             subfolder=None if pretrained_vae_name_or_path else "vae",
-#             revision=None if pretrained_vae_name_or_path else revision,
-#         ),
-#         safety_checker=None,
-#         requires_safety_checker=None,
-#         torch_dtype=torch_dtype, # TODO option to save in fp32?
-#         revision=revision,
-#     )
-
-#     if debug:
-#         print(pipeline.scheduler.__class__.__name__)
-#         print(pipeline.scheduler.config)
-
-#     return pipeline
-
 def get_pipeline(
     pretrained_model_name_or_path: str = None,
     pretrained_vae_name_or_path: str = None,
@@ -389,7 +326,7 @@ def _inject_trainable_lora(
             model._modules[target_name] = _tmp
 
             model._modules[target_name].lora_up.weight.requires_grad = True
-            model._modules[target_name].lora_down.weight.requires_grad = False
+            model._modules[target_name].lora_down.weight.requires_grad = True
         elif isinstance(_child_module, nn.ModuleList):
             for p, n, m in _find_children(_child_module):
                 if not isinstance(p, LoraInjectedLinear): # TODO catch Conv2
