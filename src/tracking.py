@@ -15,34 +15,34 @@ from .utils import image_grid
 
 
 def get_intermediate_samples(
-    accelerator,
     pipeline,
+    device,
     instance_token,
-    sample_prompt,
-    sample_negative_prompt,
-    sample_guidance_scale,
-    sample_infer_steps,
-    sample_seed,
+    prompt,
+    negative_prompt,
+    guidance_scale,
+    infer_steps,
+    seed,
     save_n_sample,
     save_dir,
     tracker,
     data_table,
     step,
 ):
-    sample_prompt = sample_prompt.replace("{}", instance_token)
-    sample_prompt = list(map(str.strip, sample_prompt.split('//')))
+    prompt = prompt.replace("{}", instance_token)
+    prompt = list(map(str.strip, prompt.split('//')))
 
-    g_cuda = torch.Generator(device=accelerator.device).manual_seed(sample_seed)
+    g_cuda = torch.Generator(device=device).manual_seed(sample_seed)
     pipeline.set_progress_bar_config(disable=True)
 
     with torch.inference_mode():
         all_images = []
         for sample_id in tqdm(range(save_n_sample), desc="Generating samples"):
             images = pipeline(
-                sample_prompt,
-                negative_prompt=[sample_negative_prompt]*len(sample_prompt),
-                guidance_scale=sample_guidance_scale,
-                num_inference_steps=sample_infer_steps,
+                prompt,
+                negative_prompt=[negative_prompt]*len(prompt),
+                guidance_scale=guidance_scale,
+                num_inference_steps=infer_steps,
                 generator=g_cuda
             ).images
             all_images.extend(images)
@@ -53,12 +53,13 @@ def get_intermediate_samples(
                     data_table.add_data(
                         step,
                         prompt_id,
-                        sample_prompt[prompt_id],
-                        sample_guidance_scale,
-                        sample_seed, sample_id,
+                        prompt[prompt_id],
+                        guidance_scale,
+                        seed,
+                        sample_id,
                         Image(im, caption=f"step:{step}, prompt_id:{prompt_id}, sample_id:{sample_id}")
                        )
 
-        grid = image_grid(all_images, rows=save_n_sample, cols=len(sample_prompt))
+        grid = image_grid(all_images, rows=save_n_sample, cols=len(prompt))
         
     return grid, data_table
