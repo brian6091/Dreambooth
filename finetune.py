@@ -627,6 +627,7 @@ def main(args):
                         sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
                     pipeline = get_pipeline(
+                        args.pretrained_model_name_or_path,
                         vae=AutoencoderKL.from_pretrained(
                             args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
                             subfolder=None if args.pretrained_vae_name_or_path else "vae",
