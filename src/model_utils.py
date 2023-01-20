@@ -176,7 +176,7 @@ def get_pipeline(
 # #         error
 
     if True:#debug:
-		print(pipeline)
+        print(pipeline)
         print(pipeline.scheduler)
 
     return pipeline
