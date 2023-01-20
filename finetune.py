@@ -611,6 +611,9 @@ def main(args):
                 global_step += 1
                 
                 if global_step > 0 and not global_step % args.save_interval and global_step >= args.save_min_steps:
+                    # if accelerator.is_main_process:
+                    # if args.lora_text_layer or args.lora_unet_layer:
+                    # distinguish lora_text_layer/no_unet, text/unet, no_text/unet, ...
                     save_weights(global_step)
                     
                     save_dir = os.path.join(args.output_dir, f"{global_step}")
@@ -622,9 +625,9 @@ def main(args):
                         sample_scheduler = get_noise_scheduler(args.sample_scheduler, config=args.sample_scheduler_config)        
                     elif args.sample_scheduler:
                         sample_scheduler = get_noise_scheduler(args.sample_scheduler, model_name_or_path=args.pretrained_model_name_or_path)
-                    else:
+                    #else:
                         # TODO skip, as below we set sample_scheduler=noise_scheduler
-                        sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+                        #sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
                     pipeline = get_pipeline(
                         args.pretrained_model_name_or_path,
@@ -638,13 +641,15 @@ def main(args):
                             if (train_text_encoder or train_token_embedding) else text_encoder,
                         unet=accelerator.unwrap_model(unet, **unwrap_args) if train_unet else unet,
                         scheduler=sample_scheduler or noise_scheduler,
-                        debug=False,
+                        debug=True,
+                        # TODO pass in torch_dtype from args.sample_precision?
                     )
                     
                     if args.save_n_sample>0:
-                        if args.lora_text_layer!=None or args.lora_unet_layer!=None:
+                        if args.lora_text_layer:
+                            tune_lora_scale(pipeline.text_encoder, args.lora_text_scale)                        
+                        if args.lora_unet_layer:
                             tune_lora_scale(pipeline.unet, args.lora_unet_scale)
-                            tune_lora_scale(pipeline.text_encoder, args.lora_text_scale)
                         
                         pipeline = pipeline.to(accelerator.device) # Nessecary? everything is on device already
                         # TODO, one of these slows inference a lot... 
