@@ -674,6 +674,10 @@ def main(args):
                             step=global_step,
                             )
 
+                        del pipeline
+                        if torch.cuda.is_available():
+                            torch.cuda.empty_cache()
+                            
                         # TODO save_local parameter
                         sample_dir = os.path.join(save_dir, "samples")
                         os.makedirs(sample_dir, exist_ok=True)
