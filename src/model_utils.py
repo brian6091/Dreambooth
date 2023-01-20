@@ -128,7 +128,7 @@ def get_noise_scheduler(
 
 def get_pipeline(
     pretrained_model_name_or_path: str = None,
-    pretrained_vae_name_or_path: str = None,
+    #pretrained_vae_name_or_path: str = None,
     vae=None,
     tokenizer=None,
     text_encoder=None,
