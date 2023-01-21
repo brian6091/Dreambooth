@@ -1,4 +1,6 @@
 import os
+from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union, Iterable
+
 import torch
 from tqdm.auto import tqdm
 
@@ -29,8 +31,10 @@ def get_intermediate_samples(
     data_table,
     step,
 ):
-    prompt = prompt.replace("{}", instance_token)
-    prompt = list(map(str.strip, prompt.split('//')))
+    if isinstance(prompt, Union[List, Set]):
+        prompt = [p.replace("{}", instance_token).strip() for p in prompt]
+    else:
+        prompt = prompt.replace("{}", instance_token).strip()
 
     g_cuda = torch.Generator(device=device).manual_seed(seed)
     pipeline.set_progress_bar_config(disable=True)
