@@ -31,10 +31,10 @@ def get_intermediate_samples(
     data_table,
     step,
 ):
-    if isinstance(prompt, Union[List, Set]):
-        prompt = [p.replace("{}", instance_token).strip() for p in prompt]
-    else:
+    if isinstance(prompt, str):
         prompt = prompt.replace("{}", instance_token).strip()
+    else:
+        prompt = [p.replace("{}", instance_token).strip() for p in prompt]
 
     g_cuda = torch.Generator(device=device).manual_seed(seed)
     pipeline.set_progress_bar_config(disable=True)
