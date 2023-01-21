@@ -589,11 +589,17 @@ def parse_args(input_args=None):
         type=as_literal,
         help="Sample scheduler parameters as dictionary.",
         )
+#     parser.add_argument(
+#         "--sample_prompt",
+#         type=str,
+#         default=None,
+#         help="The prompt used to generate sample outputs to save.",
+#     )
     parser.add_argument(
         "--sample_prompt",
-        type=str,
+        nargs='+',
         default=None,
-        help="The prompt used to generate sample outputs to save.",
+        help="The prompt(s) used to generate sample outputs to save.",
     )
     parser.add_argument(
         "--sample_negative_prompt",
