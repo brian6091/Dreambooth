@@ -687,11 +687,6 @@ def main(args):
 
                         if args.sample_to_tracker and args.tracker=="wandb" and is_wandb_available():
                             accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=global_step)
-                    
-                        del pipeline
-                        if torch.cuda.is_available():
-                            torch.cuda.empty_cache()
-
                             
             # TODO function get_step_logs(pred_loss, prior_loss, loss, args)
             if args.with_prior_preservation:
