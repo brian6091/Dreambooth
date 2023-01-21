@@ -619,6 +619,8 @@ def main(args):
                     save_dir = os.path.join(args.output_dir, f"{global_step}")
                     os.makedirs(save_dir, exist_ok=True)
 
+                    last_save_at_step = global_step
+
                     # Set up scheduler for inference
                     sample_scheduler = None
                     if args.sample_scheduler and args.sample_scheduler_config:
@@ -686,11 +688,10 @@ def main(args):
                         if args.sample_to_tracker and args.tracker=="wandb" and is_wandb_available():
                             accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=global_step)
                     
-                    del pipeline
-                    if torch.cuda.is_available():
-                        torch.cuda.empty_cache()
+                        del pipeline
+                        if torch.cuda.is_available():
+                            torch.cuda.empty_cache()
 
-                    last_save_at_step = global_step
                             
             # TODO function get_step_logs(pred_loss, prior_loss, loss, args)
             if args.with_prior_preservation:
