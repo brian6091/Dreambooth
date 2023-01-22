@@ -472,13 +472,26 @@ def main(args):
     # Initialize the trackers (automatically on the main process)
     if accelerator.is_main_process:
         accelerator.init_trackers(
-            args.tracker_descriptor,
+            args.tracker_project_name,
             #config=args.__dict__.copy(),
             init_kwargs=args.tracker_init_kwargs,
         )
         
         if is_wandb_available():
             import wandb
+            
+            artifact = wandb.Artifact(name='config', type='configuration')
+            
+            artifact.add_file(local_path=os.path.join(args.output_dir, "args.yaml"), name='config')
+            
+            if args.save_parameter_summary:
+                artifact.add_file(local_path=os.path.join(args.output_dir, "text_trainable_parameters.txt"), name='text-trainable')
+                artifact.add_file(local_path=os.path.join(args.output_dir, "unet_trainable_parameters.txt"), name='unet-trainable')
+                
+            if args.save_model_layout:
+                artifact.add_file(local_path=os.path.join(args.output_dir, "text_encoder_layout.txt"), name='text-layout')
+                artifact.add_file(local_path=os.path.join(args.output_dir, "unet_layout.txt"), name='unet-layout')
+                
             if args.tracker_watch:
                 # TODO paramter list of components to watch, otherwise all
                 # need also log_freq and type as  parameters
