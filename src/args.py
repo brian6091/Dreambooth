@@ -528,7 +528,7 @@ def parse_args(input_args=None):
         help="Which tracker (wandb, tensorboard).",
     )
     parser.add_argument(
-        "--tracker_descriptor",
+        "--tracker_project_name",
         type=str,
         default="finetune",
         help="Description of run.",
