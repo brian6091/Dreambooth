@@ -492,13 +492,18 @@ def main(args):
             wandb_tracker.log_artifact(artifact)
             
             if args.tracker_watch:
+                watch_modules = []
+                for n in args.tracker_watch:
+                    watch_modules.append(get_module_by_name(unet, n))
+
+                wandb.watch(watch_modules, log='all', log_freq=10)
                 # TODO paramter list of components to watch, otherwise all
                 # need also log_freq and type as  parameters
                 #wandb.watch()
                 #wandb.watch((text_encoder, unet), log="all", log_freq=10)               
-                test_module1 = get_module_by_name(unet, "down_blocks.0.attentions.0.transformer_blocks.0.ff.net.2")
-                test_module2 = get_module_by_name(unet, "up_blocks.3.attentions.2.transformer_blocks.0.ff.net.2")
-                wandb.watch([test_module1, test_module2], log="all", log_freq=10)
+#                 test_module1 = get_module_by_name(unet, "down_blocks.0.attentions.0.transformer_blocks.0.ff.net.2")
+#                 test_module2 = get_module_by_name(unet, "up_blocks.3.attentions.2.transformer_blocks.0.ff.net.2")
+#                 wandb.watch([test_module1, test_module2], log="all", log_freq=10)
                 
             if args.save_n_sample > 0:
                 data_table = wandb.Table(columns=["step", "prompt_id", "prompt", "cfg", "seed", "sample", "image"])
