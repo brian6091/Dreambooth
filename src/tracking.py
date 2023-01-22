@@ -35,6 +35,8 @@ def get_intermediate_samples(
     else:
         prompt = [p.replace("{}", instance_token).strip() for p in prompt]
 
+    # TODO, should get_state, and reset after sample generation,
+    # Should deterministically increment seed for each sample_id
     g_cuda = torch.Generator(device=device).manual_seed(seed)
     pipeline.set_progress_bar_config(disable=True)
 
