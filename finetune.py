@@ -471,15 +471,23 @@ def main(args):
             import wandb
             
             artifact = wandb.Artifact(name='config', type='configuration')
-            artifact.add_file(local_path=os.path.join(args.output_dir, "args.yaml"), name='config')
+            artifact.add_file(local_path=os.path.join(args.output_dir, "args.yaml"), name='config.yaml')
             
             if args.save_parameter_summary:
-                artifact.add_file(local_path=os.path.join(args.output_dir, "text_encoder_trainable_parameters.txt"), name='text-trainable')
-                artifact.add_file(local_path=os.path.join(args.output_dir, "unet_trainable_parameters.txt"), name='unet-trainable')
+                artifact.add_file(
+                    local_path=os.path.join(args.output_dir, "text_encoder_trainable_parameters.txt"), 
+                    name='text_encoder_trainable_parameters.txt')
+                artifact.add_file(
+                    local_path=os.path.join(args.output_dir, "unet_trainable_parameters.txt"), 
+                    name='unet_trainable_parameters.txt')
                 
             if args.save_model_layout:
-                artifact.add_file(local_path=os.path.join(args.output_dir, "text_encoder_layout.txt"), name='text-layout')
-                artifact.add_file(local_path=os.path.join(args.output_dir, "unet_layout.txt"), name='unet-layout')
+                artifact.add_file(
+                    local_path=os.path.join(args.output_dir, "text_encoder_layout.txt"), 
+                    name='text_encoder_layout.txt')
+                artifact.add_file(
+                    local_path=os.path.join(args.output_dir, "unet_layout.txt"),
+                    name='unet_layout.txt')
                 
             wandb_tracker = accelerator.get_tracker("wandb")
             wandb_tracker.log_artifact(artifact)
