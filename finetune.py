@@ -47,13 +47,7 @@ from huggingface_hub import Repository
 from tqdm.auto import tqdm
 from transformers import CLIPTextModel, AutoTokenizer
 
-from lora_diffusion import (
-    #inject_trainable_lora,
-    #save_lora_weight,
-    #extract_lora_ups_down,
-    #monkeypatch_lora,
-    tune_lora_scale,
-)
+from lora_diffusion import tune_lora_scale
 
 from src.datasets import FinetuneTrainDataset, PromptDataset, collate_fn
 from src.args import parse_args, format_args
@@ -61,13 +55,9 @@ from src.model_utils import (
     SAFE_CONFIGS,
     get_noise_scheduler,
     add_instance_tokens,
-    #find_modules_by_name_or_class,
     set_trainable_parameters,
-    #_find_children,
-    #_inject_trainable_lora,
     count_parameters,
     print_trainable_parameters,
-    #get_tensor_info,
     get_pipeline,
     get_module_by_name,
     save_trainable_parameters,
@@ -481,7 +471,6 @@ def main(args):
             import wandb
             
             artifact = wandb.Artifact(name='config', type='configuration')
-            
             artifact.add_file(local_path=os.path.join(args.output_dir, "args.yaml"), name='config')
             
             if args.save_parameter_summary:
@@ -643,9 +632,6 @@ def main(args):
                         sample_scheduler = get_noise_scheduler(args.sample_scheduler, config=args.sample_scheduler_config)        
                     elif args.sample_scheduler:
                         sample_scheduler = get_noise_scheduler(args.sample_scheduler, model_name_or_path=args.pretrained_model_name_or_path)
-                    #else:
-                        # TODO skip, as below we set sample_scheduler=noise_scheduler
-                        #sample_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
                     pipeline = get_pipeline(
                         args.pretrained_model_name_or_path,
