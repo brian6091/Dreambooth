@@ -533,11 +533,17 @@ def parse_args(input_args=None):
         default="finetune",
         help="Description of run.",
     )
+#     parser.add_argument(
+#         "--tracker_watch",
+#         action="store_true",
+#         help="Log gradients/parameters.",
+#     )
     parser.add_argument(
         "--tracker_watch",
-        action="store_true",
-        help="Log gradients/parameters.",
-    )    
+        nargs='+',
+        default=None,
+        help="Module names for logging gradients/parameters.",
+    )
     parser.add_argument(
         "--tracker_init_kwargs",
         type=as_literal,
@@ -589,12 +595,6 @@ def parse_args(input_args=None):
         type=as_literal,
         help="Sample scheduler parameters as dictionary.",
         )
-#     parser.add_argument(
-#         "--sample_prompt",
-#         type=str,
-#         default=None,
-#         help="The prompt used to generate sample outputs to save.",
-#     )
     parser.add_argument(
         "--sample_prompt",
         nargs='+',
