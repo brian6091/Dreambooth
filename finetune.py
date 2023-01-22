@@ -492,6 +492,9 @@ def main(args):
                 artifact.add_file(local_path=os.path.join(args.output_dir, "text_encoder_layout.txt"), name='text-layout')
                 artifact.add_file(local_path=os.path.join(args.output_dir, "unet_layout.txt"), name='unet-layout')
                 
+            wandb_tracker = accelerator.get_tracker("wandb")
+            wandb_tracker.log_artifact(artifact)
+            
             if args.tracker_watch:
                 # TODO paramter list of components to watch, otherwise all
                 # need also log_freq and type as  parameters
