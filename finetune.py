@@ -463,7 +463,6 @@ def main(args):
     if accelerator.is_main_process:
         accelerator.init_trackers(
             args.tracker_project_name,
-            #config=args.__dict__.copy(),
             init_kwargs=args.tracker_init_kwargs,
         )
         
@@ -696,7 +695,7 @@ def main(args):
                         grid.save(os.path.join(sample_dir, f"{global_step}.jpg"), quality=90, optimize=True)
 
                         if args.sample_to_tracker and args.tracker=="wandb" and is_wandb_available():
-                            accelerator.log({"sample_grid":[wandb.Image(grid, caption="test")]}, step=global_step)
+                            accelerator.log({"sample_grid":[wandb.Image(grid, caption=f"grid-step-{global_step}")]}, step=global_step)
                             
             # TODO function get_step_logs(pred_loss, prior_loss, loss, args)
             if args.with_prior_preservation:
