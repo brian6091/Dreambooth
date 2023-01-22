@@ -485,7 +485,7 @@ def main(args):
             artifact.add_file(local_path=os.path.join(args.output_dir, "args.yaml"), name='config')
             
             if args.save_parameter_summary:
-                artifact.add_file(local_path=os.path.join(args.output_dir, "text_trainable_parameters.txt"), name='text-trainable')
+                artifact.add_file(local_path=os.path.join(args.output_dir, "text_encoder_trainable_parameters.txt"), name='text-trainable')
                 artifact.add_file(local_path=os.path.join(args.output_dir, "unet_trainable_parameters.txt"), name='unet-trainable')
                 
             if args.save_model_layout:
