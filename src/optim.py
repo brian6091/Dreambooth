@@ -37,10 +37,22 @@ def load_optimizer(optname):
     try:
         import bitsandbytes as bnb
         
+        opts['SGD8bit'] = bnb.optim.SGD8bit
+        opts['Adam8bit'] = bnb.optim.Adam8bit
         opts['AdamW8bit'] = bnb.optim.AdamW8bit
+        opts['Adagrad8bit'] = bnd.optim.Adagrad8bit
     except:
         pass
 
+    try:
+        import dadaptation as dadapt
+        
+        opts['DadaptSGD'] = dadapt.DadaptSGD
+        opts['DAdaptAdam'] = dadapt.DAdaptAdam
+        opts['DAdaptAdaGrad'] = dadapt.DAdaptAdaGrad
+    except:
+        pass        
+    
     try:
         import torch_optimizer as optim
         
