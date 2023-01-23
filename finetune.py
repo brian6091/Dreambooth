@@ -98,6 +98,7 @@ def main(args):
     if args.enable_autotuner:
         torch.backends.cudnn.benchmark = True
     if args.allow_tf32:
+        #TODO torch.backends.cudnn.allow_tf32 = True necessary as well?
         torch.backends.cuda.matmul.allow_tf32 = True
         
     if args.seed is not None:
