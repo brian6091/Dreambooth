@@ -66,10 +66,12 @@ def load_optimizer(optname):
     except:
         pass
 
-    opts2 = {'Adagrad': torch.optim.Adagrad, 'Adam': torch.optim.Adam, 
-            'AdamW': torch.optim.AdamW, 'RAdam': torch.optim.RAdam, 
-            'NAdam': torch.optim.NAdam, 'Adamax': torch.optim.Adamax,
-             'SGD': torch.optim.SGD}
+    opts2 = {
+        'Adagrad': torch.optim.Adagrad, 'Adam': torch.optim.Adam,
+        'AdamW': torch.optim.AdamW, 'RAdam': torch.optim.RAdam,
+        'NAdam': torch.optim.NAdam, 'Adamax': torch.optim.Adamax,
+        'SGD': torch.optim.SGD
+    }
     
     opts = {**opts, **opts2}
     
