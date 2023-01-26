@@ -533,11 +533,6 @@ def parse_args(input_args=None):
         default="finetune",
         help="Description of run.",
     )
-#     parser.add_argument(
-#         "--tracker_watch",
-#         action="store_true",
-#         help="Log gradients/parameters.",
-#     )
     parser.add_argument(
         "--tracker_watch",
         nargs='+',
