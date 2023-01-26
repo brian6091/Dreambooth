@@ -128,14 +128,13 @@ def get_noise_scheduler(
 
 def get_pipeline(
     pretrained_model_name_or_path: str = None,
-    #pretrained_vae_name_or_path: str = None,
     vae=None,
     tokenizer=None,
     text_encoder=None,
     unet=None,
     scheduler=None,
     revision=None,
-    torch_dtype=torch.float16, # TODO
+    torch_dtype=torch.float16,
     debug=False,
 ):
     d = {"vae": vae, "tokenizer": tokenizer, "text_encoder": text_encoder, "unet": unet, "scheduler": scheduler}
@@ -149,31 +148,6 @@ def get_pipeline(
         torch_dtype=torch_dtype,
         revision=revision,           
     )
-#     if all((vae, tokenizer, text_encoder, unet, scheduler)):
-#         pipeline = StableDiffusionPipeline(
-#             vae=vae,
-#             tokenizer=tokenizer,
-#             text_encoder=text_encoder,
-#             unet=unet,
-#             scheduler=scheduler,
-#             feature_extractor=None,
-#             safety_checker=None,
-#             requires_safety_checker=None,
-#         )
-#     elif pretrained_model_name_or_path:
-#         d = {"vae": vae, "tokenizer": tokenizer, "text_encoder": text_encoder, "unet": unet, "scheduler": scheduler}
-#         kwargs = {k: v for k,v in d.items() if v}
-        
-#         pipeline = StableDiffusionPipeline.from_pretrained(
-#             pretrained_model_name_or_path,
-#             **kwargs,
-#             safety_checker=None,
-#             requires_safety_checker=None,
-#             torch_dtype=torch_dtype,
-#             revision=revision,           
-#         )
-# #     else:
-# #         error
 
     if True:#debug:
         print(pipeline)
