@@ -89,6 +89,11 @@ def get_noise_scheduler(
             noise_scheduler = DPMSolverMultistepScheduler.from_pretrained(model_name_or_path, subfolder="scheduler")
         else:
             noise_scheduler = DPMSolverMultistepScheduler.from_config(config if config else {})
+    elif scheduler=="DEISMultistepScheduler":
+        if model_name_or_path:
+            noise_scheduler = DEISMultistepScheduler.from_pretrained(model_name_or_path, subfolder="scheduler")
+        else:
+            noise_scheduler = DEISMultistepScheduler.from_config(config if config else {})
     elif scheduler=="DDIMScheduler":
         if model_name_or_path:
             noise_scheduler = DDIMScheduler.from_pretrained(model_name_or_path, subfolder="scheduler")
