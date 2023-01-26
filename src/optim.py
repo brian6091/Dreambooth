@@ -21,6 +21,29 @@ from torch.optim import Optimizer
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import LambdaLR
 
+
+def ohem_loss(input, target, loss_function, rate):
+    batch_size = input.shape[0]
+
+    if loss_function in ("mse", "MSE"):
+        loss = F.mse_loss(input, target, reduction='none').sum(dim=1)
+    elif loss_function in ("l1", "L1"):
+        loss = F.l1_loss(input, target, reduction='none').sum(dim=1)
+    elif loss_function in ("smoothl1", "smoothL1"):
+        loss = F.smooth_l1_loss(input, target, beta=beta, reduction='none').sum(dim=1)
+
+    sorted_loss, idx = torch.sort(loss, descending=True)
+
+    keep_num = min(sorted_loss.size()[0], int(batch_size*rate))
+    keep_num = min(batch_size, keep_num)
+    keep_idx = idx[:keep_num]
+
+    loss = loss[keep_idx]
+    ohem_loss = loss.sum() / keep_num
+
+    return ohem_loss, keep_idx
+
+
 def calculate_loss(input, target, loss_function="mse", reduction="mean", beta=1.0):
     if loss_function in ("mse", "MSE"):
         loss = F.mse_loss(input, target, reduction=reduction)
