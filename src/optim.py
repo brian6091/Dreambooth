@@ -26,6 +26,9 @@ def ohem_loss(input, target, loss_function, rate):
     """
     Online Hard Example Mining
     https://arxiv.org/abs/1604.03540v1
+    
+    Quite a dumb implementation as I'm still calculating loss on all samples.
+    TODO: rate arg, also probably iter arg to not drop losses in the beginning
     """
     batch_size = input.shape[0]
 
