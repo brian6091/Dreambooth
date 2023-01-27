@@ -26,9 +26,9 @@ def ohem_loss(input, target, loss_function, rate):
     batch_size = input.shape[0]
 
     if loss_function in ("mse", "MSE"):
-        loss = F.mse_loss(input, target, reduction='none').sum(dim=(1,2,3))
+        loss = F.mse_loss(input, target, reduction='none').mean(dim=(1,2,3))
     elif loss_function in ("l1", "L1"):
-        loss = F.l1_loss(input, target, reduction='none').sum(dim=(1,2,3))
+        loss = F.l1_loss(input, target, reduction='none').mean(dim=(1,2,3))
     #elif loss_function in ("smoothl1", "smoothL1"):
     #    loss = F.smooth_l1_loss(input, target, beta=beta, reduction='none').sum(dim=1)
 
