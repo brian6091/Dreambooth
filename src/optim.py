@@ -23,19 +23,22 @@ from torch.optim.lr_scheduler import LambdaLR
 
 
 def ohem_loss(input, target, loss_function, rate):
+    """
+    Online Hard Example Mining
+    https://arxiv.org/abs/1604.03540v1
+    """
     batch_size = input.shape[0]
 
     if loss_function in ("mse", "MSE"):
         loss = F.mse_loss(input, target, reduction='none').mean(dim=(1,2,3))
     elif loss_function in ("l1", "L1"):
         loss = F.l1_loss(input, target, reduction='none').mean(dim=(1,2,3))
-    #elif loss_function in ("smoothl1", "smoothL1"):
-    #    loss = F.smooth_l1_loss(input, target, beta=beta, reduction='none').sum(dim=1)
+    else:
+        raise ValueError(
+            f"OHEM for loss function {loss_function} not supported yet."
+        )        
 
-    #print("loss shape:\t", loss.shape)
-    #print("loss\t:", loss)
     sorted_loss, idx = torch.sort(loss, descending=True)
-    #print("sorted_loss\t:", sorted_loss)
 
     keep_num = min(sorted_loss.size()[0], int(batch_size*rate))
     keep_num = min(batch_size, keep_num)
@@ -43,8 +46,6 @@ def ohem_loss(input, target, loss_function, rate):
 
     loss = loss[keep_idx]
     ohem_loss = loss.mean()
-
-    #print("ohem_loss:\t", ohem_loss)
     
     return ohem_loss, keep_idx
 
