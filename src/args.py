@@ -428,6 +428,12 @@ def parse_args(input_args=None):
         help="Loss",
     )
     parser.add_argument(
+        "--loss_adjust",
+        type=str,
+        default=None,
+        help="Loss adjustment (OHEM, SuperLoss)",
+    )
+    parser.add_argument(
         "--optimizer",
         type=str,
         default="AdamW8bit",
