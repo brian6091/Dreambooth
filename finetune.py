@@ -589,14 +589,11 @@ def main(args):
                 model_pred, model_pred_prior = torch.chunk(model_pred, 2, dim=0)
                 target, target_prior = torch.chunk(target, 2, dim=0)
                 
-                print("model_pred shape:\t", model_pred.shape)
-                print("target shape:\t", target.shape)
-                
                 # Compute instance loss
-                pred_loss = calculate_loss(model_pred.float(), target.float(), loss_function=args.loss)
+                pred_loss = calculate_loss(model_pred.float(), target.float(), loss_function=args.loss, loss_adjust=args.loss_adjust)
 
                 # Compute prior loss
-                prior_loss = calculate_loss(model_pred_prior.float(), target_prior.float(), loss_function=args.loss)
+                prior_loss = calculate_loss(model_pred_prior.float(), target_prior.float(), loss_function=args.loss, loss_adjust=args.loss_adjust)
 
                 # Add the prior loss to the instance loss.
                 loss = pred_loss + args.prior_loss_weight * prior_loss
