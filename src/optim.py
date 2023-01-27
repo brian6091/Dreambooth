@@ -32,19 +32,19 @@ def ohem_loss(input, target, loss_function, rate):
     #elif loss_function in ("smoothl1", "smoothL1"):
     #    loss = F.smooth_l1_loss(input, target, beta=beta, reduction='none').sum(dim=1)
 
-    print("loss shape:\t", loss.shape)
-    print("loss\t:", loss)
+    #print("loss shape:\t", loss.shape)
+    #print("loss\t:", loss)
     sorted_loss, idx = torch.sort(loss, descending=True)
-    print("sorted_loss\t:", sorted_loss)
+    #print("sorted_loss\t:", sorted_loss)
 
     keep_num = min(sorted_loss.size()[0], int(batch_size*rate))
     keep_num = min(batch_size, keep_num)
     keep_idx = idx[:keep_num]
 
     loss = loss[keep_idx]
-    ohem_loss = loss.sum() / keep_num
+    ohem_loss = loss.mean()
 
-    print("ohem_loss:\t", ohem_loss)
+    #print("ohem_loss:\t", ohem_loss)
     
     return ohem_loss, keep_idx
 
