@@ -598,7 +598,7 @@ def main(args):
                 # Add the prior loss to the instance loss.
                 loss = pred_loss + args.prior_loss_weight * prior_loss
             else:
-                loss = calculate_loss(model_pred.float(), target.float(), loss_function=args.loss)
+                loss = calculate_loss(model_pred.float(), target.float(), loss_function=args.loss, loss_adjust=args.loss_adjust)
 
             loss = loss / args.gradient_accumulation_steps
             
