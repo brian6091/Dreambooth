@@ -98,7 +98,8 @@ def main(args):
     if args.enable_autotuner:
         torch.backends.cudnn.benchmark = True
     if args.allow_tf32:
-        #TODO torch.backends.cudnn.allow_tf32 = True necessary as well?
+        #torch.backends.cudnn.allow_tf32 = True (this is True by default)
+        # TODO make parameter, as full f32 training is affected
         torch.backends.cuda.matmul.allow_tf32 = True
         
     if args.seed is not None:
@@ -502,9 +503,6 @@ def main(args):
                 # need also log_freq and type as  parameters
                 #wandb.watch()
                 #wandb.watch((text_encoder, unet), log="all", log_freq=10)               
-#                 test_module1 = get_module_by_name(unet, "down_blocks.0.attentions.0.transformer_blocks.0.ff.net.2")
-#                 test_module2 = get_module_by_name(unet, "up_blocks.3.attentions.2.transformer_blocks.0.ff.net.2")
-#                 wandb.watch([test_module1, test_module2], log="all", log_freq=10)
                 
             if args.save_n_sample > 0:
                 data_table = wandb.Table(columns=["step", "prompt_id", "prompt", "cfg", "seed", "sample", "image"])
@@ -590,7 +588,10 @@ def main(args):
                 # Chunk the noise and model_pred into two parts and compute the loss on each part separately.
                 model_pred, model_pred_prior = torch.chunk(model_pred, 2, dim=0)
                 target, target_prior = torch.chunk(target, 2, dim=0)
-
+                
+                print("model_pred shape:\t", model_pred.shape)
+                print("target shape:\t", target.shape)
+                
                 # Compute instance loss
                 pred_loss = calculate_loss(model_pred.float(), target.float(), loss_function=args.loss)
 
