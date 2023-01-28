@@ -21,7 +21,7 @@ from torch.optim import Optimizer
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import LambdaLR
 
-from optimizers.sps import SPS
+from .optimizers.sps import SPS
 
 
 def ohem_loss(input, target, loss_function, rate):
