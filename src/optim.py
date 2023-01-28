@@ -71,7 +71,7 @@ def calculate_loss(input, target, loss_function="mse", loss_adjust=None, reducti
     return loss
 
 
-def load_optimizer(optname):    
+def get_optimizer(optname):    
     opts = dict()
     
     opts['SPS'] = SPS
