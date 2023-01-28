@@ -245,6 +245,9 @@ def get_explore_exploit_schedule_with_warmup(
     if isinstance(start_step, int):
         lr_lambda = factory(start_step, num_warmup_steps, num_explore_steps, num_total_steps, plateau)
     else:
+        if plateau==None:
+            plateau = [0]*len(start_step)
+            
         lr_lambda = []
         for start, warmup, explore, total in zip(start_step, num_warmup_steps, num_explore_steps, num_total_steps, plateau):
             lr_lambda.extend([factory(start, warmup, explore, total, plateau)])
