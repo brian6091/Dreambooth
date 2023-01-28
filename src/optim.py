@@ -106,7 +106,7 @@ def load_optimizer(optname):
     try:
         from adan import Adan
         
-        opts['Adan'] = optim.Adan
+        opts['Adan'] = Adan
     except:
         pass
 
