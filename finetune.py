@@ -64,7 +64,7 @@ from src.model_utils import (
 )
 from src.optim import (
     calculate_loss,
-    load_optimizer, 
+    get_optimizer, 
     group_parameters,
     get_explore_exploit_schedule_with_warmup,
 )
@@ -314,7 +314,7 @@ def main(args):
             # https://github.com/brian6091/Dreambooth/issues/23
             #text_encoder.gradient_checkpointing_enable()
 
-    optimizer_class = load_optimizer(args.optimizer)
+    optimizer_class = get_optimizer(args.optimizer)
         
     optimizer_params = args.optimizer_params
     optimizer_params["params"] = params_to_optimize
