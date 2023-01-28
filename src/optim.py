@@ -21,6 +21,8 @@ from torch.optim import Optimizer
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import LambdaLR
 
+from optimizers.sps import SPS
+
 
 def ohem_loss(input, target, loss_function, rate):
     """
@@ -71,6 +73,8 @@ def calculate_loss(input, target, loss_function="mse", loss_adjust=None, reducti
 
 def load_optimizer(optname):    
     opts = dict()
+    
+    opts['SPS'] = SPS
     try:
         import bitsandbytes as bnb
         
