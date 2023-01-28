@@ -210,6 +210,7 @@ def get_explore_exploit_schedule_with_warmup(
     num_warmup_steps: Union[Iterable[int], int],
     num_explore_steps: Union[Iterable[int], int],
     num_total_steps: Union[Iterable[int], int],
+    plateau: Union[Iterable[float], float] = None,
     last_epoch: int = -1
 ):
     """
@@ -222,7 +223,7 @@ def get_explore_exploit_schedule_with_warmup(
 
     #TODO: assert all ints or all Tuple[int] of same length
 
-    def factory(start, warmup, explore, total):
+    def factory(start, warmup, explore, total, plateau):
         def f(current_step):
             if current_step <= start:
                 return 0.0
@@ -232,16 +233,16 @@ def get_explore_exploit_schedule_with_warmup(
                 return 1.0
             else:
                 return max(
-                    0.0, float(total - current_step) / float(max(1, total - warmup - explore - start))
+                    plateau if plateau else 0.0, float(total - current_step) / float(max(1, total - warmup - explore - start))
                 )
 
         return f
 
     if isinstance(start_step, int):
-        lr_lambda = factory(start_step, num_warmup_steps, num_explore_steps, num_explore_steps)
+        lr_lambda = factory(start_step, num_warmup_steps, num_explore_steps, num_explore_steps, plateau)
     else:
         lr_lambda = []
-        for start, warmup, explore, total in zip(start_step, num_warmup_steps, num_explore_steps, num_total_steps):
-            lr_lambda.extend([factory(start, warmup, explore, total)])
+        for start, warmup, explore, total in zip(start_step, num_warmup_steps, num_explore_steps, num_total_steps, plateau):
+            lr_lambda.extend([factory(start, warmup, explore, total, plateau)])
 
     return LambdaLR(optimizer, lr_lambda, last_epoch)
