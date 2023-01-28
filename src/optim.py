@@ -227,7 +227,7 @@ def get_explore_exploit_schedule_with_warmup(
 
     #TODO: assert all ints or all Tuple[int] of same length
 
-    def factory(start, warmup, explore, total, plateau):
+    def factory(start, warmup, explore, total, plat):
         def f(current_step):
             if current_step <= start:
                 return 0.0
@@ -237,7 +237,7 @@ def get_explore_exploit_schedule_with_warmup(
                 return 1.0
             else:
                 return max(
-                    plateau if plateau else 0.0, float(total - current_step) / float(max(1, total - warmup - explore - start))
+                    plat if plat else 0.0, float(total - current_step) / float(max(1, total - warmup - explore - start))
                 )
 
         return f
@@ -249,7 +249,7 @@ def get_explore_exploit_schedule_with_warmup(
             plateau = [0]*len(start_step)
             
         lr_lambda = []
-        for start, warmup, explore, total in zip(start_step, num_warmup_steps, num_explore_steps, num_total_steps, plateau):
-            lr_lambda.extend([factory(start, warmup, explore, total, plateau)])
+        for start, warmup, explore, total, plat in zip(start_step, num_warmup_steps, num_explore_steps, num_total_steps, plateau):
+            lr_lambda.extend([factory(start, warmup, explore, total, plat)])
 
     return LambdaLR(optimizer, lr_lambda, last_epoch)
