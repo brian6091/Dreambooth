@@ -380,12 +380,14 @@ def main(args):
 
     if args.lr_scheduler in ("explore_exploit", "multi_explore_exploit"):
         # TODO multiply tuples by gradient_accumulation_steps
+        # TODO sensible defaults if no dict passed in?
         lr_scheduler =  get_explore_exploit_schedule_with_warmup(
             optimizer,
             start_step=args.lr_scheduler_params["start_step"],
             num_warmup_steps=args.lr_scheduler_params["num_warmup_steps"],
             num_explore_steps=args.lr_scheduler_params["num_explore_steps"],
             num_total_steps=args.lr_scheduler_params["num_total_steps"],
+            plateau=args.lr_scheduler_params["plateau"] if "plateau" in args.lr_scheduler_params.keys() else None,
         )
     else:
         lr_scheduler_params = args.lr_scheduler_params
