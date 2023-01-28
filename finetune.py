@@ -609,7 +609,7 @@ def main(args):
                 if accelerator.sync_gradients:
                     params_to_clip = itertools.chain(*[g["params"] for g in params_to_optimize])
                     accelerator.clip_grad_norm_(params_to_clip, args.max_grad_norm)
-                optimizer.step(loss=loss)
+                optimizer.step()
                 lr_scheduler.step()
                 if args.use_ema:
                     ema_unet.step(unet)
