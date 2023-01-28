@@ -102,6 +102,13 @@ def load_optimizer(optname):
         opts['Yogi'] = optim.Yogi
     except:
         pass
+    
+    try:
+        from adan import Adan
+        
+        opts['Adan'] = optim.Adan
+    except:
+        pass
 
     opts2 = {
         'Adagrad': torch.optim.Adagrad, 'Adam': torch.optim.Adam,
