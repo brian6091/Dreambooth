@@ -88,7 +88,7 @@ def get_optimizer(optname):
     try:
         import dadaptation as dadapt
         
-        opts['DadaptSGD'] = dadapt.DadaptSGD
+        opts['DadaptSGD'] = dadapt.DAdaptSGD
         opts['DAdaptAdam'] = dadapt.DAdaptAdam
         opts['DAdaptAdaGrad'] = dadapt.DAdaptAdaGrad
     except:
