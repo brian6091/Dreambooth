@@ -74,7 +74,7 @@ def calculate_loss(input, target, loss_function="mse", loss_adjust=None, reducti
 def get_optimizer(optname):    
     opts = dict()
     
-    opts['SPS'] = SPS
+    #opts['SPS'] = SPS
     try:
         import bitsandbytes as bnb
         
