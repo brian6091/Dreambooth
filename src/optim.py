@@ -108,6 +108,13 @@ def get_optimizer(optname):
         pass
     
     try:
+        from rmsgd import RMSGD
+        
+        opts['RMSGD'] = RMSGD
+    except:
+        pass
+    
+    try:
         from adan import Adan
         
         opts['Adan'] = Adan
