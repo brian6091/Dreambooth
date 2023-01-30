@@ -369,7 +369,7 @@ def main(args):
             args.debug,
         ),
         num_workers=6,
-        pin_memory=True,
+        pin_memory=False,
     )
 
     # Scheduler and math around the number of training steps.
