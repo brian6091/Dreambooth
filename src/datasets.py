@@ -89,7 +89,7 @@ class FinetuneTrainDataset(Dataset):
             self.class_images_path = [path for path in self.class_data_root.glob('*') if '.txt' not in path.suffix]
             random.shuffle(self.class_images_path)
             self.num_class_images = len(self.class_images_path)
-            self._length = max(self.num_class_images, self.num_instance_images)
+            #self._length = max(self.num_class_images, self.num_instance_images)
             self.class_prompt = class_prompt
         else:
             self.class_data_root = None
