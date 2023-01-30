@@ -264,7 +264,7 @@ def collate_fn(examples,
 
     # Still on CPU
     pixel_values = torch.stack(pixel_values)
-    pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
+    #pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
     
     input_ids = torch.cat(input_ids, dim=0)
 
