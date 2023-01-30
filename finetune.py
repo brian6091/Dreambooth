@@ -559,7 +559,7 @@ def main(args):
         if train_text_encoder or train_token_embedding:
             text_encoder.train()
         for step, batch in enumerate(train_dataloader):
-            print("\n", "\tEpoch: ", epoch, "step: ", step, '\n'.join(map(str, batch["image_paths"])),  "\n")
+            #print("\n", "\tEpoch: ", epoch, "step: ", step, '\n'.join(map(str, batch["image_paths"])),  "\n")
             # Convert images to latent space
             latents = vae.encode(batch["pixel_values"].to(dtype=weight_dtype)).latent_dist.sample()
             latents = latents * 0.18215
