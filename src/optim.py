@@ -122,9 +122,7 @@ def get_optimizer(optname):
     }
     
     opts = {**opts, **opts2}
-    
-    print(opts)
-    
+        
     if optname in opts:
         optimizer_class = opts[optname]
     else:
