@@ -87,7 +87,7 @@ class FinetuneTrainDataset(Dataset):
             self.class_data_root.mkdir(parents=True, exist_ok=True)
 
             self.class_images_path = [path for path in self.class_data_root.glob('*') if '.txt' not in path.suffix]
-            random.shuffle(self.class_images_path)
+            #random.shuffle(self.class_images_path)
             self.num_class_images = len(self.class_images_path)
             #self._length = max(self.num_class_images, self.num_instance_images)
             self.class_prompt = class_prompt
@@ -144,6 +144,7 @@ class FinetuneTrainDataset(Dataset):
 
     def __getitem__(self, index):
         example = {}
+        example["index"] = index
         image_path = self.instance_images_path[index % self.num_instance_images]
         image = Image.open(image_path)
         if not image.mode == "RGB":
@@ -155,6 +156,7 @@ class FinetuneTrainDataset(Dataset):
                 image_filename = image_path.stem + f"-{hash_image}.jpg"
                 image.save(os.path.join(self.augment_output_dir, image_filename))
         example["instance_images"] = self.image_transforms(image)
+        example["instance_images_path"] = image_path
 
         if self.prompt_templates is not None:
             self.instance_prompt = random.choice(self.prompt_templates).format(self.instance_token)
@@ -199,6 +201,7 @@ class FinetuneTrainDataset(Dataset):
                     image_filename = image_path.stem + f"-{hash_image}.jpg"
                     image.save(os.path.join(self.augment_output_dir, image_filename))
             example["class_images"] = self.image_transforms(image)
+            example["class_images_path"] = image_path
             
             if self.use_class_image_captions:
                 caption_path = image_path.with_suffix(".txt")
@@ -244,12 +247,14 @@ def collate_fn(examples,
 ):
     input_ids = [example["instance_prompt_ids"] for example in examples]
     pixel_values = [example["instance_images"] for example in examples]
+    image_paths = [example["instance_images_path"] for example in examples]
 
     # Concat class and instance examples for prior preservation.
     # We do this to avoid doing two forward passes.
     if with_prior_preservation:
         input_ids += [example["class_prompt_ids"] for example in examples]
         pixel_values += [example["class_images"] for example in examples]
+        image_paths += [example["class_images_path"] for example in examples]
 
     # Apply text-conditioning dropout by inserting uninformative prompt
     if conditioning_dropout_prob > 0:
@@ -269,6 +274,7 @@ def collate_fn(examples,
     batch = {
         "input_ids": input_ids,
         "pixel_values": pixel_values,
+        "image_paths": image_paths,
     }
     return batch
 
