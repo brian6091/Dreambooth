@@ -112,7 +112,7 @@ class FinetuneTrainDataset(Dataset):
         # Data augmentation pipeline
         augment_list = []
         if augment_min_resolution is not None:
-            augment_list.append(transforms.Resize(augment_min_resolution))
+            augment_list.append(transforms.Resize(augment_min_resolution, interpolation=transforms.InterpolationMode.BILINEAR))
         if augment_center_crop:
             augment_list.append(transforms.CenterCrop(size))
         else:
@@ -263,7 +263,9 @@ def collate_fn(examples,
                 input_ids[i] = example["unconditional_prompt_ids"]
 
     pixel_values = torch.stack(pixel_values)
+    print("Before device: ", pixel_values.device)
     pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
+    print("After device: ", pixel_values.device)
     
     input_ids = torch.cat(input_ids, dim=0)
 
