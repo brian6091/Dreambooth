@@ -749,7 +749,7 @@ def main(args):
                 break
             
         accelerator.wait_for_everyone()
-        optimizer.epoch_step()
+        #optimizer.epoch_step()
 
                             
     if accelerator.is_main_process:
