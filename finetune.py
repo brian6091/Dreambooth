@@ -317,9 +317,8 @@ def main(args):
     optimizer_class = get_optimizer(args.optimizer)
         
     optimizer_params = args.optimizer_params
-    #optimizer_params["params"] = params_to_optimize
-    #optimizer = optimizer_class(**optimizer_params)
-    optimizer = optimizer_class(params_to_optimize, **optimizer_params)
+    optimizer_params["params"] = params_to_optimize
+    optimizer = optimizer_class(**optimizer_params)
     if True:#args.debug: # TODO remove
         print(optimizer)
     
