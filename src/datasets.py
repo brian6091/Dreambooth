@@ -262,10 +262,9 @@ def collate_fn(examples,
             if random.uniform(0.0, 1.0) <= conditioning_dropout_prob:
                 input_ids[i] = example["unconditional_prompt_ids"]
 
+    # Still on CPU
     pixel_values = torch.stack(pixel_values)
-    print("Before device: ", pixel_values.device)
     pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
-    print("After device: ", pixel_values.device)
     
     input_ids = torch.cat(input_ids, dim=0)
 
