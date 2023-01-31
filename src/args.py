@@ -587,6 +587,12 @@ def parse_args(input_args=None):
         help="Start saving weights after N steps.",
     )
     parser.add_argument(
+        "--save_at_steps",
+        nargs='+',
+        default=None,
+        help="List of specific steps to save at.",
+    )
+    parser.add_argument(
         "--save_parameter_summary",
         action="store_true",
         help="Save a summary of parameters that were set to be trained.",
