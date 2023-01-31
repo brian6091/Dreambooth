@@ -29,29 +29,54 @@ def get_intermediate_samples(
     tracker,
     data_table,
     step,
+    size=512,
 ):
     if isinstance(prompt, str):
         prompt = prompt.replace("{}", instance_token).strip()
     else:
         prompt = [p.replace("{}", instance_token).strip() for p in prompt]
+        
+    n_prompts = len(prompts)
+    
 
     # TODO, should get_state, and reset after sample generation,
     # Should deterministically increment seed for each sample_id
-    g_cuda = torch.Generator(device=device).manual_seed(seed)
+    #generator = torch.Generator(device=device).manual_seed(seed)
+    generator = torch.Generator(device=device)
+    state = generator.get_state()
     pipeline.set_progress_bar_config(disable=True)
 
     with torch.inference_mode():
         all_images = []
+#         for sample_id in tqdm(range(save_n_sample), desc="Generating samples"):
+#             images = pipeline(
+#                 prompt,
+#                 negative_prompt=[negative_prompt]*len(prompt),
+#                 guidance_scale=guidance_scale,
+#                 num_inference_steps=infer_steps,
+#                 generator=generator
+#             ).images
+#             all_images.extend(images)
         for sample_id in tqdm(range(save_n_sample), desc="Generating samples"):
+            sample_seed = seed + sample_id
+            generator = generator.manual_seed(sample_seed)
+            
+            # Generate latent, which will be the same for all prompts
+            latent = torch.randn(
+              (1, pipeline.unet.in_channels, size // 8, size // 8),
+              generator = generator,
+              device = device
+            )
+            
             images = pipeline(
                 prompt,
                 negative_prompt=[negative_prompt]*len(prompt),
                 guidance_scale=guidance_scale,
                 num_inference_steps=infer_steps,
-                generator=g_cuda
+                latents=latent.repeat(n_prompts,1,1,1),
             ).images
             all_images.extend(images)
-
+            
             if data_table and tracker=="wandb" and is_wandb_available():
                 from wandb import Image
                 for prompt_id, im in enumerate(images):
@@ -60,11 +85,13 @@ def get_intermediate_samples(
                         prompt_id,
                         prompt[prompt_id],
                         guidance_scale,
-                        seed,
+                        sample_seed,
                         sample_id,
                         Image(im, caption=f"step:{step}, prompt_id:{prompt_id}, sample_id:{sample_id}")
                        )
 
         grid = image_grid(all_images, rows=save_n_sample, cols=len(prompt))
+        
+        generator.set_state(state)
         
     return grid, data_table
