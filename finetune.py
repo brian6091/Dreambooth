@@ -689,6 +689,7 @@ def main(args):
                             guidance_scale=args.sample_guidance_scale,
                             infer_steps=args.sample_infer_steps,
                             seed=args.sample_seed if args.sample_seed!=None else args.seed,
+                            size=args.resolution,
                             save_n_sample=args.save_n_sample,
                             save_dir=save_dir,
                             tracker=args.tracker,
