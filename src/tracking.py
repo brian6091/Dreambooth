@@ -33,10 +33,10 @@ def get_intermediate_samples(
 ):
     if isinstance(prompt, str):
         prompt = prompt.replace("{}", instance_token).strip()
+        n_prompts = 1
     else:
         prompt = [p.replace("{}", instance_token).strip() for p in prompt]
-        
-    n_prompts = len(prompts)
+        n_prompts = len(prompt)
     
 
     # TODO, should get_state, and reset after sample generation,
