@@ -351,7 +351,7 @@ def main(args):
         use_class_image_captions=args.use_class_image_captions,
         unconditional_prompt=args.unconditional_prompt,
         size=args.resolution,
-        augmentor=Augmentor(**args.augmentation),
+        augmentor=Augmentor(**args.augmentation) if args.augmentation else Augmentor(),
         debug=args.debug,
     )
     
