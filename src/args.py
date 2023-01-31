@@ -304,6 +304,18 @@ def parse_args(input_args=None):
     )
 
     parser.add_argument(
+        "--dataloader_num_workers",
+        type=none_or_int,
+        default=1,
+        help="Num workers for dataloader.",
+    )
+    parser.add_argument(
+        "--dataloader_pin_memory",
+        action="store_true",
+        help="Pin memory",
+    )
+    
+    parser.add_argument(
         "--conditioning_dropout_prob",
         type=none_or_float,
         default=0.0,
