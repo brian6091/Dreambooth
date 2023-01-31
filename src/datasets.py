@@ -145,7 +145,9 @@ class FinetuneTrainDataset(Dataset):
     def __getitem__(self, index):
         example = {}
         example["index"] = index
-        image_path = self.instance_images_path[index % self.num_instance_images]
+        
+        image_path = self.instance_images_path[index]
+#         image_path = self.instance_images_path[index % self.num_instance_images]
         image = Image.open(image_path)
         if not image.mode == "RGB":
             image = image.convert("RGB")
@@ -190,7 +192,8 @@ class FinetuneTrainDataset(Dataset):
             print(example["instance_prompt_ids"])
 
         if self.class_data_root:
-            image_path = self.class_images_path[index % self.num_class_images]
+            image_path = random.choice(self.class_images_path)
+#             image_path = self.class_images_path[index % self.num_class_images]
             image = Image.open(image_path)
             if not image.mode == "RGB":
                 image = image.convert("RGB")
