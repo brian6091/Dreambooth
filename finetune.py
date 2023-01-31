@@ -368,8 +368,8 @@ def main(args):
             args.conditioning_dropout_prob,
             args.debug,
         ),
-        num_workers=4,
-        pin_memory=True,
+        num_workers=args.dataloader_num_workers,
+        pin_memory=args.dataloader_pin_memory,
     )
 
     # Scheduler and math around the number of training steps.
@@ -560,8 +560,9 @@ def main(args):
         if train_text_encoder or train_token_embedding:
             text_encoder.train()
         for step, batch in enumerate(train_dataloader):
-            #print("\n", "\tEpoch: ", epoch, "step: ", step, "\n", '\n'.join(map(str, batch["image_paths"])),  "\n")
-            print("\n", "\tEpoch: ", epoch, "step: ", step, "index: ", batch["indices"], "\n", '\n'.join(map(str, batch["image_paths"])),  "\n")
+            if args.debug:
+                print("\n", "\tEpoch: ", epoch, "step: ", step, "index: ", batch["indices"], "\n", '\n'.join(map(str, batch["image_paths"])),  "\n")
+                
             # Convert images to latent space
             latents = vae.encode(batch["pixel_values"].to(dtype=weight_dtype)).latent_dist.sample()
             latents = latents * 0.18215
