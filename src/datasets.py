@@ -248,6 +248,7 @@ def collate_fn(examples,
     input_ids = [example["instance_prompt_ids"] for example in examples]
     pixel_values = [example["instance_images"] for example in examples]
     image_paths = [example["instance_images_path"] for example in examples]
+    #indices = [example["index"] for example in examples]
 
     # Concat class and instance examples for prior preservation.
     # We do this to avoid doing two forward passes.
