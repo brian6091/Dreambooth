@@ -87,9 +87,7 @@ class FinetuneTrainDataset(Dataset):
             self.class_data_root.mkdir(parents=True, exist_ok=True)
 
             self.class_images_path = [path for path in self.class_data_root.glob('*') if '.txt' not in path.suffix]
-            #random.shuffle(self.class_images_path)
             self.num_class_images = len(self.class_images_path)
-            #self._length = max(self.num_class_images, self.num_instance_images)
             self.class_prompt = class_prompt
         else:
             self.class_data_root = None
@@ -147,7 +145,6 @@ class FinetuneTrainDataset(Dataset):
         example["index"] = index
         
         image_path = self.instance_images_path[index]
-#         image_path = self.instance_images_path[index % self.num_instance_images]
         image = Image.open(image_path)
         if not image.mode == "RGB":
             image = image.convert("RGB")
@@ -193,7 +190,6 @@ class FinetuneTrainDataset(Dataset):
 
         if self.class_data_root:
             image_path = random.choice(self.class_images_path)
-#             image_path = self.class_images_path[index % self.num_class_images]
             image = Image.open(image_path)
             if not image.mode == "RGB":
                 image = image.convert("RGB")
