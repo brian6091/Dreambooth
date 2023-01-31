@@ -50,6 +50,7 @@ from transformers import CLIPTextModel, AutoTokenizer
 from lora_diffusion import tune_lora_scale
 
 from src.datasets import FinetuneTrainDataset, PromptDataset, collate_fn
+from src.augment import Augmentor
 from src.args import parse_args, format_args
 from src.model_utils import (
     SAFE_CONFIGS,
@@ -350,11 +351,7 @@ def main(args):
         use_class_image_captions=args.use_class_image_captions,
         unconditional_prompt=args.unconditional_prompt,
         size=args.resolution,
-        augment_output_dir=args.augment_output_dir if args.augment_output_dir!=None else None,
-        augment_min_resolution=args.augment_min_resolution,
-        augment_center_crop=args.augment_center_crop,
-        augment_hflip=args.augment_hflip,
-        augment_trivialwide=args.augment_trivialwide,
+        augmentor=Augmentor(**args.augmentation),
         debug=args.debug,
     )
     
