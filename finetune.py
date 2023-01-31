@@ -368,8 +368,8 @@ def main(args):
             args.conditioning_dropout_prob,
             args.debug,
         ),
-        num_workers=1,
-        pin_memory=False,
+        num_workers=4,
+        pin_memory=True,
     )
 
     # Scheduler and math around the number of training steps.
