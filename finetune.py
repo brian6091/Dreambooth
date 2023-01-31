@@ -632,7 +632,8 @@ def main(args):
                 progress_bar.update(1)
                 global_step += 1
                 
-                if global_step > 0 and not global_step % args.save_interval and global_step >= args.save_min_steps:
+                if (global_step >= args.save_min_steps and not global_step % args.save_interval) or (global_step in args.save_at_steps):
+#                 if global_step > 0 and not global_step % args.save_interval and global_step >= args.save_min_steps:
                     # if accelerator.is_main_process:
                     # if args.lora_text_layer or args.lora_unet_layer:
                     # distinguish lora_text_layer/no_unet, text/unet, no_text/unet, ...
