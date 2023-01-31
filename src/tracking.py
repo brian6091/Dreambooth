@@ -38,32 +38,20 @@ def get_intermediate_samples(
         prompt = [p.replace("{}", instance_token).strip() for p in prompt]
         n_prompts = len(prompt)
     
-
-    # TODO, should get_state, and reset after sample generation,
-    # Should deterministically increment seed for each sample_id
-    #generator = torch.Generator(device=device).manual_seed(seed)
     generator = torch.Generator(device=device)
     state = generator.get_state()
     pipeline.set_progress_bar_config(disable=True)
 
     with torch.inference_mode():
         all_images = []
-#         for sample_id in tqdm(range(save_n_sample), desc="Generating samples"):
-#             images = pipeline(
-#                 prompt,
-#                 negative_prompt=[negative_prompt]*len(prompt),
-#                 guidance_scale=guidance_scale,
-#                 num_inference_steps=infer_steps,
-#                 generator=generator
-#             ).images
-#             all_images.extend(images)
         for sample_id in tqdm(range(save_n_sample), desc="Generating samples"):
+            # Increment seed for each sample
             sample_seed = seed + sample_id
             generator = generator.manual_seed(sample_seed)
             
             # Generate latent, which will be the same for all prompts
             latent = torch.randn(
-              (1, pipeline.unet.in_channels, size // 8, size // 8),
+              (1, pipeline.unet.in_channels, size // 8, size // 8), # 64 for sd1, 96 for sd2-1
               generator = generator,
               device = device
             )
@@ -92,6 +80,7 @@ def get_intermediate_samples(
 
         grid = image_grid(all_images, rows=save_n_sample, cols=len(prompt))
         
+        # Reset the generator state
         generator.set_state(state)
         
     return grid, data_table
