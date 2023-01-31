@@ -93,6 +93,7 @@ class FinetuneTrainDataset(Dataset):
         self.unconditional_prompt = unconditional_prompt
         
         self.size = size
+        self.augmentor = augmentor
         self.debug = debug
 
     def __len__(self):
