@@ -334,33 +334,39 @@ def parse_args(input_args=None):
     )
     
     parser.add_argument(
-        "--augment_output_dir",
-        type=none_or_str,
+        "--augmentation",
+        type=as_literal,
         default=None,
-        help="The output directory where the image data augmentations will be saved.",
-    )
-    parser.add_argument(
-        "--augment_min_resolution",
-        type=none_or_int,
-        nargs='?',
-        default=None,
-        help="Resize minimum image dimension before augmention pipeline.",
-    )
-    parser.add_argument(
-        "--augment_center_crop",
-        action="store_true",
-        help="Whether to center crop images before resizing to resolution",
-    )
-    parser.add_argument(
-        "--augment_hflip",
-        action="store_true",
-        help="Whether to center crop images before resizing to resolution",
-    )
-    parser.add_argument(
-        "--augment_trivialwide",
-        action="store_true",
-        help="Whether to use TrivialAugment Wide",
-    )
+        help="Augmentation parameters",
+        )
+#     parser.add_argument(
+#         "--augment_output_dir",
+#         type=none_or_str,
+#         default=None,
+#         help="The output directory where the image data augmentations will be saved.",
+#     )
+#     parser.add_argument(
+#         "--augment_min_resolution",
+#         type=none_or_int,
+#         nargs='?',
+#         default=None,
+#         help="Resize minimum image dimension before augmention pipeline.",
+#     )
+#     parser.add_argument(
+#         "--augment_center_crop",
+#         action="store_true",
+#         help="Whether to center crop images before resizing to resolution",
+#     )
+#     parser.add_argument(
+#         "--augment_hflip",
+#         action="store_true",
+#         help="Whether to center crop images before resizing to resolution",
+#     )
+#     parser.add_argument(
+#         "--augment_trivialwide",
+#         action="store_true",
+#         help="Whether to use TrivialAugment Wide",
+#     )
 
     parser.add_argument(
         "--seed",
