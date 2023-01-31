@@ -48,11 +48,7 @@ class FinetuneTrainDataset(Dataset):
         use_class_image_captions=False,
         unconditional_prompt=" ",
         size=512,
-        augment_output_dir=None,
-        augment_min_resolution=None,
-        augment_center_crop=False,
-        augment_hflip=False,
-        augment_trivialwide=False,
+        augmentor=None,
         debug=False,
     ):
         self.tokenizer = tokenizer
@@ -97,45 +93,7 @@ class FinetuneTrainDataset(Dataset):
         self.unconditional_prompt = unconditional_prompt
         
         self.size = size
-        self.augment_output_dir = augment_output_dir
-        if augment_output_dir is not None:
-            os.makedirs(augment_output_dir, exist_ok=True)
-        self.augment_min_resolution = augment_min_resolution
-        self.augment_center_crop = augment_center_crop
-        self.augment_hflip = augment_hflip
-        self.augment_trivialwide = augment_trivialwide
-
         self.debug = debug
-        
-        # Data augmentation pipeline
-        augment_list = []
-        if augment_min_resolution is not None:
-            augment_list.append(transforms.Resize(augment_min_resolution, interpolation=transforms.InterpolationMode.BILINEAR))
-        if augment_center_crop:
-            augment_list.append(transforms.CenterCrop(size))
-        else:
-            augment_list.append(transforms.RandomCrop(size))
-        if augment_hflip:
-            augment_list.append(transforms.RandomHorizontalFlip(0.5))
-        if augment_trivialwide:
-            augment_list.append(transforms.TrivialAugmentWide())
-
-        # Convert to format usable by model. 
-        # Keep separate in case dumping augmentations to disk
-        transform_list = []
-        if len(augment_list)==0:
-            # Guard against images that have size != what the model is expecting
-            transform_list.append(transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR))
-        transform_list.append(transforms.ToTensor())
-        # check that this matches for textual inversion image = (image / 127.5 - 1.0).astype(np.float32)
-        transform_list.append(transforms.Normalize([0.5], [0.5]))
-        
-        if len(augment_list)>0:
-            self.augment_transforms = transforms.Compose(augment_list)
-        else:
-            self.augment_transforms = None
-            
-        self.image_transforms = transforms.Compose(transform_list)
 
     def __len__(self):
         return self._length
@@ -145,16 +103,7 @@ class FinetuneTrainDataset(Dataset):
         example["index"] = index
         
         image_path = self.instance_images_path[index]
-        image = Image.open(image_path)
-        if not image.mode == "RGB":
-            image = image.convert("RGB")
-        if self.augment_transforms is not None:
-            image = self.augment_transforms(image)
-            if self.augment_output_dir is not None:
-                hash_image = hashlib.sha1(image.tobytes()).hexdigest()
-                image_filename = image_path.stem + f"-{hash_image}.jpg"
-                image.save(os.path.join(self.augment_output_dir, image_filename))
-        example["instance_images"] = self.image_transforms(image)
+        example["instance_images"] = self.augmentor(image_path)
         example["instance_images_path"] = image_path
 
         if self.prompt_templates is not None:
@@ -190,16 +139,7 @@ class FinetuneTrainDataset(Dataset):
 
         if self.class_data_root:
             image_path = random.choice(self.class_images_path)
-            image = Image.open(image_path)
-            if not image.mode == "RGB":
-                image = image.convert("RGB")
-            if self.augment_transforms is not None:
-                image = self.augment_transforms(image)
-                if self.augment_output_dir is not None:
-                    hash_image = hashlib.sha1(image.tobytes()).hexdigest()
-                    image_filename = image_path.stem + f"-{hash_image}.jpg"
-                    image.save(os.path.join(self.augment_output_dir, image_filename))
-            example["class_images"] = self.image_transforms(image)
+            example["class_images"] = self.augmentor(image_path)
             example["class_images_path"] = image_path
             
             if self.use_class_image_captions:
