@@ -589,6 +589,7 @@ def parse_args(input_args=None):
     )
     parser.add_argument(
         "--save_at_steps",
+        nargs='+',
         type=as_literal,
         default=None,
         help="List of specific steps to save at.",
