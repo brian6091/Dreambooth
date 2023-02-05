@@ -24,26 +24,27 @@ from torch.optim.lr_scheduler import LambdaLR
 from .optimizers.sps import SPS
 
 
-def ohem_loss(input, target, loss_function, rate):
+def ohem_loss(input, target, loss_function, rate, descending: bool = True):
     """
     Online Hard Example Mining
     https://arxiv.org/abs/1604.03540v1
     
     Quite a dumb implementation as I'm still calculating loss on all samples.
-    TODO: rate arg, also probably iter arg to not drop losses in the beginning
+    
+    TODO: rate arg, also probably start_iter/end_iter args to not drop losses in the beginning/end
     """
     batch_size = input.shape[0]
 
     if loss_function in ("mse", "MSE"):
-        loss = F.mse_loss(input, target, reduction='none').mean(dim=(1,2,3))
+        loss = F.mse_loss(input, target, reduction='none').mean(dim=(1, 2, 3))
     elif loss_function in ("l1", "L1"):
-        loss = F.l1_loss(input, target, reduction='none').mean(dim=(1,2,3))
+        loss = F.l1_loss(input, target, reduction='none').mean(dim=(1, 2, 3))
     else:
         raise ValueError(
             f"OHEM for loss function {loss_function} not supported yet."
         )        
 
-    sorted_loss, idx = torch.sort(loss, descending=True)
+    sorted_loss, idx = torch.sort(loss, descending=descending)
 
     keep_num = min(sorted_loss.size()[0], int(batch_size*rate))
     keep_num = min(batch_size, keep_num)
