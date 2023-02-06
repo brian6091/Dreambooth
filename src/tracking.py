@@ -1,3 +1,17 @@
+#    Copyright 2023 B. Lau, brian6091@gmail.com
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+#
 import os
 from typing import Callable, Dict, List, Optional, Set, Tuple, Type, Union, Iterable
 
@@ -6,9 +20,6 @@ from tqdm.auto import tqdm
 
 from accelerate.utils import (
     LoggerType,
-    is_aim_available,
-    is_comet_ml_available,
-    is_mlflow_available,
     is_tensorboard_available,
     is_wandb_available,
 )
@@ -16,27 +27,27 @@ from accelerate.utils import (
 from .utils import image_grid
 
 
-def get_intermediate_samples(
+def generate_samples(
     pipeline,
     device,
-    instance_token,
-    prompt,
-    negative_prompt,
-    guidance_scale,
-    infer_steps,
-    seed,
-    save_n_sample,
-    save_dir,
-    tracker,
-    data_table,
-    step,
-    size=512,
+    token: str,
+    prompt: Union[Iterable[str], str],
+    negative_prompt: Union[Iterable[str], str],
+    guidance_scale: float,
+    infer_steps: int,
+    seed: int,
+    size: int = 512,
+    n_samples: int = 1,
+    tracker=None,
+    data_table=None,
+    step=None,
+    make_grid=False,
 ):
     if isinstance(prompt, str):
-        prompt = prompt.replace("{}", instance_token).strip()
+        prompt = prompt.replace("{}", token).strip()
         n_prompts = 1
     else:
-        prompt = [p.replace("{}", instance_token).strip() for p in prompt]
+        prompt = [p.replace("{}", token).strip() for p in prompt]
         n_prompts = len(prompt)
     
     generator = torch.Generator(device=device)
@@ -45,7 +56,7 @@ def get_intermediate_samples(
 
     with torch.inference_mode():
         all_images = []
-        for sample_id in tqdm(range(save_n_sample), desc="Generating samples"):
+        for sample_id in tqdm(range(n_samples), desc="Generating samples"):
             # Increment seed for each sample
             sample_seed = seed + sample_id
             generator = generator.manual_seed(sample_seed)
@@ -54,7 +65,8 @@ def get_intermediate_samples(
             latent = torch.randn(
               (1, pipeline.unet.in_channels, size // 8, size // 8), # 64 for sd1, 96 for sd2-1
               generator = generator,
-              device = device
+              device = device,
+              dtype = pipeline.unet.dtype,
             )
             
             images = pipeline(
@@ -62,8 +74,9 @@ def get_intermediate_samples(
                 negative_prompt=[negative_prompt]*len(prompt),
                 guidance_scale=guidance_scale,
                 num_inference_steps=infer_steps,
-                latents=latent.repeat(n_prompts,1,1,1),
+                latents=latent.repeat(n_prompts, 1, 1, 1),
             ).images
+
             all_images.extend(images)
             
             if data_table and tracker=="wandb" and is_wandb_available():
@@ -79,9 +92,11 @@ def get_intermediate_samples(
                         Image(im, caption=f"step:{step}, prompt_id:{prompt_id}, sample_id:{sample_id}")
                        )
 
-        grid = image_grid(all_images, rows=save_n_sample, cols=len(prompt))
+        grid = None
+        if make_grid:
+            grid = image_grid(all_images, rows=n_samples, cols=len(prompt))
         
         # Reset the generator state
         generator.set_state(state)
         
-    return grid, data_table
+    return grid, data_table, prompt, all_images
