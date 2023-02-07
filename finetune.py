@@ -672,23 +672,23 @@ def main(args):
                         #pipeline.enable_vae_slicing()
                         if args.enable_xformers and is_xformers_available():
                             pipeline.enable_xformers_memory_efficient_attention()
-                            
-                        grid, data_table = get_intermediate_samples(
+
+                        grid, data_table, _, __ = generate_samples(
                             pipeline=pipeline,
                             device=accelerator.device,
-                            instance_token=args.instance_token,
+                            token=args.instance_token,
                             prompt=args.sample_prompt,
                             negative_prompt=args.sample_negative_prompt,
                             guidance_scale=args.sample_guidance_scale,
                             infer_steps=args.sample_infer_steps,
                             seed=args.sample_seed if args.sample_seed!=None else args.seed,
                             size=args.resolution,
-                            save_n_sample=args.save_n_sample,
-                            save_dir=save_dir,
+                            n_samples=args.save_n_sample,
                             tracker=args.tracker,
                             data_table=data_table,
                             step=global_step,
-                            )
+                            make_grid=True,
+                        )
 
                         del pipeline
                         if torch.cuda.is_available():
