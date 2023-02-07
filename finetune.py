@@ -504,6 +504,16 @@ def main(args):
             if args.save_n_sample > 0:
                 data_table = wandb.Table(columns=["step", "prompt_id", "prompt", "cfg", "seed", "sample", "image"])
         
+    if args.evaluate:
+        pipeline_evaluator = PipelineCLIPEvaluator(
+            device=accelerator.device,
+            target_images=args.instance_data_dir, # TODO, eventually could be a validation dataset?
+            target_prompts=args.sample_prompt,
+            instance_token=args.instance_token,
+            class_token=args.class_token,
+            clip_model=clip_model='openai/clip-vit-large-patch14', # TODO make argument
+        )        
+
     print("***** Running training *****")
     print(f"  Num examples = {len(train_dataset)}")
     print(f"  Num batches each epoch = {len(train_dataloader)}")
@@ -626,6 +636,7 @@ def main(args):
                 progress_bar.update(1)
                 global_step += 1
                 
+                eval_metrics = None
                 if (global_step >= args.save_min_steps and not global_step % args.save_interval) or (global_step in args.save_at_steps):
                     # if accelerator.is_main_process:
                     # if args.lora_text_layer or args.lora_unet_layer:
@@ -660,25 +671,23 @@ def main(args):
                         # TODO pass in torch_dtype from args.sample_precision?
                     )
                     
-                    if args.save_n_sample>0:
+                    if args.evaluate or (args.save_n_sample > 0):
                         if args.lora_text_layer:
                             tune_lora_scale(pipeline.text_encoder, args.lora_text_scale)                        
                         if args.lora_unet_layer:
                             tune_lora_scale(pipeline.unet, args.lora_unet_scale)
                         
                         pipeline = pipeline.to(accelerator.device) # Nessecary? everything is on device already
-                        # TODO, one of these slows inference a lot... 
-                        #pipeline.enable_attention_slicing()
-                        #pipeline.enable_vae_slicing()
+
                         if args.enable_xformers and is_xformers_available():
                             pipeline.enable_xformers_memory_efficient_attention()
 
-                        grid, data_table, _, __ = generate_samples(
+                        grid, data_table, _, image_gen_instance = generate_samples(
                             pipeline=pipeline,
                             device=accelerator.device,
                             token=args.instance_token,
                             prompt=args.sample_prompt,
-                            negative_prompt=args.sample_negative_prompt,
+                            negative_prompt=args.sample_negative_prompt if args.sample_negative_prompt else '',
                             guidance_scale=args.sample_guidance_scale,
                             infer_steps=args.sample_infer_steps,
                             seed=args.sample_seed if args.sample_seed!=None else args.seed,
@@ -687,20 +696,39 @@ def main(args):
                             tracker=args.tracker,
                             data_table=data_table,
                             step=global_step,
-                            make_grid=True,
+                            make_grid=True if (args.save_n_sample > 0) or args.sample_to_tracker else False,
                         )
 
+                        if args.evaluate:
+                            eval_metrics = pipeline_evaluator.evaluate(
+                                    pipeline=pipeline,
+                                    image_gen_instance=image_gen_instance,
+                                    target_prompts=args.sample_prompt,
+                                    n_samples=args.save_n_sample,
+                                    negative_prompt=args.sample_negative_prompt if args.sample_negative_prompt else '',
+                                    guidance_scale=args.sample_guidance_scale5,
+                                    infer_steps=args.sample_infer_steps,
+                                    seed=args.sample_seed if args.sample_seed!=None else args.seed,
+                                    size=args.resolution,
+                                    estimate_image_only=True,
+                                    estimate_prompt_only=True,
+                                    use_target_instance_cache=True,
+                                )                            
+                        
                         del pipeline
                         if torch.cuda.is_available():
                             torch.cuda.empty_cache()
                             
                         # TODO save_local parameter
-                        sample_dir = os.path.join(save_dir, "samples")
-                        os.makedirs(sample_dir, exist_ok=True)
-                        grid.save(os.path.join(sample_dir, f"{global_step}.jpg"), quality=90, optimize=True)
+                        if args.save_n_sample > 0:
+                            sample_dir = os.path.join(save_dir, "samples")
+                            os.makedirs(sample_dir, exist_ok=True)
+                            grid.save(os.path.join(sample_dir, f"{global_step}.jpg"), quality=90, optimize=True)
 
                         if args.sample_to_tracker and args.tracker=="wandb" and is_wandb_available():
                             accelerator.log({"sample_grid":[wandb.Image(grid, caption=f"grid-step-{global_step}")]}, step=global_step)
+                            
+                        # args.checkpoints_to_tracker
                             
             # TODO function get_step_logs(pred_loss, prior_loss, loss, args)
             if args.with_prior_preservation:
@@ -743,6 +771,11 @@ def main(args):
             progress_bar.set_postfix(**logs)
             accelerator.log(logs, step=global_step)
 
+            metrics = {}
+            if eval_metrics:
+                metrics[''] = # TODO
+                accelerator.log(metrics, step=global_step)
+                            
             if global_step >= args.max_train_steps:
                 break
             
