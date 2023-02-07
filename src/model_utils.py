@@ -403,7 +403,7 @@ def search_and_replace_lora(
         weights = {k: v for k, v in td.items() if k.startswith(search)}
         
         # Get the parent module
-        m = get_module_by_name(pipe2.text_encoder, n.rsplit(".", 1)[0])
+        m = get_module_by_name(model, n.rsplit(".", 1)[0])
         
         _inject_trained_lora(
             module=m,
