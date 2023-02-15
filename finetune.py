@@ -511,8 +511,8 @@ def main(args):
             target_prompts=args.sample_prompt,
             instance_token=args.instance_token,
             class_token=args.class_token,
-            clip_model=clip_model='openai/clip-vit-large-patch14', # TODO make argument
-        )        
+            clip_model='openai/clip-vit-large-patch14', # TODO make argument
+        )
 
     print("***** Running training *****")
     print(f"  Num examples = {len(train_dataset)}")
@@ -702,7 +702,7 @@ def main(args):
                         if args.evaluate:
                             eval_metrics = pipeline_evaluator.evaluate(
                                     pipeline=pipeline,
-                                    image_gen_instance=image_gen_instance,
+                                    image_gen_instance=image_gen_instance if args.save_n_sample > 0 else None,
                                     target_prompts=args.sample_prompt,
                                     n_samples=args.save_n_sample,
                                     negative_prompt=args.sample_negative_prompt if args.sample_negative_prompt else '',
