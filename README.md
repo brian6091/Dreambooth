@@ -16,10 +16,10 @@ Tested with [Stable Diffusion v1-5](https://huggingface.co/runwayml/stable-diffu
 
 Some unique features:
 * **Advanced configuration:** Mix-and-match different fine-tuning methods ([LoRA](https://github.com/cloneofsimo/lora) X Dreambooth, Dreambooth X Textual inversion, etc)
-* **Train only what you want:** 
+* **Train only what you want:** You think training only the top half of the Unet is useful, try it out!
 * **Different loss criteria**
 * **Continual learning**
-* **Optimizer zoo:** In addition to the standard AdamW (and it's 8-bit variant), you can try out Dadaptation, 
+* **Optimizer zoo:** In addition to the standard AdamW (and it's 8-bit variant), you can try out [Dadaptation](https://github.com/facebookresearch/dadaptation), [Lion](https://github.com/lucidrains/lion-pytorch), [Adan](https://github.com/sail-sg/Adan)
 * **Data augmentation:** such as random cropping, flipping and resizing, which can minimize manually prepping and cropping images in certain cases (e.g., training a style)
 * Drop some text-conditioning to improve classifier-free guidance sampling (e.g., how [SD V1-5 was fine-tuned](https://huggingface.co/runwayml/stable-diffusion-v1-5))
 * Image captioning using filenames or associated textfiles
