@@ -85,6 +85,13 @@ def get_optimizer(optname):
         opts['Adagrad8bit'] = bnd.optim.Adagrad8bit
     except:
         pass
+    
+    try:
+        from lion_pytorch import Lion
+        
+        opts['Lion'] = Lion
+    except:
+        pass
 
     try:
         import dadaptation as dadapt
