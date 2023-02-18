@@ -1,5 +1,6 @@
 # BSD 3-Clause License
 # Copyright (c) 2023, fabian-sp
+# https://github.com/fabian-sp/ProxSPS
 
 import torch
 import warnings
