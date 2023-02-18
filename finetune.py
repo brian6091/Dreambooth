@@ -706,7 +706,7 @@ def main(args):
                                     target_prompts=args.sample_prompt,
                                     n_samples=args.save_n_sample,
                                     negative_prompt=args.sample_negative_prompt if args.sample_negative_prompt else '',
-                                    guidance_scale=args.sample_guidance_scale5,
+                                    guidance_scale=args.sample_guidance_scale,
                                     infer_steps=args.sample_infer_steps,
                                     seed=args.sample_seed if args.sample_seed!=None else args.seed,
                                     size=args.resolution,
